@@ -2,4 +2,4 @@
 
 A minimalist 2D C game framework, in very early stages of development.
 
-*NOTE:* 32 bit platforms are _NOT_ supported
+**_NOTE:_** 32 bit platforms are **NOT** supported
