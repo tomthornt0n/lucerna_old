@@ -14,7 +14,7 @@ project "DataDeskCustomLayer"
         targetdir ("bin/windows")
         postbuildcommands
         {
-            "pushd ../vendor/bin/data_desk/windows && data_desk --custom ../../../../DataDeskCustomLayer/bin/windows/DataDeskCustomLayer.dll ../../../../components.ds && popd"
+            "RunDataDesk.bat"
         }  
 
     filter "system:linux"
