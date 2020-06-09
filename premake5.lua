@@ -11,10 +11,11 @@ workspace "Lucerna"
 	outputdir = "%{cfg.buildcfg}-%{cfg.system}/"
 
 	IncludeDir = {}
-	IncludeDir["cglm"] = "Engine/vendor/cglm/"
-	IncludeDir["GLFW"] = "Engine/vendor/glfw/include"
-	IncludeDir["glad"] = "Engine/vendor/glad/include"
-	IncludeDir["stb"]  = "Engine/vendor/stb"
+	IncludeDir["cglm"]   = "Engine/vendor/cglm/"
+	IncludeDir["GLFW"]   = "Engine/vendor/glfw/include"
+	IncludeDir["glad"]   = "Engine/vendor/glad/include"
+	IncludeDir["stb"]    = "Engine/vendor/stb"
+	IncludeDir["mathc"]  = "Engine/vendor/mathc"
 
 	include "DataDeskCustomLayer"
 
@@ -47,6 +48,7 @@ workspace "Lucerna"
 			"%{IncludeDir.cglm}",
 			"%{IncludeDir.GLFW}",
 			"%{IncludeDir.glad}",
+			"%{IncludeDir.mathc}",
 			"%{IncludeDir.stb}"
 		}
 
@@ -69,6 +71,9 @@ workspace "Lucerna"
 			defines       "LC_DEBUG"
 			runtime       "Debug"
 			symbols       "on"
+
+        filter {"configurations:Debug", "system:linux"}
+            buildoptions  { "-g" }
 
 		filter "configurations:Release"
 			defines       "LC_RELEASE"

@@ -8,7 +8,7 @@ static lc_Window* window;
 
 const float CAMERA_MOVE_SPEED = 128.0f;
 
-void OnWindowClose()
+void OnWindowClose(void)
 {
     running = false;
 }
@@ -18,26 +18,47 @@ void OnWindowResize(int width, int height)
     LC_TRACE("Window resize: %i, %i", width, height);
 }
 
-int main()
+int main(int argc, char** argv)
 {
     //create the window
     window = lc_CreateWindow("Lucerna test!", 960, 540);
     window->Data.WindowClosedCallback = OnWindowClose;
     window->Data.WindowResizeCallback = OnWindowResize;
+    lc_SetWindowVSync(window, false);
+
+    //create a scene
+    lc_Scene* scene = lc_CreateScene();
+
+    //setup the renderer
+    lc_InitRenderer(scene);
+    lc_Shader shader = lc_CreateShader("Client/assets/shaders/solidColour.vert", "Client/assets/shaders/solidColour.frag");
 
     //initialise logging
     lc_InitLog();
 
+    //create some entities
+    lc_Entity entity1  = lc_CreateEntity(scene);
+    lc_Entity entity2 = lc_CreateEntity(scene);
+
+
+    //add the renderable component
+    float entity1Colour[4] = { 0.55f, 0.91f, 0.99f, 1.0f };
+    lc_AddRenderable(scene, entity1, -0.5f, -0.5f, 0.25f, 0.25f, entity1Colour);
+       
+    float entity2Colour[4] = { 0.74f, 0.58f, 0.98f, 1.0f };
+    lc_AddRenderable(scene, entity2, 0.5f, 0.5f, 0.25f, 0.25f, entity2Colour);
+
+
     //main loop
     while (running)
     {
-        glClearColor(1, 0, 1, 1);
-        glClear(GL_COLOR_BUFFER_BIT);
+        lc_Render(shader);
 
         lc_UpdateWindow(window);
     }
 
     //cleanup
+    lc_DestroyRenderer();
     lc_DestroyWindow(window);
     lc_DestroyLog();
 }

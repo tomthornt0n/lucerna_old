@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <time.h>
-
 //core logging macro wrappers
 #define LC_CORE_ERROR(...)                                   lc_Log(LC_LOG_LEVEL_ERROR, "CORE", __VA_ARGS__)
 #define LC_CORE_WARN(...)                                    lc_Log(LC_LOG_LEVEL_WARN, "CORE", __VA_ARGS__)
@@ -40,7 +34,7 @@
     #ifdef LC_PLATFORM_WINDOWS
         #define LC_ASSERT(x, ...) { if(!(x)) { lc_Log(LC_LOG_LEVEL_FATAL, "ASSERTION FAILURE", __VA_ARGS__); __debugbreak(); } }
     #else
-        #define LC_ASSERT(x, ...) { if(!(x)) { lc_Log(LC_LOG_LEVEL_FATAL, "ASSERTION FAILURE", __VA_ARGS__); } }
+        #define LC_ASSERT(x, ...) { if(!(x)) { lc_Log(LC_LOG_LEVEL_FATAL, "ASSERTION FAILURE", __VA_ARGS__); exit(0);} }
     #endif
 #else
     #define LC_ASSERT(x, ...)
@@ -48,45 +42,45 @@
 #endif
 
 #ifdef LC_PLATFORM_WINDOWS
-	#include <windows.h>
+    #include <windows.h>
 
-	static HANDLE stdoutHandle;
-	static DWORD outModeInit;
-	
-	void lc_InitLog()
-	{
-		DWORD outMode                                       = 0;
-		stdoutHandle                                        = GetStdHandle(STD_OUTPUT_HANDLE);
+    static HANDLE stdoutHandle;
+    static DWORD outModeInit;
+    
+    void lc_InitLog()
+    {
+        DWORD outMode                                       = 0;
+        stdoutHandle                                        = GetStdHandle(STD_OUTPUT_HANDLE);
 
-		if (stdoutHandle == INVALID_HANDLE_VALUE)
-			exit(GetLastError());
+        if (stdoutHandle == INVALID_HANDLE_VALUE)
+            exit(GetLastError());
 
-		if(!GetConsoleMode(stdoutHandle, &outMode))
-			exit(GetLastError());
+        if(!GetConsoleMode(stdoutHandle, &outMode))
+            exit(GetLastError());
 
-		outModeInit                                         = outMode;
-		outMode                                            |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+        outModeInit                                         = outMode;
+        outMode                                            |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-		if (!SetConsoleMode(stdoutHandle, outMode))
-			exit(GetLastError());
-	}
+        if (!SetConsoleMode(stdoutHandle, outMode))
+            exit(GetLastError());
+    }
 
-	void lc_DestroyLog()
-	{
-		printf("\x1b[0m");
+    void lc_DestroyLog()
+    {
+        printf("\x1b[0m");
 
-		if (!SetConsoleMode(stdoutHandle, outModeInit))
-			exit(GetLastError());
-	}
+        if (!SetConsoleMode(stdoutHandle, outModeInit))
+            exit(GetLastError());
+    }
 #else
-	void lc_InitLog()
-	{
-	}
-	
-	void lc_DestroyLog()
-	{
-		printf("\x1b[0m");
-	}
+    void lc_InitLog()
+    {
+    }
+    
+    void lc_DestroyLog()
+    {
+        printf("\x1b[0m");
+    }
 #endif
 
 enum { LC_LOG_LEVEL_TRACE, LC_LOG_LEVEL_DEBUG, LC_LOG_LEVEL_INFO, LC_LOG_LEVEL_WARN, LC_LOG_LEVEL_ERROR, LC_LOG_LEVEL_FATAL };
@@ -104,22 +98,22 @@ static const char* lc_LogLevelColours[] =
 
 void lc_Log(int level, const char *prefix, const char *fmt, ...)
 {    
-	//Get current time
-	time_t t                                               = time(NULL);
-	struct tm *lt                                          = localtime(&t);
+    //Get current time
+    time_t t                                               = time(NULL);
+    struct tm *lt                                          = localtime(&t);
 
-	//Log to stderr
-	va_list args;
-	char buf[16];
-	buf[strftime(buf, sizeof(buf), "%H:%M:%S", lt)]        = '\0';
+    //Log to stderr
+    va_list args;
+    char buf[16];
+    buf[strftime(buf, sizeof(buf), "%H:%M:%S", lt)]        = '\0';
 
-	fprintf(
-		stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:\x1b[0m ",
-		buf, lc_LogLevelColours[level], lc_LogLevelNames[level], prefix);
+    fprintf(
+        stderr, "%s %s%-5s\x1b[0m \x1b[90m%s:\x1b[0m ",
+        buf, lc_LogLevelColours[level], lc_LogLevelNames[level], prefix);
 
-	va_start(args, fmt);
-	vfprintf(stderr, fmt, args);
-	va_end(args);
-	fprintf(stderr, "\n");
-	fflush(stderr);
+    va_start(args, fmt);
+    vfprintf(stderr, fmt, args);
+    va_end(args);
+    fprintf(stderr, "\n");
+    fflush(stderr);
 }

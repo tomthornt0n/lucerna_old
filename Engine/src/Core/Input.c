@@ -50,7 +50,7 @@
 #define LC_KEY_WORLD_1       161; /* non-US #1 */
 #define LC_KEY_WORLD_2       162; /* non-US #2 */
 
-/* Function keys */				
+/* Function keys */             
 #define LC_KEY_ESCAPE        256;
 #define LC_KEY_ENTER         257;
 #define LC_KEY_TAB           258;
@@ -138,17 +138,17 @@
 
 bool lc_IsKeyPressed(lc_Window* window, int keycode)
 {
-	int state = glfwGetKey(window->NativeWindow, keycode);
-	return state == GLFW_PRESS || state == GLFW_REPEAT;
+    int state = glfwGetKey(window->NativeWindow, keycode);
+    return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
 bool lc_IsMouseButtonPressed(lc_Window* window, int button)
 {
-	int state = glfwGetMouseButton(window->NativeWindow, button);
-	return state == GLFW_PRESS || state == GLFW_REPEAT;
+    int state = glfwGetMouseButton(window->NativeWindow, button);
+    return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
 void lc_GetMousePos(lc_Window* window, double* x, double* y)
 {
-	glfwGetCursorPos(window->NativeWindow, x, y);
+    glfwGetCursorPos(window->NativeWindow, x, y);
 }

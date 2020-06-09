@@ -1,12 +1,9 @@
-#include <stdbool.h>
-#include <stdlib.h>
-
 //stored in the GLFWwindow's user pointer area, so can be acessed from the GLFWwindow, without need of the lc_Window
 typedef struct
 {
     const char* Title;
-	int Width, Height;
-	bool VSync;
+    int Width, Height;
+    bool VSync;
 
     //event callbacks
     void (*WindowClosedCallback)();
@@ -21,8 +18,8 @@ typedef struct
 
 typedef struct
 {
-	GLFWwindow* NativeWindow;
-    lc_WindowData Data;	
+    GLFWwindow* NativeWindow;
+    lc_WindowData Data; 
 } lc_Window;
 
 
@@ -30,11 +27,11 @@ static bool s_GLFWInitialized                              = false;
 
 static void GLFWErrorCallback(int error, const char* description)
 {
-	LC_ASSERT(false, "GLFW ERROR(%d): %s", error, description);
+    LC_ASSERT(false, "GLFW ERROR(%d): %s", error, description);
 }
 
 //default user event callbacks
-static void DefaultWindowCloseCallback() {}
+static void DefaultWindowCloseCallback(void) {}
 static void DefaultWindowResizeCallback(int width, int height) {}
 static void DefaultKeyPressedCallback(int keyCode, bool repeat) {}
 static void DefaultKeyReleasedCallback(int keycode) {}
@@ -62,21 +59,21 @@ static void WindowKeyFunction(GLFWwindow* window, int key, int scanCode, int act
     lc_WindowData* data                                    = (lc_WindowData*)glfwGetWindowUserPointer(window);
     switch (action)
     {
-    case GLFW_PRESS:
-    {
-        data->KeyPressedCallback(key, false);
-        break;
-    }
-    case GLFW_RELEASE:
-    {
-        data->KeyReleasedCallback(key);
-        break;
-    }
-    case GLFW_REPEAT:
-    {
-        data->KeyPressedCallback(key, true);
-        break;
-    }
+        case GLFW_PRESS:
+        {
+            data->KeyPressedCallback(key, false);
+            break;
+        }
+        case GLFW_RELEASE:
+        {
+            data->KeyReleasedCallback(key);
+            break;
+        }
+        case GLFW_REPEAT:
+        {
+            data->KeyPressedCallback(key, true);
+            break;
+        }
     }
 };
 static void WindowCharFunction(GLFWwindow* window, unsigned int key)
@@ -89,16 +86,16 @@ static void WindowMouseButtonFunction(GLFWwindow* window, int key, int action, i
     lc_WindowData* data                                    = (lc_WindowData*)glfwGetWindowUserPointer(window);
     switch (action)
     {
-    case GLFW_PRESS:
-    {
-        data->MouseButtonPressedCallback(key);
-        break;
-    }
-    case GLFW_RELEASE:
-    {
-        data->MouseButtonReleasedCallback(key);
-        break;
-    }
+        case GLFW_PRESS:
+        {
+            data->MouseButtonPressedCallback(key);
+            break;
+        }
+        case GLFW_RELEASE:
+        {
+            data->MouseButtonReleasedCallback(key);
+            break;
+        }
     }
 };
 static void WindowMouseScrollFunction(GLFWwindow* window, double xOffset, double yOffset)
@@ -109,7 +106,7 @@ static void WindowMouseScrollFunction(GLFWwindow* window, double xOffset, double
 
 lc_Window* lc_CreateWindow(const char* title, int width, int height)
 {
-	lc_Window* window                                      = malloc(sizeof(lc_Window));
+    lc_Window* window                                      = malloc(sizeof(lc_Window));
 
     window->Data.Title                                     = title;
     window->Data.Width                                     = width;
@@ -125,15 +122,15 @@ lc_Window* lc_CreateWindow(const char* title, int width, int height)
     window->Data.MouseScrolledCallback                     = DefaultMouseScrolledCallback;
 
 
-	if (!s_GLFWInitialized)
-	{
-		int success                                        = glfwInit();
-		LC_ASSERT(success, "Could not initialize GLFW");
+    if (!s_GLFWInitialized)
+    {
+        int success                                        = glfwInit();
+        LC_ASSERT(success, "Could not initialize GLFW");
 
-		glfwSetErrorCallback(GLFWErrorCallback);
+        glfwSetErrorCallback(GLFWErrorCallback);
 
-		s_GLFWInitialized                                  = true;
-	}
+        s_GLFWInitialized                                  = true;
+    }
 
     window->NativeWindow                                   = glfwCreateWindow(width, height, title, NULL, NULL);
     LC_ASSERT(window->NativeWindow, "GLFW ERROR: Window creation failed!");
@@ -159,12 +156,14 @@ lc_Window* lc_CreateWindow(const char* title, int width, int height)
 void lc_UpdateWindow(lc_Window* window)
 {
     glfwPollEvents();
-	if(window->Data.Width > 0 && window->Data.Height > 0) //don't swap buffers when the window is minimised
-	    glfwSwapBuffers(window->NativeWindow);
+    if(window->Data.Width > 0 && window->Data.Height > 0) //don't swap buffers when the window is minimised
+        glfwSwapBuffers(window->NativeWindow);
 }
 
 void lc_SetWindowVSync(lc_Window* window, bool enabled)
 {
+    window->Data.VSync = enabled;
+    glfwSwapInterval(enabled ? 1 : 0);
 }
 
 void lc_DestroyWindow(lc_Window* window)

@@ -1,8 +1,3 @@
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 /* used to create bitfields */
 #define BIT(x) (1 << x)
 
@@ -45,23 +40,23 @@ char* lc_Concatenate(int count, ...)
 */
 int lc_LoadFile(const char* filename, char** result)
 {
-	int size                                               = 0;
-	FILE* f                                                = fopen(filename, "rb");
-	if (f == NULL)
-	{
-		*result                                            = NULL;
-		return -1;
-	}
-	fseek(f, 0, SEEK_END);
-	size                                                   = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	*result                                                = malloc(size + 1);
-	if (size != fread(*result, sizeof(char), size, f))
-	{
-		free(*result);
-		return -1;
-	}
-	fclose(f);
-	(*result)[size]                                        = 0;
-	return size;
+    int size                                               = 0;
+    FILE* f                                                = fopen(filename, "rb");
+    if (f == NULL)
+    {
+        *result                                            = NULL;
+        return -1;
+    }
+    fseek(f, 0, SEEK_END);
+    size                                                   = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    *result                                                = malloc(size + 1);
+    if (size != fread(*result, sizeof(char), size, f))
+    {
+        free(*result);
+        return -1;
+    }
+    fclose(f);
+    (*result)[size]                                        = 0;
+    return size;
 }

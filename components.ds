@@ -1,43 +1,5 @@
-//all components here currently are for testing purposes only
-
-lc_Transform :: struct
-{
-	XPos : float;
-	YPos : float;
-	XScale : float;
-	YScale : float;
-	Rotation : float;
-}
-
-lc_Colour :: struct
-{
-	Red : float;
-	Green : float;
-	Blue : float;
-	Alpha : float;
-}
-
-lc_Texture :: struct
-{
-	TextureID : uint32_t;
-}
-
-lc_SubSprite :: struct
-{
-	XSize : float;
-	YSize : float;
-	XOffset : float;
-	YOffset : float;
-}
-
 lc_Name :: struct
 {
 	Name : *char;
 }
 
-@NoPrefix
-Health :: struct
-{
-	Health : int;
-	MaxHealth : int;
-}
