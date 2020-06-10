@@ -22,6 +22,8 @@ void lc_BufferRenderData(void)
  
     glBufferSubData(GL_ARRAY_BUFFER, 0, renderableCount * sizeof(lc_Renderable), renderData);
     free(renderData);
+
+    lc_RenderDataUpToDate = true;
 }
 
 void lc_AddRenderable(lc_Scene* scene, lc_Entity entity, float x, float y, float width, float height, float* colour)

@@ -20,6 +20,9 @@ void OnWindowResize(int width, int height)
 
 int main(int argc, char** argv)
 {
+    //initialise logging
+    lc_InitLog();
+
     //create the window
     window = lc_CreateWindow("Lucerna test!", 960, 540);
     window->Data.WindowClosedCallback = OnWindowClose;
@@ -33,20 +36,20 @@ int main(int argc, char** argv)
     lc_InitRenderer(scene);
     lc_Shader shader = lc_CreateShader("Client/assets/shaders/solidColour.vert", "Client/assets/shaders/solidColour.frag");
 
-    //initialise logging
-    lc_InitLog();
-
     //create some entities
     lc_Entity entity1  = lc_CreateEntity(scene);
-    lc_Entity entity2 = lc_CreateEntity(scene);
-
+    lc_Entity entity2  = lc_CreateEntity(scene);
+    lc_Entity entity3  = lc_CreateEntity(scene);
 
     //add the renderable component
     float entity1Colour[4] = { 0.55f, 0.91f, 0.99f, 1.0f };
-    lc_AddRenderable(scene, entity1, -0.5f, -0.5f, 0.25f, 0.25f, entity1Colour);
+    lc_AddRenderable(scene, entity1, -0.4f, -0.4f, 0.25f, 0.25f, entity1Colour);
        
     float entity2Colour[4] = { 0.74f, 0.58f, 0.98f, 1.0f };
-    lc_AddRenderable(scene, entity2, 0.5f, 0.5f, 0.25f, 0.25f, entity2Colour);
+    lc_AddRenderable(scene, entity2, 0.4f, 0.4f, 0.25f, 0.25f, entity2Colour);
+
+    float entity3Colour[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    lc_AddRenderable(scene, entity3, 0.0f, 0.0f, 0.4f, 0.4f, entity3Colour);
 
 
     //main loop

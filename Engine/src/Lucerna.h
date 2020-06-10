@@ -14,8 +14,6 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
-#include "mathc.h"
-
 #include "stretchy_buffer.h"
 
 //lucerna engine

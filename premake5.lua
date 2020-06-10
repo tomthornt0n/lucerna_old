@@ -15,7 +15,6 @@ workspace "Lucerna"
 	IncludeDir["GLFW"]   = "Engine/vendor/glfw/include"
 	IncludeDir["glad"]   = "Engine/vendor/glad/include"
 	IncludeDir["stb"]    = "Engine/vendor/stb"
-	IncludeDir["mathc"]  = "Engine/vendor/mathc"
 
 	include "DataDeskCustomLayer"
 
@@ -48,7 +47,6 @@ workspace "Lucerna"
 			"%{IncludeDir.cglm}",
 			"%{IncludeDir.GLFW}",
 			"%{IncludeDir.glad}",
-			"%{IncludeDir.mathc}",
 			"%{IncludeDir.stb}"
 		}
 
