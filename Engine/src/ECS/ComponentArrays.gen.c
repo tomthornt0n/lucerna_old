@@ -1,1 +1,1 @@
-	lc_Name LcName[LC_MAX_ENTITIES];
+	lc_Name Name[LC_MAX_ENTITIES];

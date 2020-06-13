@@ -1,6 +1,6 @@
-void lc_AddName(lc_Scene* scene, lc_Entity entity, char* name)
+void lc_AddName(lcScene_t* scene, lcEntity_t entity, char* name)
 {
 	scene->EntitySignatures[entity] |= LC__NAME;
-	scene->LcName[entity].Name = name;
+	scene->Name[entity].Name = name;
 }
 

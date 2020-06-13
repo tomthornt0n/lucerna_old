@@ -8,10 +8,10 @@
 
 #include "../Engine/src/Core/Util.c"
 
-FILE* ComponentsFile                                = NULL;
-FILE* FunctionsFile                                 = NULL;
-FILE* ComponentArraysFile                           = NULL;
-FILE* AttribArraysFile                              = NULL;
+FILE* ComponentsFile = NULL;
+FILE* FunctionsFile = NULL;
+FILE* ComponentArraysFile = NULL;
+FILE* AttribArraysFile = NULL;
 
 int bitOffset                                       = 1;
 
@@ -31,7 +31,10 @@ void GenerateComponent(DataDeskNode* component)
 
     //add an array for that type of component
     printf("\tCreating component array...\n");
-    fprintf(ComponentArraysFile, "\t%s %s[LC_MAX_ENTITIES];\n", component->name, component->name_upper_camel_case);
+    if (DataDeskNodeHasTag(component, "NoPrefix"))
+        fprintf(ComponentArraysFile, "\t%s %s[LC_MAX_ENTITIES];\n", component->name, component->name_upper_camel_case);
+    else
+        fprintf(ComponentArraysFile, "\t%s %s[LC_MAX_ENTITIES];\n", component->name, component->name_upper_camel_case + 2);
 
     //implement a function to add it
     printf("\tGenerating add function...\n\n");
@@ -42,7 +45,7 @@ void GenerateComponent(DataDeskNode* component)
     else
         functionName = component->name_upper_camel_case + 2;
 
-    fprintf(FunctionsFile, "void lc_Add%s(lc_Scene* scene, lc_Entity entity", functionName);                // write the start of the function
+    fprintf(FunctionsFile, "void lc_Add%s(lcScene_t* scene, lcEntity_t entity", functionName);                // write the start of the function
     for (DataDeskNode* member = component->struct_declaration.first_member; member; member = member->next)  // loop through every member of the component and add an argument for it
     {
         int pointerCount                                     = member->declaration.type->type_usage.pointer_count;
@@ -54,8 +57,13 @@ void GenerateComponent(DataDeskNode* component)
     fprintf(FunctionsFile, ")\n{\n\tscene->EntitySignatures[entity] |= %s;\n", component->name_uppercase_with_underscores);
     for (DataDeskNode* member = component->struct_declaration.first_member; member; member = member->next)  // loop through members again
     {
-        fprintf(FunctionsFile, "\tscene->%s[entity].%s = %s;\n",
-             component->name_upper_camel_case, member->name, member->name_lowercase_with_underscores);  // initialise members based on parameters
+        if (DataDeskNodeHasTag(component, "NoPrefix"))
+            fprintf(FunctionsFile, "\tscene->%s[entity].%s = %s;\n",
+                 component->name_upper_camel_case, member->name, member->name_lowercase_with_underscores);  // initialise members based on parameters
+        else
+            fprintf(FunctionsFile, "\tscene->%s[entity].%s = %s;\n",
+                 component->name_upper_camel_case + 2, member->name, member->name_lowercase_with_underscores);  // initialise members based on parameters
+
     }
     fprintf(FunctionsFile, "}\n\n");
 }

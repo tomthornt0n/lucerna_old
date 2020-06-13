@@ -1,13 +1,13 @@
-typedef uint32_t lc_Shader;
+typedef uint32_t lcShader_t;
 
-lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
+lcShader_t lc_CreateShader(const char *vertexPath, const char *fragmentPath)
 {
-	//create a shader program ID to return
-	lc_Shader program;
+	/* create a shader program ID to return */
+	lcShader_t program;
 
-	char* vertexSrc;
+	char *vertexSrc;
 	LC_ASSERT(lc_LoadFile(vertexPath, &vertexSrc) != -1, "Could not load vertex src!");
-	char* fragmentSrc;
+	char *fragmentSrc;
 	LC_ASSERT(lc_LoadFile(fragmentPath, &fragmentSrc) != -1, "Could not load fragment src!");
     
 	program = glCreateProgram();
@@ -15,7 +15,7 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 	uint32_t vertexID;
 	uint32_t fragmentID;
 
-	//compile the vertex shader and attach it to the program
+	/* compile the vertex shader and attach it to the program */
 	vertexID = glCreateShader(GL_VERTEX_SHADER);
 
 	glShaderSource(vertexID, 1, (const char**)&vertexSrc, 0);
@@ -28,12 +28,12 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 	{
 	    int maxLength;
 		glGetShaderiv(vertexID, GL_INFO_LOG_LENGTH, &maxLength);
-		char* msg = malloc(sizeof(char) * maxLength);
+		char *msg = malloc(sizeof(char) * maxLength);
 		glGetShaderInfoLog(vertexID, maxLength, &maxLength, msg);
 
 		glDeleteShader(vertexID);
 
-		LC_ASSERT(false, "Vertex shader compilation failure! %s", msg);
+		LC_ASSERT(0, "Vertex shader compilation failure! %s", msg);
 
 		free(msg);
 	}
@@ -53,12 +53,12 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 		int maxLength;
 		glGetShaderiv(fragmentID, GL_INFO_LOG_LENGTH, &maxLength);
 
-		char* msg = malloc(sizeof(char) * maxLength);
+		char *msg = malloc(sizeof(char) * maxLength);
 		glGetShaderInfoLog(fragmentID, maxLength, &maxLength, msg);
 
 		glDeleteShader(fragmentID);
 
-		LC_ASSERT(false, "Fragment shader compilation failure! %s", msg);
+		LC_ASSERT(0, "Fragment shader compilation failure! %s", msg);
 
 		free(msg);
 	}
@@ -74,7 +74,7 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 		int maxLength;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
-		char* msg = malloc(sizeof(char) * maxLength);
+		char *msg = malloc(sizeof(char) * maxLength);
 		glGetShaderInfoLog(program, maxLength, &maxLength, msg);
 
 		glDeleteProgram(program);
@@ -82,7 +82,7 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 		glDeleteShader(vertexID);
 		glDeleteShader(fragmentID);
 
-		LC_ASSERT(false, "Shader link failure! %s", msg);
+		LC_ASSERT(0, "Shader link failure! %s", msg);
 
 		free(msg);
 	}
@@ -93,47 +93,63 @@ lc_Shader lc_CreateShader(const char* vertexPath, const char* fragmentPath)
 	free(vertexSrc);
 	free(fragmentSrc);
 
+    glUseProgram(program);
+
 	return program;
 }
 
-void lc_DestroyShader(lc_Shader shader)
+void lc_DestroyShader(lcShader_t shader)
 {
 	glDeleteProgram(shader);
 }
 
-//----uniforms-------------------------------------------------------------------------------
+/*-----------------------------uniforms-----------------------------*/
 
-//floats
-void lc_ShaderUploadUniformFloat(lc_Shader shader, const char* name, float value)
+/* matrices */
+void lc_ShaderUploadUniformMatrix4(lcShader_t shader, const char *name, float *matrix)
 {
+    glUseProgram(shader);
+	GLint location = glGetUniformLocation(shader, name);
+	glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
+}
+
+/* floats */
+void lc_ShaderUploadUniformFloat(lcShader_t shader, const char *name, float value)
+{
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform1f(location, value);
 }
-void lc_ShaderUploadUniformFloat2(lc_Shader shader, const char* name, const float* value)
+void lc_ShaderUploadUniformFloat2(lcShader_t shader, const char *name, const float *value)
 {
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform2f(location, value[0], value[1]);
 }
-void lc_ShaderUploadUniformFloat3(lc_Shader shader, const char* name, const float* value)
+void lc_ShaderUploadUniformFloat3(lcShader_t shader, const char *name, const float *value)
 {
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform3f(location, value[0], value[1], value[2]);
 }
-void lc_ShaderUploadUniformFloat4(lc_Shader shader, const char* name, const float* value)
+void lc_ShaderUploadUniformFloat4(lcShader_t shader, const char *name, const float *value)
 {
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform4f(location, value[0], value[1], value[2], value[3]);
 }
 
-//integers
-void lc_ShaderUploadUniformInt(lc_Shader shader, const char* name, int value)
+/* integers */
+void lc_ShaderUploadUniformInt(lcShader_t shader, const char *name, int value)
 {
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform1i(location, value);
 }
 
-void lc_ShaderUploadUniformIntArray(lc_Shader shader, const char* name, int count, int* value)
+void lc_ShaderUploadUniformIntArray(lcShader_t shader, const char *name, int count, int *value)
 {
+    glUseProgram(shader);
 	GLint location = glGetUniformLocation(shader, name);
 	glUniform1iv(location, count, value);
 }

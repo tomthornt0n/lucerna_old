@@ -1,22 +1,24 @@
 #ifndef LUCERNA_H
 #define LUCERNA_H
 
-//c standard library
+/* c standard library */
 #include <stdarg.h>
-#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
-//dependencies
+/* for SIMD */
+#include <immintrin.h>
+
+/* dependencies */
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
 #include "stretchy_buffer.h"
 
-//lucerna engine
+/* lucerna engine */
 #include "Core/Log.c"
 #include "Core/Util.c"
 #include "Core/Window.c"
@@ -29,6 +31,7 @@
 
 #include "Renderer/Shader.c"
 #include "Renderer/Renderer.c"
+#include "Renderer/Camera.c"
 
 #endif
 

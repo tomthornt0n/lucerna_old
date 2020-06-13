@@ -60,6 +60,7 @@ workspace "Lucerna"
             links         { "opengl32" }
     
         filter "system:linux"
+            buildoptions  { "-std=c89" }
     	    defines       { "LC_PLATFORM_LINUX" }
             links         { "dl", "m", "pthread", "X11", "GL" }
     
