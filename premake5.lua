@@ -11,14 +11,13 @@ workspace "Lucerna"
     outputdir = "%{cfg.buildcfg}-%{cfg.system}/"
     
     IncludeDir = {}
-    IncludeDir["GLFW"]   = "Engine/vendor/glfw/include"
-    IncludeDir["glad"]   = "Engine/vendor/glad/include"
-    IncludeDir["stb"]    = "Engine/vendor/stb"
+    IncludeDir["GLFW"]   = "Engine/Vendor/glfw/include"
+    IncludeDir["glad"]   = "Engine/Vendor/glad/include"
     
     include "DataDeskCustomLayer"
 
-    include "Engine/vendor/glfw"
-    include "Engine/vendor/glad"
+    include "Engine/Vendor/glfw"
+    include "Engine/Vendor/glad"
 
     project "LucernaProject"
         location            "Client"
@@ -31,7 +30,7 @@ workspace "Lucerna"
         
         files
         {
-            "Client/src/Main.c"
+            "Client/Source/Main.c"
         }
         
         defines
@@ -41,11 +40,10 @@ workspace "Lucerna"
     
     	includedirs
     	{
-    	    "Client/src",
-    	    "Engine/src",
+    	    "Client/Source",
+    	    "Engine/Source",
     	    "%{IncludeDir.GLFW}",
     	    "%{IncludeDir.glad}",
-    	    "%{IncludeDir.stb}"
     	}
     
     	links

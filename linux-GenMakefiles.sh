@@ -1,4 +1,4 @@
 #!/bin/bash
 
-vendor/bin/premake/premake5 gmake
+Vendor/premake/premake5 gmake
 

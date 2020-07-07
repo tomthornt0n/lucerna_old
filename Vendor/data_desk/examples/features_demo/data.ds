@@ -1,0 +1,92 @@
+// Here's a demonstration of what you can declare inside of a Data Desk file.
+
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Constants
+
+SOME_CONSTANT :: 16
+
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Structs
+
+@TagA @TagB
+MyStructA :: struct
+{
+	a : int;
+	b : float;
+	c : char;
+}
+
+@TagWithParameters(123, 456, 789)
+MyStructB :: struct
+{
+	@TagOnMember
+		x : float,
+
+	@TagWithParameters(123, 456)
+		y : float,
+
+	sub_struct : struct
+	{
+		foo : int[16],
+		bar : *void,
+		@Tag
+			baz : float[8][SOME_CONSTANT]
+	}
+}
+
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Unions
+
+@SameAsStructs
+MyUnion :: union
+{
+	struct_a : MyStructA,
+	struct_b : MyStructB,
+}
+
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Enums
+
+@Tag
+MyEnum :: enum
+{
+	@Tag1 ENUM_VALUE_1,
+	@Tag2 ENUM_VALUE_2,
+	@Tag3 ENUM_VALUE_3,
+}
+
+
+
+
+
+
+// ----------------------------------------------------------------------------
+// Flags
+
+@Tag
+MyFlags :: flags
+{
+	@Tag1 FLAGS_VALUE_1,
+	@Tag2 FLAGS_VALUE_2,
+	@Tag3 FLAGS_VALUE_3,
+}

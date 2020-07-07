@@ -1,5 +1,0 @@
-lc_Name :: struct
-{
-	Name : *char;
-}
-

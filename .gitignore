@@ -4,15 +4,15 @@
 !vendor/bin/**
 
 # Visual Studio files and folder
-.vs/
-.vscode
+.vs/**
+.vscode/**
 **.sln
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
 
-#generated code
-**.gen
+# Generated Code
+**.gen.c
 
-#makefiles
+# Makefiles
 **/Makefile

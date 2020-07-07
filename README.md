@@ -2,4 +2,3 @@
 
 A minimalist 2D game framework implemented in C89, in very early stages of development.
 
-**_NOTE:_** 32 bit platforms are **NOT** supported

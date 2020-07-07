@@ -2,16 +2,14 @@
 
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "../Engine/src/Core/Util.c"
-
 FILE* ComponentsFile = NULL;
 FILE* FunctionsFile = NULL;
 FILE* ComponentArraysFile = NULL;
-FILE* AttribArraysFile = NULL;
 
 int bitOffset                                       = 1;
 
@@ -74,9 +72,17 @@ DataDeskCustomInitCallback(void)
     printf("\n\033[35mInitialising data desk...\033[0m\n\n");
 
     //open the files
-    ComponentsFile      = fopen("../../../../Engine/src/ECS/Components.gen.c", "w");
-    FunctionsFile       = fopen("../../../../Engine/src/ECS/EcsFunctions.gen.c", "w");
-    ComponentArraysFile = fopen("../../../../Engine/src/ECS/ComponentArrays.gen.c", "w");
+    ComponentsFile      = fopen("../../../Engine/Source/ECS/Components.gen.c", "w");
+    FunctionsFile       = fopen("../../../Engine/Source/ECS/EcsFunctions.gen.c", "w");
+    ComponentArraysFile = fopen("../../../Engine/Source/ECS/ComponentArrays.gen.c", "w");
+
+    if (!ComponentArraysFile ||
+        !FunctionsFile       ||
+        !ComponentArraysFile)
+    {
+        printf("\033[31mError opening output files!\033[0m");
+        exit(-1);
+    }
 
     //setup the components file
     fprintf(ComponentsFile, "#ifndef COMPONENTS_H\n#define COMPONENTS_H\n\n");
