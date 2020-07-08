@@ -130,9 +130,9 @@ float lc_Vector4Dot(float *vector1, float *vector2)
 void lc_Matrix4Multiply(float *result,
                         float *matrix1, float *matrix2)
 {
-    const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[0]));
-    const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[4]));
-    const __m128 _matrix2Column3 = _mm_load_ps(&(matrix1[8]));
+    const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[ 0]));
+    const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[ 4]));
+    const __m128 _matrix2Column3 = _mm_load_ps(&(matrix1[ 8]));
     const __m128 _matrix2Column4 = _mm_load_ps(&(matrix1[12]));
 
     float *leftRowPointer = &matrix2[0];
@@ -159,16 +159,15 @@ void lc_Matrix4Multiply(float *result,
 
 void lc_Matrix4CreateOrthographicProjectionMatrix(float *matrix,
                                                   float left, float right,
-                                                  float top, float bottom,
-                                                  float near, float far)
+                                                  float top, float bottom)
 {
     memset(matrix, 0, 16 * sizeof(float));
     matrix[0]  = 2.0f / (right - left);
     matrix[5]  = 2.0f / (top - bottom);
-    matrix[10] = 2.0f / (far - near);
+    matrix[10] = -1.0f;
     matrix[12] = -(right + left) / (right - left);
     matrix[13] = -(top + bottom) / (top - bottom);
-    matrix[14] = -(far + near) / (far - near);
+    matrix[14] = 0.0f;
     matrix[15] = 1.0f;
 }
 

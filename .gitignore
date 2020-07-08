@@ -1,7 +1,6 @@
 # Binaries
 **/bin/**
 **/bin-int/**
-!vendor/bin/**
 
 # Visual Studio files and folder
 .vs/**

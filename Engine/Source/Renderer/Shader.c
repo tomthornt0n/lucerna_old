@@ -1,5 +1,7 @@
 typedef uint32_t lcShader_t;
 
+lcShader_t _lc_RendererBoundShader;
+
 lcShader_t lc_ShaderCreate(const char *vertexPath, const char *fragmentPath)
 {
 	/* create a shader program ID to return */

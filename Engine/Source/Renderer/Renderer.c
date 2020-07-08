@@ -2,17 +2,14 @@ struct
 {
     uint32_t VertexArray, VertexBuffer, IndexBuffer;
 
-    lcShader_t BoundShader;
     lcScene_t *BoundScene;
-
-    GLint CameraUniformLocation;
 
     lcSubset_t *Renderables;
 
     uint8_t *ModifiedStart, *ModifiedEnd;
 } _lc_Renderer;
 
-void _lc_RendererBufferData()
+void _lc_RendererBufferData(void)
 {
     if (_lc_Renderer.ModifiedStart == NULL ||
         _lc_Renderer.ModifiedEnd == NULL)
@@ -135,16 +132,10 @@ void _lc_RendererUpdateViewport(lcMessage_t message)
                message.WindowResize.Height);
 }
 
-void lc_RendererInit()
+void lc_RendererInit(void)
 {
     _lc_Renderer.ModifiedStart = NULL;
     _lc_Renderer.ModifiedEnd = NULL;
-
-    _lc_Renderer.BoundScene = NULL;
-    _lc_Renderer.BoundShader = 0;
-    glUseProgram(_lc_Renderer.BoundShader);
-
-    _lc_Renderer.CameraUniformLocation = -2;
 
     glGenVertexArrays(1, &(_lc_Renderer.VertexArray));
     glBindVertexArray(_lc_Renderer.VertexArray);
@@ -196,59 +187,41 @@ void lc_RendererInit()
     lc_MessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, _lc_RendererUpdateViewport);
 }
 
-void lc_RendererRender(lcScene_t *scene, lcShader_t shader)
+void lc_RendererBindScene(lcScene_t *scene)
+{
+    if (_lc_Renderer.Renderables != NULL)
+        lc_SubsetDestroy(_lc_Renderer.Renderables);
+
+    _lc_Renderer.Renderables = lc_SubsetCreate(scene);
+    lc_SubsetSetSignature(_lc_Renderer.Renderables, LC__RENDERABLE);
+    lc_SubsetRefresh(_lc_Renderer.Renderables);
+
+    _lc_Renderer.ModifiedStart = (uint8_t *)(scene->LcRenderable);
+    _lc_Renderer.ModifiedEnd = (uint8_t *)(&(scene->LcRenderable[LC_LIST_LEN(_lc_Renderer.Renderables->Entities)]));
+
+    _lc_Renderer.BoundScene = scene;
+
+    _lc_RendererBufferData();
+}
+
+void lc_RendererBindShader(lcShader_t shader)
+{
+    glUseProgram(shader);
+    _lc_RendererBoundShader = shader;
+
+    lc_Camera._UniformLocation = glGetUniformLocation(
+        shader,
+        lc_Camera._UniformName
+    );
+
+    glUniformMatrix4fv(lc_Camera._UniformLocation,
+                       1, GL_FALSE,
+                       lc_Camera._ViewProjectionMatrix);
+}
+
+void lc_RendererRender(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    if (_lc_Renderer.BoundScene != scene)
-    {
-        if (_lc_Renderer.Renderables != NULL)
-            lc_SubsetDestroy(_lc_Renderer.Renderables);
-
-        _lc_Renderer.Renderables = lc_SubsetCreate(scene);
-        lc_SubsetSetSignature(_lc_Renderer.Renderables, LC__RENDERABLE);
-        lc_SubsetRefresh(_lc_Renderer.Renderables);
-
-        _lc_Renderer.ModifiedStart = (uint8_t *)(scene->LcRenderable);
-        _lc_Renderer.ModifiedEnd = (uint8_t *)(&(scene->LcRenderable[LC_LIST_LEN(_lc_Renderer.Renderables->Entities)]));
-
-        _lc_Renderer.BoundScene = scene;
-
-        _lc_RendererBufferData();
-    }
-
-    if (_lc_Renderer.BoundShader != shader)
-    {
-        glUseProgram(shader);
-
-        _lc_Renderer.CameraUniformLocation = glGetUniformLocation(
-            shader,
-            lc_Camera._UniformName
-        );
-    }
-
-    if (lc_Camera._Changed)
-    {
-        LC_CORE_LOG_DEBUG("Camera changed. Recalculating viewProjection");
-
-        float viewProjection[16];
-
-        /* <debug> */
-        int i;
-        for (i = 0; i < 16; ++i)
-            LC_CORE_LOG_DEBUG("%f", lc_Camera._ProjectionMatrix[i]);
-
-        LC_CORE_LOG_DEBUG("hello");
-        /* </debug> */
-
-        lc_Matrix4Multiply(viewProjection,
-                           lc_Camera._ProjectionMatrix,
-                           lc_Camera._ViewMatrix);
-        glUniformMatrix4fv(_lc_Renderer.CameraUniformLocation,
-                           1, GL_FALSE,
-                           viewProjection);
-        lc_Camera._Changed = 0;
-    }
 
     if (_lc_Renderer.ModifiedStart != NULL &&
         _lc_Renderer.ModifiedEnd   != NULL)
@@ -261,7 +234,7 @@ void lc_RendererRender(lcScene_t *scene, lcShader_t shader)
                    GL_UNSIGNED_INT, NULL);
 }
 
-void lc_RendererDestroy()
+void lc_RendererDestroy(void)
 {
     lc_SubsetDestroy(_lc_Renderer.Renderables);
     glDeleteBuffers(1, &(_lc_Renderer.VertexBuffer));

@@ -21,6 +21,7 @@
 #include "Core/Log.c"
 #include "Core/List.c"
 #include "Core/Messages.c"
+#include "Core/Loader.c"
 #include "Core/Util.c"
 #include "Core/Window.c"
 #include "Core/Input.c"
