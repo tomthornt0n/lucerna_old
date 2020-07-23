@@ -1,14 +1,12 @@
-struct : name
+@Component
+struct : ComponentName
 {
-    char *: name;
+    char *: Name;
 }
 
-struct : position_and_scale
+@Component
+struct : ComponentPosition
 {
-    float : x;
-    float : y;
-    float : z;
-    
-    double : scale;
+    float : X;
+    float : Y;
 }
-
