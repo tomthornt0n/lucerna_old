@@ -1,0 +1,14 @@
+struct : name
+{
+    char *: name;
+}
+
+struct : position_and_scale
+{
+    float : x;
+    float : y;
+    float : z;
+    
+    double : scale;
+}
+

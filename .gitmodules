@@ -1,0 +1,3 @@
+[submodule "lcddl"]
+	path = lcddl
+	url = https://github.com/tomthornt0n/lcddl

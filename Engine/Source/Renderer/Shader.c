@@ -8,9 +8,9 @@ lcShader_t lc_ShaderCreate(const char *vertexPath, const char *fragmentPath)
 	lcShader_t program;
 
 	uint8_t *vertexSrc;
-	LC_ASSERT(lc_LoadFile(vertexPath, &vertexSrc) != -1, "Could not load vertex src!");
+	LC_ASSERT(lc_LoaderReadFile(vertexPath, &vertexSrc) != -1, "Could not load vertex src!");
 	uint8_t *fragmentSrc;
-	LC_ASSERT(lc_LoadFile(fragmentPath, &fragmentSrc) != -1, "Could not load fragment src!");
+	LC_ASSERT(lc_LoaderReadFile(fragmentPath, &fragmentSrc) != -1, "Could not load fragment src!");
     
 	program = glCreateProgram();
 	
