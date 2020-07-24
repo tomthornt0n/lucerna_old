@@ -90,7 +90,7 @@ void GenerateComponent(lcddlNode_t *component)
         fprintf(stderr, "\033[31mERROR: Too many components!\033[0m\n");
         exit(-1);
     }
-    lcddl_WriteStructToFileAsC(ComponentsFile, component);
+    lcddl_WriteNodeToFileAsC(ComponentsFile, component);
 
     fprintf(stderr, "        Creating component array...\n");
     fprintf(ComponentArraysFile, "    %s *", component->Name);

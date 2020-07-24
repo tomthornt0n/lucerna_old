@@ -1,3 +1,7 @@
+#define _LC_STRINGIFY(x) #x
+#define _LC_TO_STRING(x) _LC_STRINGIFY(x)
+#define __LINE_STRING__ _LC_TO_STRING(__LINE__)
+
 #if defined(LC_DEBUG) || defined(LC_DO_NOT_STRIP_LOGGING_FROM_RELEASE)
     #define LC_LOGGING_ENABLED
 #endif
@@ -47,7 +51,8 @@
     static HANDLE stdoutHandle;
     static DWORD outModeInit;
     
-    void lc_LogInit(void)
+    void
+    lc_LogInit(void)
     {
         DWORD outMode = 0;
         stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -65,7 +70,8 @@
             exit(GetLastError());
     }
 
-    void lc_LogDestroy(void)
+    void
+    lc_LogDestroy(void)
     {
         printf("\x1b[0m");
 
@@ -73,11 +79,13 @@
             exit(GetLastError());
     }
 #else
-    void lc_LogInit(void)
+    void
+    lc_LogInit(void)
     {
     }
     
-    void lc_LogDestroy(void)
+    void
+    lc_LogDestroy(void)
     {
     }
 #endif
@@ -94,7 +102,10 @@ static const char *lc_LogLevelColours[] =
   "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
 };
 
-void lc_Log(int level, const char *prefix, const char *fmt, ...)
+void
+lc_Log(int level,
+       const char *prefix,
+       const char *fmt, ...)
 {    
     /* Log to stderr */
     va_list args;

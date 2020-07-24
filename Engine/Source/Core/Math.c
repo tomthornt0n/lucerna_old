@@ -1,78 +1,89 @@
-void lc_Vector2Add(float *result,
-                   float *vector1, float *vector2)
+void
+lc_Vector2Add(float *result,
+              float *vector1, float *vector2)
 {
     result[0] = vector1[0] + vector2[0];
     result[1] = vector1[1] + vector2[1];
 }
 
-void lc_Vector2Subtract(float *result,
-                        float *vector1, float *vector2)
+void
+lc_Vector2Subtract(float *result,
+                   float *vector1, float *vector2)
 {
     result[0] = vector1[0] - vector2[0];
     result[1] = vector1[1] - vector2[1];
 }
 
-void lc_Vector2Multiply(float *result,
-                        float *vector1, float *vector2)
+void
+lc_Vector2Multiply(float *result,
+                   float *vector1, float *vector2)
 {
     result[0] = vector1[0] * vector2[0];
     result[1] = vector1[1] * vector2[1];
 }
 
-void lc_Vector2Divide(float *result,
-                      float *vector1, float *vector2)
+void
+lc_Vector2Divide(float *result,
+                 float *vector1, float *vector2)
 {
     result[0] = vector1[0] / vector2[0];
     result[1] = vector1[1] / vector2[1];
 }
 
-float lc_Vector2Dot(float *vector1, float *vector2)
+float
+lc_Vector2Dot(float *vector1, float *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]));
 }
 
-void lc_Vector3Add(float *result,
-                   float *vector1, float *vector2)
+void
+lc_Vector3Add(float *result,
+              float *vector1, float *vector2)
 {
     result[0] = vector1[0] + vector2[0];
     result[1] = vector1[1] + vector2[1];
     result[2] = vector1[2] + vector2[2];
 }
 
-void lc_Vector3Subtract(float *result,
-                        float *vector1, float *vector2)
+void
+lc_Vector3Subtract(float *result,
+                   float *vector1, float *vector2)
 {
     result[0] = vector1[0] - vector2[0];
     result[1] = vector1[1] - vector2[1];
     result[2] = vector1[2] - vector2[2];
 }
 
-void lc_Vector3Multiply(float *result,
-                        float *vector1, float *vector2)
+void
+lc_Vector3Multiply(float *result,
+                   float *vector1, float *vector2)
 {
     result[0] = vector1[0] * vector2[0];
     result[1] = vector1[1] * vector2[1];
     result[2] = vector1[2] * vector2[2];
 }
 
-void lc_Vector3Divide(float *result,
-                      float *vector1, float *vector2)
+void
+lc_Vector3Divide(float *result,
+                 float *vector1, float *vector2)
 {
     result[0] = vector1[0] / vector2[0];
     result[1] = vector1[1] / vector2[1];
     result[2] = vector1[2] / vector2[2];
 }
 
-float lc_Vector3Dot(float *vector1, float *vector2)
+float
+lc_Vector3Dot(float *vector1, float *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]) +
             (vector1[2] * vector2[2]));
 }
 
-void lc_Vector4Add(float *result,
-                   float *vector1, float *vector2)
+void
+lc_Vector4Add(float *result,
+              float *vector1, float *vector2)
 {
     __m128 _left, _right, _answer;
 
@@ -83,7 +94,8 @@ void lc_Vector4Add(float *result,
     _mm_store_ps(result, _answer);
 }
 
-void lc_Vector4Subtract(float *result,
+void
+lc_Vector4Subtract(float *result,
                    float *vector1, float *vector2)
 {
     __m128 _left, _right, _answer;
@@ -95,7 +107,8 @@ void lc_Vector4Subtract(float *result,
     _mm_store_ps(result, _answer);
 }
 
-void lc_Vector4Multiply(float *result,
+void
+lc_Vector4Multiply(float *result,
                    float *vector1, float *vector2)
 {
     __m128 _left, _right, _result;
@@ -107,8 +120,9 @@ void lc_Vector4Multiply(float *result,
     _mm_store_ps(result, _result);
 }
 
-void lc_Vector4Divide(float *result,
-                   float *vector1, float *vector2)
+void
+lc_Vector4Divide(float *result,
+                 float *vector1, float *vector2)
 {
     __m128 _left, _right, _answer;
 
@@ -119,7 +133,8 @@ void lc_Vector4Divide(float *result,
     _mm_store_ps(result, _answer);
 }
 
-float lc_Vector4Dot(float *vector1, float *vector2)
+float
+lc_Vector4Dot(float *vector1, float *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]) +
@@ -127,8 +142,9 @@ float lc_Vector4Dot(float *vector1, float *vector2)
             (vector1[3] * vector2[3]));
 }
 
-void lc_Matrix4Multiply(float *result,
-                        float *matrix1, float *matrix2)
+void
+lc_Matrix4Multiply(float *result,
+                   float *matrix1, float *matrix2)
 {
     const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[ 0]));
     const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[ 4]));
@@ -157,9 +173,10 @@ void lc_Matrix4Multiply(float *result,
 }
 
 
-void lc_Matrix4CreateOrthographicProjectionMatrix(float *matrix,
-                                                  float left, float right,
-                                                  float top, float bottom)
+void
+lc_Matrix4CreateOrthographicProjectionMatrix(float *matrix,
+                                             float left, float right,
+                                             float top, float bottom)
 {
     memset(matrix, 0, 16 * sizeof(float));
     matrix[0]  = 2.0f / (right - left);
@@ -171,8 +188,9 @@ void lc_Matrix4CreateOrthographicProjectionMatrix(float *matrix,
     matrix[15] = 1.0f;
 }
 
-void lc_Matrix4CreateTranslationMatrix(float *matrix,
-                                       float xOffset, float yOffset)
+void
+lc_Matrix4CreateTranslationMatrix(float *matrix,
+                                  float xOffset, float yOffset)
 {
     memset(matrix, 0, 16 * sizeof(float));
 
@@ -184,8 +202,9 @@ void lc_Matrix4CreateTranslationMatrix(float *matrix,
     matrix[15] = 1.0f;
 }
 
-void lc_Matrix4CreateScaleMatrix(float *matrix,
-                                 float xScale, float yScale)
+void
+lc_Matrix4CreateScaleMatrix(float *matrix,
+                            float xScale, float yScale)
 {
     memset(matrix, 0, 16 * sizeof(float));
 

@@ -10,7 +10,8 @@ struct
     float Position[2];
 } lc_Camera;
 
-void _lc_CameraRecalculateViewProjectionMatrix(void)
+void
+_lc_CameraRecalculateViewProjectionMatrix(void)
 {
     lc_Matrix4Multiply(lc_Camera._ViewProjectionMatrix,
                        lc_Camera._ProjectionMatrix,
@@ -22,7 +23,8 @@ void _lc_CameraRecalculateViewProjectionMatrix(void)
 }
 
 
-void _lc_CameraUpdateProjectionMatrix(lcMessage_t message)
+void
+_lc_CameraUpdateProjectionMatrix(lcMessage_t message)
 {
     LC_CORE_LOG_DEBUG("Window size changed. Recalculating projection matrix");
 
@@ -37,8 +39,9 @@ void _lc_CameraUpdateProjectionMatrix(lcMessage_t message)
    _lc_CameraRecalculateViewProjectionMatrix(); 
 }
 
-void lc_CameraInit(char *uniformName,
-                   float *position)
+void
+lc_CameraInit(char *uniformName,
+              float *position)
 {
     lc_Camera._ViewMatrix = malloc(sizeof(float) * 16);
     lc_Camera._ProjectionMatrix = malloc(sizeof(float) * 16);
@@ -66,7 +69,8 @@ void lc_CameraInit(char *uniformName,
     _lc_CameraRecalculateViewProjectionMatrix();
 }
 
-void lc_CameraMove(float* offset)
+void
+lc_CameraMove(float* offset)
 {
     lc_Vector2Add(lc_Camera.Position,
                   lc_Camera.Position, offset);
@@ -78,7 +82,8 @@ void lc_CameraMove(float* offset)
     _lc_CameraRecalculateViewProjectionMatrix();
 }
 
-void lc_CameraDestroy(void)
+void
+lc_CameraDestroy(void)
 {
     free(lc_Camera._ViewMatrix);
     free(lc_Camera._ProjectionMatrix);

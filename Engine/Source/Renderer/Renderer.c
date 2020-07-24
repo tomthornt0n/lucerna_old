@@ -9,7 +9,8 @@ struct
     uint8_t *ModifiedStart, *ModifiedEnd;
 } _lc_Renderer;
 
-void _lc_RendererBufferData(void)
+void
+_lc_RendererBufferData(void)
 {
     if (_lc_Renderer.ModifiedStart == NULL ||
         _lc_Renderer.ModifiedEnd == NULL)
@@ -32,8 +33,6 @@ void _lc_RendererBufferData(void)
              (uint8_t*)(_lc_Renderer.BoundScene->LcRenderable);
     ptrdiff_t size = _lc_Renderer.ModifiedEnd - _lc_Renderer.ModifiedStart;
 
-    LC_CORE_LOG_DEBUG("\n\tBuffering Vertex Data:\n\t\tOffset: %i\n\t\tSize: %i", offset, size);
-
     glBufferSubData(GL_ARRAY_BUFFER,
                     offset, size,
                     (uint8_t*)renderData + offset);
@@ -44,10 +43,11 @@ void _lc_RendererBufferData(void)
     _lc_Renderer.ModifiedEnd = NULL;
 }
 
-void lc_AddRenderable(lcEntity_t entity, lcScene_t *scene,
-                      float x, float y,
-                      float width, float height,
-                      float *colour)
+void
+lc_AddRenderable(lcEntity_t entity, lcScene_t *scene,
+                 float x, float y,
+                 float width, float height,
+                 float *colour)
 {
     scene->EntitySignatures[entity] |= LC__RENDERABLE;
     scene->LcRenderable[entity].Position1[0] = x - width;
@@ -88,8 +88,9 @@ void lc_AddRenderable(lcEntity_t entity, lcScene_t *scene,
     }
 }
 
-void lc_RenderableMove(lcEntity_t entity, lcScene_t *scene,
-                       float xOffset, float yOffset)
+void
+lc_RenderableMove(lcEntity_t entity, lcScene_t *scene,
+                  float xOffset, float yOffset)
 {
     LC_ASSERT((scene->EntitySignatures[entity] & LC__RENDERABLE)
               == LC__RENDERABLE,
@@ -125,14 +126,16 @@ void lc_RenderableMove(lcEntity_t entity, lcScene_t *scene,
     }
 }
 
-void _lc_RendererUpdateViewport(lcMessage_t message)
+void
+_lc_RendererUpdateViewport(lcMessage_t message)
 {
     glViewport(0, 0,
                message.WindowResize.Width,
                message.WindowResize.Height);
 }
 
-void lc_RendererInit(void)
+void
+lc_RendererInit(void)
 {
     _lc_Renderer.ModifiedStart = NULL;
     _lc_Renderer.ModifiedEnd = NULL;
@@ -187,7 +190,8 @@ void lc_RendererInit(void)
     lc_MessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, _lc_RendererUpdateViewport);
 }
 
-void lc_RendererBindScene(lcScene_t *scene)
+void
+lc_RendererBindScene(lcScene_t *scene)
 {
     if (_lc_Renderer.Renderables != NULL)
         lc_SubsetDestroy(_lc_Renderer.Renderables);
@@ -196,15 +200,22 @@ void lc_RendererBindScene(lcScene_t *scene)
     lc_SubsetSetSignature(_lc_Renderer.Renderables, LC__RENDERABLE);
     lc_SubsetRefresh(_lc_Renderer.Renderables);
 
-    _lc_Renderer.ModifiedStart = (uint8_t *)(scene->LcRenderable);
-    _lc_Renderer.ModifiedEnd = (uint8_t *)(&(scene->LcRenderable[LC_LIST_LEN(_lc_Renderer.Renderables->Entities)]));
+    _lc_Renderer.ModifiedStart =
+        (uint8_t *)(scene->LcRenderable);
+
+    _lc_Renderer.ModifiedEnd =
+        (uint8_t *)
+        (&(scene->LcRenderable[
+            LC_LIST_LEN(_lc_Renderer.Renderables->Entities)
+        ]));
 
     _lc_Renderer.BoundScene = scene;
 
     _lc_RendererBufferData();
 }
 
-void lc_RendererBindShader(lcShader_t shader)
+void
+lc_RendererBindShader(lcShader_t shader)
 {
     glUseProgram(shader);
     _lc_RendererBoundShader = shader;
@@ -219,7 +230,8 @@ void lc_RendererBindShader(lcShader_t shader)
                        lc_Camera._ViewProjectionMatrix);
 }
 
-void lc_RendererRender(void)
+void
+lc_RendererRender(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -234,7 +246,8 @@ void lc_RendererRender(void)
                    GL_UNSIGNED_INT, NULL);
 }
 
-void lc_RendererDestroy(void)
+void
+lc_RendererDestroy(void)
 {
     lc_SubsetDestroy(_lc_Renderer.Renderables);
     glDeleteBuffers(1, &(_lc_Renderer.VertexBuffer));

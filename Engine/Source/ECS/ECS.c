@@ -4,11 +4,11 @@
 
 #define LC_NO_ENTITY 0xffffffffffffffff
 
-#define LC_SUBSET_LOOP(subset)                                                                   \
-int i;                                                                                           \
-for(i = 0; i < LC_LIST_LEN(subset->Entities); i++)                                                  \
-{                                                                                                \
-    lcEntity_t entity = subset->Entities[i];                                                      \
+#define LC_SUBSET_LOOP(subset)                                                 \
+int i;                                                                         \
+for(i = 0; i < LC_LIST_LEN(subset->Entities); i++)                             \
+{                                                                              \
+    lcEntity_t entity = subset->Entities[i];                                   \
     lcScene_t *scene = subset->Parent;
 
 #define LC_END_SUBSET_LOOP }
@@ -33,7 +33,8 @@ typedef struct
 } lcSubset_t;
 
 
-lcScene_t lc_SceneCreate(void)
+lcScene_t
+lc_SceneCreate(void)
 {
     lcScene_t scene;
 
@@ -48,7 +49,8 @@ lcScene_t lc_SceneCreate(void)
 
 #include "lc_SceneDestroy.gen.c"
 
-lcSubset_t *lc_SubsetCreate(lcScene_t *scene)
+lcSubset_t *
+lc_SubsetCreate(lcScene_t *scene)
 {
     lcSubset_t *subset = malloc(sizeof(lcSubset_t));
 
@@ -60,18 +62,22 @@ lcSubset_t *lc_SubsetCreate(lcScene_t *scene)
     return subset;
 }
 
-void lc_SubsetDestroy(lcSubset_t *subset)
+void
+lc_SubsetDestroy(lcSubset_t *subset)
 {
     LC_LIST_DESTROY(subset->Entities);
     free(subset);
 }
 
-void lc_SubsetSetSignature(lcSubset_t *subset, lcSignature_t components)
+void
+lc_SubsetSetSignature(lcSubset_t *subset,
+                      lcSignature_t components)
 {
     subset->Signature = components;
 }
 
-void lc_SubsetRefresh(lcSubset_t *subset)
+void
+lc_SubsetRefresh(lcSubset_t *subset)
 {
     LC_LIST_DESTROY(subset->Entities);
     subset->Entities = NULL;
@@ -91,7 +97,8 @@ void lc_SubsetRefresh(lcSubset_t *subset)
     }
 }
 
-lcEntity_t lc_EntityCreate(lcScene_t *scene)
+lcEntity_t
+lc_EntityCreate(lcScene_t *scene)
 {
     lcEntity_t entity;
     for (entity = 0; entity < LC_MAX_ENTITIES; entity++)
@@ -104,11 +111,11 @@ lcEntity_t lc_EntityCreate(lcScene_t *scene)
     }
 
     LC_ASSERT(0, "Too many entities in scene!");
-    /* return an arbitrary value to stop the compiler complaining (will always exit before this point so doesn't matter what) */
-    return 0;
 }
 
-void lc_EntityDestroy(lcScene_t *scene, lcEntity_t entity)
+void
+lc_EntityDestroy(lcScene_t *scene,
+                 lcEntity_t entity)
 {
     scene->EntitySignatures[entity] = LC_COMPONENT_NONE;
 }

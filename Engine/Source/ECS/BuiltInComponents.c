@@ -1,4 +1,4 @@
-#define LC__RENDERABLE BIT(0)
+#define LC__RENDERABLE (1 << 0)
 typedef struct
 {
     float Position1[2];

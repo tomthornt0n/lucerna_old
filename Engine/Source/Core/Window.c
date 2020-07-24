@@ -7,26 +7,31 @@ struct
     uint8_t VSync;
 } lc_Window;
 
-static void GLFWErrorCallback(int error, const char *description)
+void
+GLFWErrorCallback(int error, const char *description)
 {
     LC_ASSERT(0, "GLFW ERROR(%d): %s", error, description);
 }
 
-/* window event callback functions */
-static void WindowCloseFunction(GLFWwindow *window)
+void
+WindowCloseFunction(GLFWwindow *window)
 {
     lc_MessageEmit(lc_WindowCloseMessageCreate());
-};
-static void WindowResizeFunction(GLFWwindow *window,
-                                 int width, int height)
+}
+
+void
+WindowResizeFunction(GLFWwindow *window,
+                     int width, int height)
 {
     lc_Window.Width = width;
     lc_Window.Height = height;
 
     lc_MessageEmit(lc_WindowResizeMessageCreate(width, height));
-};
-static void WindowKeyFunction(GLFWwindow *window,
-                              int key, int scanCode, int action, int mods)
+}
+
+void
+WindowKeyFunction(GLFWwindow *window,
+                  int key, int scanCode, int action, int mods)
 {
     switch (action)
     {
@@ -46,10 +51,11 @@ static void WindowKeyFunction(GLFWwindow *window,
             break;
         }
     }
-};
+}
 
-static void WindowMouseButtonFunction(GLFWwindow *window,
-                                      int key, int action, int mods)
+void
+WindowMouseButtonFunction(GLFWwindow *window,
+                          int key, int action, int mods)
 {
     switch (action)
     {
@@ -64,15 +70,18 @@ static void WindowMouseButtonFunction(GLFWwindow *window,
             break;
         }
     }
-};
-static void WindowMouseScrollFunction(GLFWwindow *window,
-                                      double xOffset, double yOffset)
+}
+
+void
+WindowMouseScrollFunction(GLFWwindow *window,
+                          double xOffset, double yOffset)
 {
     lc_MessageEmit(lc_MouseScrollMessageCreate(xOffset, yOffset));
-};
+}
 
-void lc_WindowInit(const char *title,
-                     int width, int height)
+void
+lc_WindowInit(const char *title,
+              int width, int height)
 {
     lc_Window.Title = title;
 
@@ -92,7 +101,6 @@ void lc_WindowInit(const char *title,
     int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     LC_ASSERT(status, "ERROR: failed to initialise glad!");
 
-    /* set GLFW event callbacks */
     glfwSetWindowCloseCallback(lc_Window._NativeWindow, WindowCloseFunction);
     glfwSetWindowSizeCallback(lc_Window._NativeWindow, WindowResizeFunction);    
     glfwSetKeyCallback(lc_Window._NativeWindow, WindowKeyFunction);    
@@ -100,22 +108,27 @@ void lc_WindowInit(const char *title,
     glfwSetScrollCallback(lc_Window._NativeWindow, WindowMouseScrollFunction);
 }
 
-void lc_WindowUpdate()
+void
+lc_WindowUpdate(void)
 {
     glfwPollEvents();
 
     /* don't swap buffers when the window is minimised */
     if(lc_Window.Width > 0 && lc_Window.Height > 0)
+    {
         glfwSwapBuffers(lc_Window._NativeWindow);
+    }
 }
 
-void lc_WindowSetVSync(uint8_t enabled)
+void
+lc_WindowSetVSync(uint8_t enabled)
 {
     lc_Window.VSync = enabled;
     glfwSwapInterval(enabled ? 1 : 0);
 }
 
-void lc_WindowDestroy()
+void
+lc_WindowDestroy(void)
 {
     glfwDestroyWindow(lc_Window._NativeWindow);
 }

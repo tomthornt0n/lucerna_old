@@ -136,19 +136,22 @@
 #define LC_MOUSE_BUTTON_RIGHT  LC_MOUSE_BUTTON_2
 #define LC_MOUSE_BUTTON_MIDDLE LC_MOUSE_BUTTON_3
 
-uint8_t lc_InputIsKeyPressed(int keycode)
+uint8_t
+lc_InputIsKeyPressed(int keycode)
 {
     int state = glfwGetKey(lc_Window._NativeWindow, keycode);
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-uint8_t lc_InputIsMouseButtonPressed(int button)
+uint8_t
+lc_InputIsMouseButtonPressed(int button)
 {
     int state = glfwGetMouseButton(lc_Window._NativeWindow, button);
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-void lc_InputGetMousePos(float *output)
+void
+lc_InputGetMousePos(float *output)
 {
     double x, y;
     glfwGetCursorPos(lc_Window._NativeWindow, &x, &y);

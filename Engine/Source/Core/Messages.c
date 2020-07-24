@@ -56,6 +56,7 @@ typedef void (*lcMessageListener_t)(lcMessage_t);
 
 lcMessageListener_t *_lc_MessageListeners[LC_MESSAGE_TYPE_COUNT];
 
+void
 lc_MessageSystemInit(void)
 {
     int i;
@@ -66,7 +67,8 @@ lc_MessageSystemInit(void)
     }
 }
 
-lcMessage_t lc_WindowCloseMessageCreate(void)
+lcMessage_t
+lc_WindowCloseMessageCreate(void)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_WINDOW_CLOSE;
@@ -74,8 +76,9 @@ lcMessage_t lc_WindowCloseMessageCreate(void)
     return message;
 }
 
-lcMessage_t lc_WindowResizeMessageCreate(uint32_t width,
-                                         uint32_t height)
+lcMessage_t
+lc_WindowResizeMessageCreate(uint32_t width,
+                             uint32_t height)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_WINDOW_RESIZE;
@@ -86,8 +89,9 @@ lcMessage_t lc_WindowResizeMessageCreate(uint32_t width,
     return message;
 }
 
-lcMessage_t lc_KeyPressMessageCreate(int keyCode,
-                                     uint8_t repeat)
+lcMessage_t
+lc_KeyPressMessageCreate(int keyCode,
+                         uint8_t repeat)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_KEY_PRESS;
@@ -98,7 +102,8 @@ lcMessage_t lc_KeyPressMessageCreate(int keyCode,
     return message;
 }
 
-lcMessage_t lc_KeyReleaseMessageCreate(int keyCode)
+lcMessage_t
+lc_KeyReleaseMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_KEY_RELEASE;
@@ -108,7 +113,8 @@ lcMessage_t lc_KeyReleaseMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t lc_MouseButtonPressMessageCreate(int keyCode)
+lcMessage_t
+lc_MouseButtonPressMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS;
@@ -118,7 +124,8 @@ lcMessage_t lc_MouseButtonPressMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t lc_MouseButtonReleaseMessageCreate(int keyCode)
+lcMessage_t
+lc_MouseButtonReleaseMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE;
@@ -128,8 +135,9 @@ lcMessage_t lc_MouseButtonReleaseMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t lc_MouseScrollMessageCreate(int xOffset,
-                                         int yOffset)
+lcMessage_t
+lc_MouseScrollMessageCreate(int xOffset,
+                            int yOffset)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_SCROLL;
@@ -140,6 +148,7 @@ lcMessage_t lc_MouseScrollMessageCreate(int xOffset,
     return message;
 }
 
+void
 lc_MessageBind(lcMessageType_t messageType,
                lcMessageListener_t message)
 {
@@ -148,6 +157,7 @@ lc_MessageBind(lcMessageType_t messageType,
                       &message);
 }
 
+void
 lc_MessageEmit(lcMessage_t message)
 {
     int i;
@@ -157,7 +167,8 @@ lc_MessageEmit(lcMessage_t message)
     }
 }
 
-lc_MessageSystemDestroy()
+void
+lc_MessageSystemDestroy(void)
 {
     int i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
