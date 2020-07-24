@@ -112,7 +112,7 @@ void
 lc_ShaderUploadUniformMatrix4(char *name,
                               float *matrix)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
 }
 
@@ -121,7 +121,7 @@ void
 lc_ShaderUploadUniformFloat(char *name,
                             float value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform1f(location, value);
 }
 
@@ -129,7 +129,7 @@ void
 lc_ShaderUploadUniformFloat2(char *name,
                              float *value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform2f(location, value[0], value[1]);
 }
 
@@ -137,7 +137,7 @@ void
 lc_ShaderUploadUniformFloat3(char *name,
                              float *value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform3f(location, value[0], value[1], value[2]);
 }
 
@@ -145,7 +145,7 @@ void
 lc_ShaderUploadUniformFloat4(char *name,
                              float *value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform4f(location, value[0], value[1], value[2], value[3]);
 }
 
@@ -154,7 +154,7 @@ void
 lc_ShaderUploadUniformInt(char *name,
                           int value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform1i(location, value);
 }
 
@@ -163,6 +163,6 @@ lc_ShaderUploadUniformIntArray(char *name,
                                int count,
                                int *value)
 {
-	GLint location = glGetUniformLocation(shader, name);
+	GLint location = glGetUniformLocation(_lc_RendererBoundShader, name);
 	glUniform1iv(location, count, value);
 }

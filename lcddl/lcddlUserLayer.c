@@ -84,7 +84,7 @@ void GenerateComponent(lcddlNode_t *component)
     fprintf(stderr, "        Generating component struct...\n");
     fprintf(ComponentsFile, "#define LC_COMPONENT_");
     fWriteStringAsUppercaseWithUnderscores(ComponentsFile, component->Name);
-    fprintf(ComponentsFile, " BIT(%i)\n", bitOffset++);
+    fprintf(ComponentsFile, " (1 << %i)\n", bitOffset++);
     if(bitOffset == 0xffffffffffffffff)
     {
         fprintf(stderr, "\033[31mERROR: Too many components!\033[0m\n");

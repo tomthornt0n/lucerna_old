@@ -18,7 +18,6 @@
 #include "GLFW/glfw3.h"
 
 /* lucerna engine */
-#include "Core/Util.c"
 #include "Core/Log.c"
 #include "Core/List.c"
 #include "Core/Messages.c"
