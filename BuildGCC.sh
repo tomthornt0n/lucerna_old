@@ -75,7 +75,7 @@ build_glfw_release(){
 
 build_lucerna_debug(){
     echo -e "\033[35mBuilding lucerna...\033[0m"
-    gcc -IEngine/Vendor/glfw/include -IEngine/Vendor/glad/include -IClient/Source -IEngine/Source -DGLFW_INCLUDE_NONE -DLC_PLATFORM_LINUX -DLC_DEBUG  -LEngine/Vendor/glfw/bin -LEngine/Vendor/glad/bin -std=c89 -g Client/Source/Main.c -ldl -lm -lpthread -lX11 -lGL -lglfw -lglad -o bin/LucernaProject
+    gcc -IEngine/Vendor/glfw/include -IEngine/Vendor/glad/include -IClient/Source -IEngine/Source -DGLFW_INCLUDE_NONE -DLC_PLATFORM_LINUX -DLC_DEBUG  -LEngine/Vendor/glfw/bin -LEngine/Vendor/glad/bin -std=c89 -ggdb Client/Source/Main.c -ldl -lm -lpthread -lX11 -lGL -lglfw -lglad -o bin/LucernaProject
     echo -e "\033[32mDone!\n\033[0m"
 }
 

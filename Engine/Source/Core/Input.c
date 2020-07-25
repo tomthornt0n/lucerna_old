@@ -1,10 +1,17 @@
-/*-------- key codes --------*/
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Lucerna
+  
+  Author  : Tom Thornton
+  Updated : 25 July 2020
+  License : MIT, at end of file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #define LC_KEY_SPACE         32
-#define LC_KEY_APOSTROPHE    39  /* ' */
-#define LC_KEY_COMMA         44  /* , */
-#define LC_KEY_MINUS         45  /* - */
-#define LC_KEY_PERIOD        46  /* . */
-#define LC_KEY_SLASH         47  /* / */
+#define LC_KEY_APOSTROPHE    39  
+#define LC_KEY_COMMA         44  
+#define LC_KEY_MINUS         45  
+#define LC_KEY_PERIOD        46  
+#define LC_KEY_SLASH         47  
 #define LC_KEY_0             48
 #define LC_KEY_1             49
 #define LC_KEY_2             50
@@ -15,8 +22,8 @@
 #define LC_KEY_7             55
 #define LC_KEY_8             56
 #define LC_KEY_9             57
-#define LC_KEY_SEMICOLON     59  /* ; */
-#define LC_KEY_EQUAL         61  /* = */
+#define LC_KEY_SEMICOLON     59
+#define LC_KEY_EQUAL         61
 #define LC_KEY_A             65
 #define LC_KEY_B             66
 #define LC_KEY_C             67
@@ -43,14 +50,13 @@
 #define LC_KEY_X             88
 #define LC_KEY_Y             89
 #define LC_KEY_Z             90
-#define LC_KEY_LEFT_BRACKET  91  /* [ */
-#define LC_KEY_BACKSLASH     92  /* \ */
-#define LC_KEY_RIGHT_BRACKET 93  /* ] */
-#define LC_KEY_GRAVE_ACCENT  96  /* ` */
+#define LC_KEY_LEFT_BRACKET  91
+#define LC_KEY_BACKSLASH     92
+#define LC_KEY_RIGHT_BRACKET 93
+#define LC_KEY_GRAVE_ACCENT  96
 #define LC_KEY_WORLD_1       161
 #define LC_KEY_WORLD_2       162
 
-/* Function keys */             
 #define LC_KEY_ESCAPE        256
 #define LC_KEY_ENTER         257
 #define LC_KEY_TAB           258
@@ -122,7 +128,6 @@
 #define LC_KEY_RIGHT_SUPER   347
 #define LC_KEY_MENU          348
 
-/*-------- mouse button codes --------*/
 #define LC_MOUSE_BUTTON_1      0
 #define LC_MOUSE_BUTTON_2      1
 #define LC_MOUSE_BUTTON_3      2
@@ -151,10 +156,36 @@ lc_InputIsMouseButtonPressed(int button)
 }
 
 void
-lc_InputGetMousePos(float *output)
+lc_InputGetMousePos(float *result)
 {
     double x, y;
     glfwGetCursorPos(lc_Window._NativeWindow, &x, &y);
-    output[0] = (float)x;
-    output[1] = (float)y;
+    result[0] = (float)x;
+    result[1] = (float)y;
 }
+
+
+/*
+MIT License
+
+Copyright (c) 2020 Tom Thornton
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+

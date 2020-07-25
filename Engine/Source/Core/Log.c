@@ -1,3 +1,11 @@
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Lucerna
+  
+  Author  : Tom Thornton
+  Updated : 25 July 2020
+  License : MIT, at end of file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
 #define _LC_STRINGIFY(x) #x
 #define _LC_TO_STRING(x) _LC_STRINGIFY(x)
 #define __LINE_STRING__ _LC_TO_STRING(__LINE__)
@@ -8,14 +16,12 @@
 
 #ifdef LC_LOGGING_ENABLED
 
-    /* core logging macro wrappers */
     #define LC_CORE_LOG_ERROR(...)      lc_Log(LC_LOG_LEVEL_ERROR, "CORE", __VA_ARGS__)
     #define LC_CORE_LOG_WARN(...)       lc_Log(LC_LOG_LEVEL_WARN, "CORE", __VA_ARGS__)
     #define LC_CORE_LOG_INFO(...)       lc_Log(LC_LOG_LEVEL_INFO, "CORE", __VA_ARGS__)
     #define LC_CORE_LOG_DEBUG(...)      lc_Log(LC_LOG_LEVEL_DEBUG, "CORE", __VA_ARGS__)
     #define LC_CORE_LOG_TRACE(...)      lc_Log(LC_LOG_LEVEL_TRACE, "CORE", __VA_ARGS__)
     
-    /* client logging macro wrappers */
     #define LC_LOG_ERROR(...)           lc_Log(LC_LOG_LEVEL_ERROR, "CLIENT", __VA_ARGS__)
     #define LC_LOG_WARN(...)            lc_Log(LC_LOG_LEVEL_WARN, "CLIENT", __VA_ARGS__)
     #define LC_LOG_INFO(...)            lc_Log(LC_LOG_LEVEL_INFO, "CLIENT", __VA_ARGS__)
@@ -90,14 +96,22 @@
     }
 #endif
 
-enum { LC_LOG_LEVEL_TRACE, LC_LOG_LEVEL_DEBUG, LC_LOG_LEVEL_INFO, LC_LOG_LEVEL_WARN, LC_LOG_LEVEL_ERROR, LC_LOG_LEVEL_FATAL };
+enum
+{
+    LC_LOG_LEVEL_TRACE,
+    LC_LOG_LEVEL_DEBUG,
+    LC_LOG_LEVEL_INFO,
+    LC_LOG_LEVEL_WARN,
+    LC_LOG_LEVEL_ERROR,
+    LC_LOG_LEVEL_FATAL
+};
 
-static const char *lc_LogLevelNames[] =
+char *lc_LogLevelNames[] =
 {
   "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
 };
 
-static const char *lc_LogLevelColours[] =
+char *lc_LogLevelColours[] =
 {
   "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
 };
@@ -119,4 +133,29 @@ lc_Log(int level,
     fprintf(stderr, "\n");
     fflush(stderr);
 }
+
+
+/*
+MIT License
+
+Copyright (c) 2020 Tom Thornton
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
