@@ -2,11 +2,11 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 July 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-struct
+static struct
 {
     uint32_t VertexArray, VertexBuffer, IndexBuffer;
 
@@ -15,31 +15,31 @@ struct
     lcSubset_t *Renderables;
 
     uint8_t *ModifiedStart, *ModifiedEnd;
-} _lc_Renderer;
+} lcRenderer;
 
-void
-_lc_RendererBufferData(void)
+static void
+lcRendererBufferData(void)
 {
-    if (_lc_Renderer.ModifiedStart == NULL ||
-        _lc_Renderer.ModifiedEnd == NULL)
+    if (lcRenderer.ModifiedStart == NULL ||
+        lcRenderer.ModifiedEnd == NULL)
     {
         return;
     }
 
-    lc_SubsetRefresh(_lc_Renderer.Renderables);
+    lcSubsetRefresh(lcRenderer.Renderables);
 
-    uint32_t renderableCount = LC_LIST_LEN(_lc_Renderer.Renderables->Entities);
+    uint32_t renderableCount = LC_LIST_LEN(lcRenderer.Renderables->Entities);
  
-    glBindBuffer(GL_ARRAY_BUFFER, _lc_Renderer.VertexBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
     
-    lc_Renderable *renderData = calloc(renderableCount, sizeof(lc_Renderable));
-    LC_SUBSET_LOOP(_lc_Renderer.Renderables)
-        renderData[i] = _lc_Renderer.BoundScene->LcRenderable[entity];
+    lcRenderable *renderData = calloc(renderableCount, sizeof(lcRenderable));
+    LC_SUBSET_LOOP(lcRenderer.Renderables)
+        renderData[i] = lcRenderer.BoundScene->LcRenderable[entity];
     LC_END_SUBSET_LOOP
  
-    ptrdiff_t offset = _lc_Renderer.ModifiedStart -
-             (uint8_t*)(_lc_Renderer.BoundScene->LcRenderable);
-    ptrdiff_t size = _lc_Renderer.ModifiedEnd - _lc_Renderer.ModifiedStart;
+    ptrdiff_t offset = lcRenderer.ModifiedStart -
+             (uint8_t*)(lcRenderer.BoundScene->LcRenderable);
+    ptrdiff_t size = lcRenderer.ModifiedEnd - lcRenderer.ModifiedStart;
 
     glBufferSubData(GL_ARRAY_BUFFER,
                     offset, size,
@@ -47,15 +47,15 @@ _lc_RendererBufferData(void)
 
     free(renderData);
 
-    _lc_Renderer.ModifiedStart = NULL;
-    _lc_Renderer.ModifiedEnd = NULL;
+    lcRenderer.ModifiedStart = NULL;
+    lcRenderer.ModifiedEnd = NULL;
 }
 
 void
-lc_AddRenderable(lcEntity_t entity, lcScene_t *scene,
-                 float x, float y,
-                 float width, float height,
-                 float *colour)
+lcAddRenderable(lcEntity_t entity, lcScene_t *scene,
+                float x, float y,
+                float width, float height,
+                float *colour)
 {
     scene->EntitySignatures[entity] |= LC__RENDERABLE;
     scene->LcRenderable[entity].Position1[0] = x - width;
@@ -78,26 +78,26 @@ lc_AddRenderable(lcEntity_t entity, lcScene_t *scene,
     memcpy(&(scene->LcRenderable[entity].Colour4),
            colour, 4 * sizeof(float));
 
-    if (((uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity])) <
-        _lc_Renderer.ModifiedStart
-        || _lc_Renderer.ModifiedStart == NULL)
-        && _lc_Renderer.BoundScene == scene)
+    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity])) <
+        lcRenderer.ModifiedStart
+        || lcRenderer.ModifiedStart == NULL)
+        && lcRenderer.BoundScene == scene)
     {
-        _lc_Renderer.ModifiedStart =
-             (uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]));
+        lcRenderer.ModifiedStart =
+             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]));
     }
-    if (((uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]) + 1) >
-        _lc_Renderer.ModifiedEnd
-        || _lc_Renderer.ModifiedEnd == NULL)
-        && _lc_Renderer.BoundScene == scene)
+    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1) >
+        lcRenderer.ModifiedEnd
+        || lcRenderer.ModifiedEnd == NULL)
+        && lcRenderer.BoundScene == scene)
     {
-        _lc_Renderer.ModifiedEnd =
-             (uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]) + 1);
+        lcRenderer.ModifiedEnd =
+             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1);
     }
 }
 
 void
-lc_RenderableMove(lcEntity_t entity, lcScene_t *scene,
+lcRenderableMove(lcEntity_t entity, lcScene_t *scene,
                   float xOffset, float yOffset)
 {
     LC_ASSERT((scene->EntitySignatures[entity] & LC__RENDERABLE)
@@ -116,26 +116,26 @@ lc_RenderableMove(lcEntity_t entity, lcScene_t *scene,
     scene->LcRenderable[entity].Position4[0] += xOffset;
     scene->LcRenderable[entity].Position4[1] += yOffset;
 
-    if (((uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity])) <
-        _lc_Renderer.ModifiedStart
-        || _lc_Renderer.ModifiedStart == NULL)
-        && _lc_Renderer.BoundScene == scene)
+    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity])) <
+        lcRenderer.ModifiedStart
+        || lcRenderer.ModifiedStart == NULL)
+        && lcRenderer.BoundScene == scene)
     {
-        _lc_Renderer.ModifiedStart =
-             (uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]));
+        lcRenderer.ModifiedStart =
+             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]));
     }
-    if (((uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]) + 1) >
-        _lc_Renderer.ModifiedEnd
-        || _lc_Renderer.ModifiedEnd == NULL)
-        && _lc_Renderer.BoundScene == scene)
+    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1) >
+        lcRenderer.ModifiedEnd
+        || lcRenderer.ModifiedEnd == NULL)
+        && lcRenderer.BoundScene == scene)
     {
-        _lc_Renderer.ModifiedEnd =
-             (uint8_t*)(&(_lc_Renderer.BoundScene->LcRenderable[entity]) + 1);
+        lcRenderer.ModifiedEnd =
+             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1);
     }
 }
 
-void
-_lc_RendererUpdateViewport(lcMessage_t message)
+static void
+lcRendererUpdateViewport(lcMessage_t message)
 {
     glViewport(0, 0,
                message.WindowResize.Width,
@@ -143,16 +143,16 @@ _lc_RendererUpdateViewport(lcMessage_t message)
 }
 
 void
-lc_RendererInit(void)
+lcRendererInit(void)
 {
-    _lc_Renderer.ModifiedStart = NULL;
-    _lc_Renderer.ModifiedEnd = NULL;
+    lcRenderer.ModifiedStart = NULL;
+    lcRenderer.ModifiedEnd = NULL;
 
-    glGenVertexArrays(1, &(_lc_Renderer.VertexArray));
-    glBindVertexArray(_lc_Renderer.VertexArray);
+    glGenVertexArrays(1, &(lcRenderer.VertexArray));
+    glBindVertexArray(lcRenderer.VertexArray);
 
-    glGenBuffers(1, &(_lc_Renderer.VertexBuffer));
-    glBindBuffer(GL_ARRAY_BUFFER, _lc_Renderer.VertexBuffer);
+    glGenBuffers(1, &(lcRenderer.VertexBuffer));
+    glBindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
@@ -163,10 +163,10 @@ lc_RendererInit(void)
                           6 * sizeof(float), (const void*)(2 * sizeof(float)));
 
     glBufferData(GL_ARRAY_BUFFER,
-                 LC_MAX_ENTITIES * sizeof(lc_Renderable), NULL,
+                 LC_MAX_ENTITIES * sizeof(lcRenderable), NULL,
                  GL_DYNAMIC_DRAW);
 
-    glGenBuffers(1, &(_lc_Renderer.IndexBuffer));
+    glGenBuffers(1, &(lcRenderer.IndexBuffer));
     unsigned int *indices = calloc(LC_MAX_ENTITIES * 6, sizeof(uint32_t));
     unsigned int offset = 0;
 
@@ -184,7 +184,7 @@ lc_RendererInit(void)
         offset += 4;
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _lc_Renderer.IndexBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lcRenderer.IndexBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                  LC_MAX_ENTITIES * 6 * sizeof(uint32_t), indices,
                  GL_STATIC_DRAW);
@@ -193,76 +193,73 @@ lc_RendererInit(void)
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    _lc_Renderer.Renderables = NULL;
+    lcRenderer.Renderables = NULL;
 
-    lc_MessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, _lc_RendererUpdateViewport);
+    lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
 }
 
 void
-lc_RendererBindScene(lcScene_t *scene)
+lcRendererBindScene(lcScene_t *scene)
 {
-    if (_lc_Renderer.Renderables != NULL)
-        lc_SubsetDestroy(_lc_Renderer.Renderables);
+    if (lcRenderer.Renderables != NULL)
+        lcSubsetDestroy(lcRenderer.Renderables);
 
-    _lc_Renderer.Renderables = lc_SubsetCreate(scene);
-    lc_SubsetSetSignature(_lc_Renderer.Renderables, LC__RENDERABLE);
-    lc_SubsetRefresh(_lc_Renderer.Renderables);
+    lcRenderer.Renderables = lcSubsetCreate(scene);
+    lcSubsetSetSignature(lcRenderer.Renderables, LC__RENDERABLE);
+    lcSubsetRefresh(lcRenderer.Renderables);
 
-    _lc_Renderer.ModifiedStart =
+    lcRenderer.ModifiedStart =
         (uint8_t *)(scene->LcRenderable);
 
-    _lc_Renderer.ModifiedEnd =
+    lcRenderer.ModifiedEnd =
         (uint8_t *)
         (&(scene->LcRenderable[
-            LC_LIST_LEN(_lc_Renderer.Renderables->Entities)
+            LC_LIST_LEN(lcRenderer.Renderables->Entities)
         ]));
 
-    _lc_Renderer.BoundScene = scene;
+    lcRenderer.BoundScene = scene;
 
-    _lc_RendererBufferData();
+    lcRendererBufferData();
 }
 
 void
-lc_RendererBindShader(lcShader_t shader)
+lcRendererBindShader(lcShader_t shader)
 {
     glUseProgram(shader);
-    _lc_RendererBoundShader = shader;
+    lcRendererBoundShader = shader;
 
-    lc_Camera._UniformLocation = glGetUniformLocation(
-        shader,
-        lc_Camera._UniformName
-    );
+    lcCamera.UniformLocation = glGetUniformLocation(shader,
+                                                    lcCamera.UniformName);
 
-    glUniformMatrix4fv(lc_Camera._UniformLocation,
+    glUniformMatrix4fv(lcCamera.UniformLocation,
                        1, GL_FALSE,
-                       lc_Camera._ViewProjectionMatrix);
+                       lcCamera.ViewProjectionMatrix);
 }
 
 void
-lc_RendererRender(void)
+lcRendererRender(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (_lc_Renderer.ModifiedStart != NULL &&
-        _lc_Renderer.ModifiedEnd   != NULL)
+    if (lcRenderer.ModifiedStart != NULL &&
+        lcRenderer.ModifiedEnd   != NULL)
     {
-        _lc_RendererBufferData();
+        lcRendererBufferData();
     }
 
     glDrawElements(GL_TRIANGLES,
-                   LC_LIST_LEN(_lc_Renderer.Renderables->Entities) * 6,
+                   LC_LIST_LEN(lcRenderer.Renderables->Entities) * 6,
                    GL_UNSIGNED_INT, NULL);
 }
 
 void
-lc_RendererDestroy(void)
+lcRendererDestroy(void)
 {
-    lc_SubsetDestroy(_lc_Renderer.Renderables);
-    glDeleteBuffers(1, &(_lc_Renderer.VertexBuffer));
-    glDeleteBuffers(1, &(_lc_Renderer.IndexBuffer));
-    glDeleteVertexArrays(1, &(_lc_Renderer.VertexArray));
+    lcSubsetDestroy(lcRenderer.Renderables);
+    glDeleteBuffers(1, &(lcRenderer.VertexBuffer));
+    glDeleteBuffers(1, &(lcRenderer.IndexBuffer));
+    glDeleteVertexArrays(1, &(lcRenderer.VertexArray));
 }
-
 
 /*
 MIT License

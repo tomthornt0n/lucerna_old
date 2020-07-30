@@ -12,6 +12,7 @@
 
 # Generated Code
 **.gen.c
+**.gen.h
 
 # Makefiles
 **/Makefile

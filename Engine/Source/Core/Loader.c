@@ -2,8 +2,9 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 July 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
+  Notes   : PNG decoder based on https://handmadehero.org/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 /* NOTE(tbt): Loads a file and allocates memory for it
@@ -11,8 +12,8 @@
    or -1 if loading the file failed
 */
 int
-lc_LoaderReadFile(const char *filename,
-                  uint8_t **result)
+lcLoaderReadFile(const char *filename,
+                 uint8_t **result)
 {
     int size = 0;
 
@@ -50,14 +51,14 @@ lc_LoaderReadFile(const char *filename,
 typedef struct
 {
     uint8_t Signature[8];
-} _lcPNGHeader_t;
-uint8_t _lc_PNGSignature[] = { 0x89, 0x50, 0x4e, 0x47, 0xd, 0xa, 0x1a, 0xa };
+} lcPNGHeader_t;
+uint8_t lcPNGSignature[] = { 0x89, 0x50, 0x4e, 0x47, 0xd, 0xa, 0x1a, 0xa };
 
 typedef struct
 {
     uint32_t Length;
     char Type[4];
-} _lcPNGChunkHeader_t;
+} lcPNGChunkHeader_t;
 
 typedef struct
 {
@@ -69,27 +70,28 @@ typedef struct
     uint8_t FilterMethod;
     uint8_t InterlaceMethod;
 
-} _lcPNGChunkDataIHDR_t;
+} lcPNGChunkDataIHDR_t;
 
 typedef struct
 {
     uint8_t ZLibMethodFlags;
     uint8_t AdditionalFlags;
-} _lcPNGChunkDataIDATHeader_t;
+} lcPNGChunkDataIDATHeader_t;
 
 typedef struct
 {
     uint8_t CheckValue;
-} _lcPNGChunkDataIDATFooter_t;
+} lcPNGChunkDataIDATFooter_t;
 
 typedef struct
 {
     uint32_t CRC;
-} _lcPNGChunkFooter_t;
+} lcPNGChunkFooter_t;
 
 #pragma pack(pop)
 
-void _lc_PNGEndianSwap(uint32_t *value)
+static void
+lcPNGEndianSwap(uint32_t *value)
 {
     uint32_t v = *value;
 
@@ -106,9 +108,10 @@ typedef struct
 
     uint32_t BitBuffer;
     uint32_t BitCount;
-} _lcPNGBitStream_t;
+} lcPNGBitStream_t;
 
-uint32_t _lc_PNGConsumeBits(_lcPNGBitStream_t *buffer,
+static uint32_t
+lcPNGConsumeBits(lcPNGBitStream_t *buffer,
                         uint8_t bitCount)
 {
     LC_ASSERT(bitCount <= 32, "bitCount cannot be greater than 32!"); 
@@ -138,42 +141,36 @@ uint32_t _lc_PNGConsumeBits(_lcPNGBitStream_t *buffer,
 typedef struct
 {
     /* TODO(tbt): decode huffman stuff */
-} _lcPNGHuffman_t;
+} lcPNGHuffman_t;
 
 
-void
-_lc_PNGComputeHuffman(uint32_t inputCount,
-                      uint32_t *input,
-                      _lcPNGHuffman_t *result)
+static void
+lcPNGComputeHuffman(uint32_t inputCount,
+                    uint32_t *input,
+                    lcPNGHuffman_t *result)
 {
     /* TODO(tbt): implement me */
 }
 
-uint32_t
-_lc_PNGHuffmanDecode(_lcPNGHuffman_t *huffman,
-                     _lcPNGBitStream_t *input)
+static uint32_t
+lcPNGHuffmanDecode(lcPNGHuffman_t *huffman,
+                   lcPNGBitStream_t *input)
 {
     /* TODO(tbt): implement me */
     return 0;
 }
 
-typedef struct
-{
-    uint32_t Width, Height;
-    void *Data;
-} lcImage_t;
-
 /* NOTE(tbt): Very minimal png loading.
    Not intended to be robust or general purpose in any way
 */
-lcImage_t lc_LoaderParsePNG(char *filename)
+lcImage_t lcLoaderParsePNG(char *filename)
 {
     lcImage_t result;
 
     uint8_t *fileData;
-    int fileSize = lc_LoaderReadFile(filename, &fileData);
+    int fileSize = lcLoaderReadFile(filename, &fileData);
 
-    _lcPNGBitStream_t idatData;
+    lcPNGBitStream_t idatData;
     idatData.Contents = NULL;
     idatData.ContentsSize = 0;
     idatData.BitCount = 0;
@@ -184,32 +181,32 @@ lcImage_t lc_LoaderParsePNG(char *filename)
 
     uint8_t *at = fileData;
 
-    _lcPNGHeader_t *header = (_lcPNGHeader_t *)at;
-    at += sizeof(_lcPNGHeader_t);
+    lcPNGHeader_t *header = (lcPNGHeader_t *)at;
+    at += sizeof(lcPNGHeader_t);
 
-    LC_ASSERT(!memcmp(_lc_PNGSignature, header->Signature, 8),
+    LC_ASSERT(!memcmp(lcPNGSignature, header->Signature, 8),
               "  Not a PNG file!");
 
     while (1)
     {
         /* NOTE(tbt): 'extract' components of each chunk */
-        _lcPNGChunkHeader_t *chunkHeader = (_lcPNGChunkHeader_t *)at;
-        at += sizeof(_lcPNGChunkHeader_t);
+        lcPNGChunkHeader_t *chunkHeader = (lcPNGChunkHeader_t *)at;
+        at += sizeof(lcPNGChunkHeader_t);
         void *chunkData = at;
-        _lc_PNGEndianSwap(&chunkHeader->Length);
+        lcPNGEndianSwap(&chunkHeader->Length);
         at += chunkHeader->Length;
-        _lcPNGChunkFooter_t *chunkFooter = (_lcPNGChunkFooter_t *)at;
-        _lc_PNGEndianSwap(&chunkFooter->CRC);
-        at += sizeof(_lcPNGChunkFooter_t);
+        lcPNGChunkFooter_t *chunkFooter = (lcPNGChunkFooter_t *)at;
+        lcPNGEndianSwap(&chunkFooter->CRC);
+        at += sizeof(lcPNGChunkFooter_t);
 
         LC_CORE_LOG_INFO("  %.4s:", chunkHeader->Type);
 
         if (!memcmp(chunkHeader->Type, "IHDR", 4))
         {
-            _lcPNGChunkDataIHDR_t *ihdr = chunkData;
+            lcPNGChunkDataIHDR_t *ihdr = chunkData;
             
-            _lc_PNGEndianSwap(&ihdr->Width);
-            _lc_PNGEndianSwap(&ihdr->Height);
+            lcPNGEndianSwap(&ihdr->Width);
+            lcPNGEndianSwap(&ihdr->Height);
 
             LC_CORE_LOG_INFO("    Width: %u", ihdr->Width);
             LC_CORE_LOG_INFO("    Height: %u", ihdr->Height);
@@ -255,11 +252,11 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                                                              incremented
                                                           */
 
-            uint8_t cm     = _lc_PNGConsumeBits(&idatData, 4);
-            uint8_t cInfo  = _lc_PNGConsumeBits(&idatData, 4);
-            uint8_t fCheck = _lc_PNGConsumeBits(&idatData, 5);
-            uint8_t fDict  = _lc_PNGConsumeBits(&idatData, 1);
-            uint8_t fLevel = _lc_PNGConsumeBits(&idatData, 2);
+            uint8_t cm     = lcPNGConsumeBits(&idatData, 4);
+            uint8_t cInfo  = lcPNGConsumeBits(&idatData, 4);
+            uint8_t fCheck = lcPNGConsumeBits(&idatData, 5);
+            uint8_t fDict  = lcPNGConsumeBits(&idatData, 1);
+            uint8_t fLevel = lcPNGConsumeBits(&idatData, 2);
 
             LC_CORE_LOG_INFO("      ZLIB header:");
             LC_CORE_LOG_INFO("        cm: %u", cm);
@@ -283,8 +280,8 @@ lcImage_t lc_LoaderParsePNG(char *filename)
             uint32_t bfinal = 0;
             while (bfinal == 0)
             {
-                bfinal = _lc_PNGConsumeBits(&idatData, 1);
-                uint32_t btype = _lc_PNGConsumeBits(&idatData, 2);
+                bfinal = lcPNGConsumeBits(&idatData, 1);
+                uint32_t btype = lcPNGConsumeBits(&idatData, 2);
 
                 LC_ASSERT(btype == 0 ||
                           btype == 2,
@@ -294,8 +291,8 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                 {
                     idatData.BitBuffer = 0;
                     idatData.BitCount = 0;
-                    uint32_t len = _lc_PNGConsumeBits(&idatData, 16);
-                    uint32_t nlen = _lc_PNGConsumeBits(&idatData, 16);
+                    uint32_t len = lcPNGConsumeBits(&idatData, 16);
+                    uint32_t nlen = lcPNGConsumeBits(&idatData, 16);
 
                     LC_CORE_LOG_INFO("      ZLIB block:");
                     LC_CORE_LOG_INFO("        bfinal: %u", bfinal);
@@ -306,12 +303,12 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                 else
                 {
                     /* TODO(tbt): decode huffman stuff */
-                    _lcPNGHuffman_t litLenHuffman;
-                    _lcPNGHuffman_t distanceHuffman;
+                    lcPNGHuffman_t litLenHuffman;
+                    lcPNGHuffman_t distanceHuffman;
 
-                    uint32_t hlit = _lc_PNGConsumeBits(&idatData, 5);
-                    uint32_t hdist = _lc_PNGConsumeBits(&idatData, 5);
-                    uint32_t hclen = _lc_PNGConsumeBits(&idatData, 4);
+                    uint32_t hlit = lcPNGConsumeBits(&idatData, 5);
+                    uint32_t hdist = lcPNGConsumeBits(&idatData, 5);
+                    uint32_t hclen = lcPNGConsumeBits(&idatData, 4);
 
                     hlit += 257;
                     hdist += 1;
@@ -337,11 +334,11 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                     for (i = 0; i < hclen; ++i)
                     {
                         hclenTable[hclenSwizzle[i]] =
-                            _lc_PNGConsumeBits(&idatData, 3);
+                            lcPNGConsumeBits(&idatData, 3);
                     }
 
-                    _lcPNGHuffman_t dictionaryHuffman;
-                    _lc_PNGComputeHuffman(hclen,
+                    lcPNGHuffman_t dictionaryHuffman;
+                    lcPNGComputeHuffman(hclen,
                                           hclenTable,
                                           &dictionaryHuffman);
 
@@ -351,7 +348,7 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                     while (litLenCount < (hlit + hdist))
                     {
                         uint32_t encodedLength =
-                            _lc_PNGHuffmanDecode(&dictionaryHuffman,
+                            lcPNGHuffmanDecode(&dictionaryHuffman,
                                                  &idatData);
                         uint32_t repeatCount = 1;
                         uint32_t repeatValue = 0;
@@ -362,16 +359,16 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                         }
                         else if (encodedLength == 16)
                         {
-                            repeatCount = _lc_PNGConsumeBits(&idatData, 2) + 3;
+                            repeatCount = lcPNGConsumeBits(&idatData, 2) + 3;
                             repeatValue = litLenDistTable[hlit + hdist - 1];
                         }
                         else if (encodedLength == 17)
                         {
-                            repeatCount = _lc_PNGConsumeBits(&idatData, 2) + 3;
+                            repeatCount = lcPNGConsumeBits(&idatData, 2) + 3;
                         }
                         else if (encodedLength == 18)
                         {
-                            repeatCount = _lc_PNGConsumeBits(&idatData, 7) + 7;
+                            repeatCount = lcPNGConsumeBits(&idatData, 7) + 7;
                         }
                         else
                         {
@@ -386,17 +383,17 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                         }
                     }
 
-                    _lc_PNGComputeHuffman(hlit,
+                    lcPNGComputeHuffman(hlit,
                                           litLenDistTable,
                                           &litLenHuffman);
 
-                    _lc_PNGComputeHuffman(hdist,
+                    lcPNGComputeHuffman(hdist,
                                           litLenDistTable + hlit,
                                           &distanceHuffman);
 
                     while (1)
                     {
-                        uint32_t litLen = _lc_PNGHuffmanDecode(&litLenHuffman,
+                        uint32_t litLen = lcPNGHuffmanDecode(&litLenHuffman,
                                                                &idatData);
                         litLen = 256; /* NOTE(tbt): for debug purposes */
 
@@ -409,7 +406,7 @@ lcImage_t lc_LoaderParsePNG(char *filename)
                         {
                             uint32_t length = litLen - 256;
                             uint32_t distance =
-                                _lc_PNGHuffmanDecode(&distanceHuffman,
+                                lcPNGHuffmanDecode(&distanceHuffman,
                                                      &idatData);
 
                             int i;

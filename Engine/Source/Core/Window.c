@@ -2,42 +2,34 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 July 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
+  Notes   : Uses GLFW for now, will hopefully write own platform layer at some
+            point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-struct 
-{
-    GLFWwindow *_NativeWindow;
+static GLFWwindow *lcWindow;
 
-    const char *Title;
-    uint32_t Width, Height;
-    uint8_t VSync;
-} lc_Window;
-
-void
+static void
 GLFWErrorCallback(int error, const char *description)
 {
     LC_ASSERT(0, "GLFW ERROR(%d): %s", error, description);
 }
 
-void
+static void
 WindowCloseFunction(GLFWwindow *window)
 {
-    lc_MessageEmit(lc_WindowCloseMessageCreate());
+    lcMessageEmit(lcWindowCloseMessageCreate());
 }
 
-void
+static void
 WindowResizeFunction(GLFWwindow *window,
                      int width, int height)
 {
-    lc_Window.Width = width;
-    lc_Window.Height = height;
-
-    lc_MessageEmit(lc_WindowResizeMessageCreate(width, height));
+    lcMessageEmit(lcWindowResizeMessageCreate(width, height));
 }
 
-void
+static void
 WindowKeyFunction(GLFWwindow *window,
                   int key, int scanCode, int action, int mods)
 {
@@ -45,23 +37,23 @@ WindowKeyFunction(GLFWwindow *window,
     {
         case GLFW_PRESS:
         {
-            lc_MessageEmit(lc_KeyPressMessageCreate(key, 0));
+            lcMessageEmit(lcKeyPressMessageCreate(key, 0));
             break;
         }
         case GLFW_RELEASE:
         {
-            lc_MessageEmit(lc_KeyReleaseMessageCreate(key));
+            lcMessageEmit(lcKeyReleaseMessageCreate(key));
             break;
         }
         case GLFW_REPEAT:
         {
-            lc_MessageEmit(lc_KeyPressMessageCreate(key, 1));
+            lcMessageEmit(lcKeyPressMessageCreate(key, 1));
             break;
         }
     }
 }
 
-void
+static void
 WindowMouseButtonFunction(GLFWwindow *window,
                           int key, int action, int mods)
 {
@@ -69,76 +61,65 @@ WindowMouseButtonFunction(GLFWwindow *window,
     {
         case GLFW_PRESS:
         {
-            lc_MessageEmit(lc_MouseButtonPressMessageCreate(key));
+            lcMessageEmit(lcMouseButtonPressMessageCreate(key));
             break;
         }
         case GLFW_RELEASE:
         {
-            lc_MessageEmit(lc_MouseButtonReleaseMessageCreate(key));
+            lcMessageEmit(lcMouseButtonReleaseMessageCreate(key));
             break;
         }
     }
 }
 
-void
+static void
 WindowMouseScrollFunction(GLFWwindow *window,
                           double xOffset, double yOffset)
 {
-    lc_MessageEmit(lc_MouseScrollMessageCreate(xOffset, yOffset));
+    lcMessageEmit(lcMouseScrollMessageCreate(xOffset, yOffset));
 }
 
 void
-lc_WindowInit(const char *title,
+lcWindowInit(const char *title,
               int width, int height)
 {
-    lc_Window.Title = title;
-
-    lc_Window.Width = width;
-    lc_Window.Height = height;
-
     int success = glfwInit();
     LC_ASSERT(success, "Could not initialize GLFW");
 
     glfwSetErrorCallback(GLFWErrorCallback);
 
-    lc_Window._NativeWindow = glfwCreateWindow(width, height, title, NULL, NULL);
-    LC_ASSERT(lc_Window._NativeWindow, "GLFW ERROR: Window creation failed!");
+    lcWindow = glfwCreateWindow(width, height, title, NULL, NULL);
+    LC_ASSERT(lcWindow, "GLFW ERROR: Window creation failed!");
     
-    glfwMakeContextCurrent(lc_Window._NativeWindow);
+    glfwMakeContextCurrent(lcWindow);
 
     int status = gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
     LC_ASSERT(status, "ERROR: failed to initialise glad!");
 
-    glfwSetWindowCloseCallback(lc_Window._NativeWindow, WindowCloseFunction);
-    glfwSetWindowSizeCallback(lc_Window._NativeWindow, WindowResizeFunction);    
-    glfwSetKeyCallback(lc_Window._NativeWindow, WindowKeyFunction);    
-    glfwSetMouseButtonCallback(lc_Window._NativeWindow, WindowMouseButtonFunction);
-    glfwSetScrollCallback(lc_Window._NativeWindow, WindowMouseScrollFunction);
+    glfwSetWindowCloseCallback(lcWindow, WindowCloseFunction);
+    glfwSetFramebufferSizeCallback(lcWindow, WindowResizeFunction);    
+    glfwSetKeyCallback(lcWindow, WindowKeyFunction);    
+    glfwSetMouseButtonCallback(lcWindow, WindowMouseButtonFunction);
+    glfwSetScrollCallback(lcWindow, WindowMouseScrollFunction);
 }
 
 void
-lc_WindowUpdate(void)
+lcWindowUpdate(void)
 {
     glfwPollEvents();
-
-    /* NOTE(tbt): don't swap buffers when the window is minimised */
-    if(lc_Window.Width > 0 && lc_Window.Height > 0)
-    {
-        glfwSwapBuffers(lc_Window._NativeWindow);
-    }
+    glfwSwapBuffers(lcWindow);
 }
 
 void
-lc_WindowSetVSync(uint8_t enabled)
+lcWindowSetVSync(uint8_t enabled)
 {
-    lc_Window.VSync = enabled;
-    glfwSwapInterval(enabled ? 1 : 0);
+    glfwSwapInterval(enabled);
 }
 
 void
-lc_WindowDestroy(void)
+lcWindowDestroy(void)
 {
-    glfwDestroyWindow(lc_Window._NativeWindow);
+    glfwDestroyWindow(lcWindow);
 }
 
 

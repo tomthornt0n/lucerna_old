@@ -9,6 +9,7 @@
 
 FILE *ComponentsFile = NULL;
 FILE *FunctionsFile = NULL;
+FILE *FunctionsHeaderFile = NULL;
 FILE *ComponentArraysFile = NULL;
 FILE *AllocationsFile = NULL;
 FILE *DeallocationsFile = NULL;
@@ -108,21 +109,33 @@ void GenerateComponent(lcddlNode_t *component)
 
     fprintf(stderr, "        Generating add function...\n\n");
 
-    fprintf(FunctionsFile, "void lc_Add");
+    fprintf(FunctionsFile, "void lcAdd");
+    fprintf(FunctionsHeaderFile, "void lcAdd");
     fWriteStringAsTitleCase(FunctionsFile, component->Name);
+    fWriteStringAsTitleCase(FunctionsHeaderFile, component->Name);
     fprintf(FunctionsFile, "(lcScene_t* scene, lcEntity_t entity");
+    fprintf(FunctionsHeaderFile, "(lcScene_t* scene, lcEntity_t entity");
     lcddlNode_t *member = component->Children;
     while (member)
     {
         int pointerCount = member->IndirectionLevel;
         fprintf(FunctionsFile,
                 ", %s ", member->Type);
+        fprintf(FunctionsHeaderFile,
+                ", %s ", member->Type);
         int i;
         for (i = 0; i < pointerCount; ++i)
+        {
             fprintf(FunctionsFile, "*");
-        fWriteStringAsLowercaseWithUnderscores(FunctionsFile, member->Name);
+            fprintf(FunctionsHeaderFile, "*");
+        }
+        fWriteStringAsLowercaseWithUnderscores(FunctionsFile,
+                                               member->Name);
+        fWriteStringAsLowercaseWithUnderscores(FunctionsHeaderFile,
+                                               member->Name);
         member = member->Next;
     }
+    fprintf(FunctionsHeaderFile, ");");
     fprintf(FunctionsFile,
             ")\n{\n    scene->EntitySignatures[entity] |= LC_COMPONENT_");
     fWriteStringAsUppercaseWithUnderscores(FunctionsFile,
@@ -152,19 +165,22 @@ void lcddlUserInitCallback(void)
             "\n    \033[34mInitialising LCDDL...\033[0m\n\n");
 
     ComponentsFile = fopen(
-            "Engine/Source/ECS/Components.gen.c",
+            "Engine/Source/ECS/Components.gen.h",
             "w");
     FunctionsFile = fopen(
         "Engine/Source/ECS/EcsFunctions.gen.c",
         "w");
+    FunctionsHeaderFile = fopen(
+        "Engine/Source/ECS/EcsFunctions.gen.h",
+        "w");
     ComponentArraysFile = fopen(
-        "Engine/Source/ECS/ComponentArrays.gen.c",
+        "Engine/Source/ECS/ComponentArrays.gen.h",
         "w");
     AllocationsFile = fopen(
         "Engine/Source/ECS/ComponentArraysAllocation.gen.c",
         "w");
     DeallocationsFile = fopen(
-        "Engine/Source/ECS/lc_SceneDestroy.gen.c",
+        "Engine/Source/ECS/lcSceneDestroy.gen.c",
         "w");
 
     if (!ComponentArraysFile ||
@@ -181,7 +197,7 @@ void lcddlUserInitCallback(void)
             "#define LC_COMPONENT_NONE 0\n\n");
 
     fprintf(DeallocationsFile,
-            "void lc_SceneDestroy(lcScene_t *scene)\n{\n");
+            "void lcSceneDestroy(lcScene_t *scene)\n{\n");
 }
 
 void lcddlUserTopLevelCallback(lcddlNode_t *node)

@@ -1,40 +1,15 @@
-#ifndef LC_MAX_ENTITIES
-#define LC_MAX_ENTITIES 1000
-#endif
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Lucerna
+  
+  Author  : Tom Thornton
+  Updated : 30 July 2020
+  License : MIT, at end of file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #define LC_NO_ENTITY 0xffffffffffffffff
 
-#define LC_SUBSET_LOOP(subset)                                                 \
-int i;                                                                         \
-for(i = 0; i < LC_LIST_LEN(subset->Entities); i++)                             \
-{                                                                              \
-    lcEntity_t entity = subset->Entities[i];                                   \
-    lcScene_t *scene = subset->Parent;
-
-#define LC_END_SUBSET_LOOP }
-
-typedef uint64_t lcSignature_t;
-typedef uint32_t lcEntity_t;
-
-typedef struct
-{
-    lcSignature_t EntitySignatures[LC_MAX_ENTITIES];
-
-#include "ComponentArrays.gen.c"
-
-    lc_Renderable LcRenderable[LC_MAX_ENTITIES];
-} lcScene_t;
-
-typedef struct
-{
-    lcSignature_t Signature;
-    lcEntity_t *Entities;
-    lcScene_t *Parent;
-} lcSubset_t;
-
-
 lcScene_t
-lc_SceneCreate(void)
+lcSceneCreate(void)
 {
     lcScene_t scene;
 
@@ -47,10 +22,10 @@ lc_SceneCreate(void)
     return scene;
 }
 
-#include "lc_SceneDestroy.gen.c"
+#include "lcSceneDestroy.gen.c"
 
 lcSubset_t *
-lc_SubsetCreate(lcScene_t *scene)
+lcSubsetCreate(lcScene_t *scene)
 {
     lcSubset_t *subset = malloc(sizeof(lcSubset_t));
 
@@ -63,21 +38,21 @@ lc_SubsetCreate(lcScene_t *scene)
 }
 
 void
-lc_SubsetDestroy(lcSubset_t *subset)
+lcSubsetDestroy(lcSubset_t *subset)
 {
     LC_LIST_DESTROY(subset->Entities);
     free(subset);
 }
 
 void
-lc_SubsetSetSignature(lcSubset_t *subset,
-                      lcSignature_t components)
+lcSubsetSetSignature(lcSubset_t *subset,
+                     lcSignature_t components)
 {
     subset->Signature = components;
 }
 
 void
-lc_SubsetRefresh(lcSubset_t *subset)
+lcSubsetRefresh(lcSubset_t *subset)
 {
     LC_LIST_DESTROY(subset->Entities);
     subset->Entities = NULL;
@@ -87,7 +62,10 @@ lc_SubsetRefresh(lcSubset_t *subset)
     {
         if (
                 ((subset->Signature & subset->Parent->EntitySignatures[i])
-                    == subset->Signature) &&
+                    == subset->Signature)
+
+                &&
+
                 subset->Parent->EntitySignatures[i]
                     != LC_NO_ENTITY
             )
@@ -98,7 +76,7 @@ lc_SubsetRefresh(lcSubset_t *subset)
 }
 
 lcEntity_t
-lc_EntityCreate(lcScene_t *scene)
+lcEntityCreate(lcScene_t *scene)
 {
     lcEntity_t entity;
     for (entity = 0; entity < LC_MAX_ENTITIES; entity++)
@@ -114,8 +92,8 @@ lc_EntityCreate(lcScene_t *scene)
 }
 
 void
-lc_EntityDestroy(lcScene_t *scene,
-                 lcEntity_t entity)
+lcEntityDestroy(lcScene_t *scene,
+                lcEntity_t entity)
 {
     scene->EntitySignatures[entity] = LC_COMPONENT_NONE;
 }

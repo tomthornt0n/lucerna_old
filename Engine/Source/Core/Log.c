@@ -2,32 +2,22 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 July 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define _LC_STRINGIFY(x) #x
-#define _LC_TO_STRING(x) _LC_STRINGIFY(x)
-#define __LINE_STRING__ _LC_TO_STRING(__LINE__)
-
-#if defined(LC_DEBUG) || defined(LC_DO_NOT_STRIP_LOGGING_FROM_RELEASE)
-    #define LC_LOGGING_ENABLED
-#endif
+#define LC_STRINGIFY(x) #x
+#define LC_TO_STRING(x) LC_STRINGIFY(x)
+#define __LINE_STRING__ LC_TO_STRING(__LINE__)
 
 #ifdef LC_LOGGING_ENABLED
 
-    #define LC_CORE_LOG_ERROR(...)      lc_Log(LC_LOG_LEVEL_ERROR, "CORE", __VA_ARGS__)
-    #define LC_CORE_LOG_WARN(...)       lc_Log(LC_LOG_LEVEL_WARN, "CORE", __VA_ARGS__)
-    #define LC_CORE_LOG_INFO(...)       lc_Log(LC_LOG_LEVEL_INFO, "CORE", __VA_ARGS__)
-    #define LC_CORE_LOG_DEBUG(...)      lc_Log(LC_LOG_LEVEL_DEBUG, "CORE", __VA_ARGS__)
-    #define LC_CORE_LOG_TRACE(...)      lc_Log(LC_LOG_LEVEL_TRACE, "CORE", __VA_ARGS__)
+    #define LC_CORE_LOG_ERROR(...) lcLog(LC_LOG_LEVEL_ERROR, "CORE", __VA_ARGS__)
+    #define LC_CORE_LOG_WARN(...)  lcLog(LC_LOG_LEVEL_WARN, "CORE", __VA_ARGS__)
+    #define LC_CORE_LOG_INFO(...)  lcLog(LC_LOG_LEVEL_INFO, "CORE", __VA_ARGS__)
+    #define LC_CORE_LOG_DEBUG(...) lcLog(LC_LOG_LEVEL_DEBUG, "CORE", __VA_ARGS__)
+    #define LC_CORE_LOG_TRACE(...) lcLog(LC_LOG_LEVEL_TRACE, "CORE", __VA_ARGS__)
     
-    #define LC_LOG_ERROR(...)           lc_Log(LC_LOG_LEVEL_ERROR, "CLIENT", __VA_ARGS__)
-    #define LC_LOG_WARN(...)            lc_Log(LC_LOG_LEVEL_WARN, "CLIENT", __VA_ARGS__)
-    #define LC_LOG_INFO(...)            lc_Log(LC_LOG_LEVEL_INFO, "CLIENT", __VA_ARGS__)
-    #define LC_LOG_DEBUG(...)           lc_Log(LC_LOG_LEVEL_DEBUG, "CLIENT", __VA_ARGS__)
-    #define LC_LOG_TRACE(...)           lc_Log(LC_LOG_LEVEL_TRACE, "CLIENT", __VA_ARGS__)
-
 #else
 
     #define LC_CORE_LOG_ERROR(...)
@@ -36,19 +26,6 @@
     #define LC_CORE_LOG_DEBUG(...)
     #define LC_CORE_LOG_TRACE(...)
     
-    #define LC_LOG_ERROR(...)
-    #define LC_LOG_WARN(...)
-    #define LC_LOG_INFO(...)
-    #define LC_LOG_DEBUG(...)
-    #define LC_LOG_TRACE(...)
-
-#endif
-
-/* asserstions */
-#ifdef _MSC_VER
-    #define LC_ASSERT(x, ...) { if(!(x)) { lc_Log(LC_LOG_LEVEL_FATAL, "Assertion failure at line "__LINE_STRING__" in "__FILE__, __VA_ARGS__); __debugbreak(); } }
-#else
-    #define LC_ASSERT(x, ...) { if(!(x)) { lc_Log(LC_LOG_LEVEL_FATAL, "Assertion failure at line "__LINE_STRING__" in "__FILE__, __VA_ARGS__); exit(0);} }
 #endif
 
 #if defined(LC_PLATFORM_WINDOWS) && defined(LC_LOGGING_ENABLED)
@@ -58,7 +35,7 @@
     static DWORD outModeInit;
     
     void
-    lc_LogInit(void)
+    lcLogInit(void)
     {
         DWORD outMode = 0;
         stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -77,7 +54,7 @@
     }
 
     void
-    lc_LogDestroy(void)
+    lcLogDestroy(void)
     {
         printf("\x1b[0m");
 
@@ -86,12 +63,12 @@
     }
 #else
     void
-    lc_LogInit(void)
+    lcLogInit(void)
     {
     }
     
     void
-    lc_LogDestroy(void)
+    lcLogDestroy(void)
     {
     }
 #endif
@@ -106,26 +83,27 @@ enum
     LC_LOG_LEVEL_FATAL
 };
 
-char *lc_LogLevelNames[] =
+static char *
+lcLogLevelNames[] =
 {
   "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
 };
 
-char *lc_LogLevelColours[] =
+static char *
+lcLogLevelColours[] =
 {
   "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
 };
 
 void
-lc_Log(int level,
-       const char *prefix,
-       const char *fmt, ...)
+lcLog(int level,
+      char *prefix,
+      char *fmt, ...)
 {    
-    /* Log to stderr */
     va_list args;
     fprintf(
         stderr, "\x1b[0m%s%-5s\x1b[0m \x1b[38m%-6s\x1b[34m │ \x1b[0m ",
-        lc_LogLevelColours[level], lc_LogLevelNames[level], prefix);
+        lcLogLevelColours[level], lcLogLevelNames[level], prefix);
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);

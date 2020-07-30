@@ -1,54 +1,49 @@
-/* override the default max entities before including Lucerna.c */
-#define LC_MAX_ENTITIES 1000
-#include "Lucerna.c"
+#include "Lucerna.h"
 
 static uint8_t running = 1;
 
-void OnWindowClose(lcMessage_t message)
+static void
+OnWindowClose(lcMessage_t message)
 {
     running = 0;
 }
 
-void UpdateMovingSqaures(lcSubset_t *subset)
+static void
+UpdateMovingSqaures(lcSubset_t *subset)
 {
     LC_SUBSET_LOOP(subset)
-        lc_RenderableMove(entity, scene,
+        lcRenderableMove(entity, scene,
                           1.0f / (float)entity,
                           (float)entity / 10000.0f);
     LC_END_SUBSET_LOOP
 }
 
-int main(int argc, char** argv)
+void
+lcClientMain(int argc,
+             char** argv)
 {
-    /* initialise the message system */
-    lc_MessageSystemInit();
-
-    /* initialise logging */
-    lc_LogInit();
-
     /* create the window */
-    lc_WindowInit("Lucerna test!", 960, 540);
-    lc_MessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
-    lc_WindowSetVSync(1);
+    lcWindowInit("Lucerna test!", 960, 540);
+    lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
+    lcWindowSetVSync(1);
 
     /* create some scenes */
-    lcScene_t scene1 = lc_SceneCreate();
+    lcScene_t scene1 = lcSceneCreate();
 
     /* setup the renderer */
     float cameraPos[2] = {0.0f, 0.0f};
-    lc_CameraInit("u_ViewProjectionMatrix",
+    lcCameraInit("u_ViewProjectionMatrix",
                   cameraPos);
 
-    lcShader_t shader = lc_ShaderCreate("Client/Assets/Shaders/SolidColour.vert",
+    lcShader_t shader = lcShaderCreate("Client/Assets/Shaders/SolidColour.vert",
                                         "Client/Assets/Shaders/SolidColour.frag");
+    lcRendererInit();
 
-    lc_RendererInit();
-
-    lc_RendererBindShader(shader);
-    lc_RendererBindScene(&scene1);
+    lcRendererBindShader(shader);
+    lcRendererBindScene(&scene1);
 
     /* create some entities */
-    int size = 20;
+    int size = 40;
     float cellSize = 32.0f;
 
     int x, y;
@@ -56,7 +51,7 @@ int main(int argc, char** argv)
     {
         for (y = 0; y < size; ++y)
         {
-            lcEntity_t entity = lc_EntityCreate(&scene1);
+            lcEntity_t entity = lcEntityCreate(&scene1);
             float col[] =
             {
                 (float)x / ((float)size + 0.1f),
@@ -64,19 +59,19 @@ int main(int argc, char** argv)
                 0.85f, 1.0f
             };
 
-            lc_AddRenderable(entity, &scene1,
+            lcAddRenderable(entity, &scene1,
                              x * cellSize, y * cellSize,
                              cellSize, cellSize,
                              col);
         }
     }
 
-    lcSubset_t *movingSquares = lc_SubsetCreate(&scene1);
-    lc_SubsetSetSignature(movingSquares, LC__RENDERABLE);
-    lc_SubsetRefresh(movingSquares);
+    lcSubset_t *movingSquares = lcSubsetCreate(&scene1);
+    lcSubsetSetSignature(movingSquares, LC__RENDERABLE);
+    lcSubsetRefresh(movingSquares);
 
     /* test PNG */
-    lcImage_t img = lc_LoaderParsePNG("Client/Assets/Textures/test.png");
+    lcImage_t img = lcLoaderParsePNG("Client/Assets/Textures/test.png");
     free(img.Data);
 
     float cameraSpeed = 5.0f;
@@ -86,39 +81,37 @@ int main(int argc, char** argv)
     {
         /* UpdateMovingSqaures(movingSquares); */
 
-        if (lc_InputIsKeyPressed(LC_KEY_W))
+        if (lcInputIsKeyPressed(LC_KEY_W))
         {
             float offset[] = { 0.0f, cameraSpeed };
-            lc_CameraMove(offset);
+            lcCameraMove(offset);
         }
-        else if (lc_InputIsKeyPressed(LC_KEY_S))
+        else if (lcInputIsKeyPressed(LC_KEY_S))
         {
             float offset[] = { 0.0f, -cameraSpeed };
-            lc_CameraMove(offset);
+            lcCameraMove(offset);
         }
 
-        if (lc_InputIsKeyPressed(LC_KEY_A))
+        if (lcInputIsKeyPressed(LC_KEY_A))
         {
             float offset[] = { cameraSpeed, 0.0f };
-            lc_CameraMove(offset);
+            lcCameraMove(offset);
         }
-        else if (lc_InputIsKeyPressed(LC_KEY_D))
+        else if (lcInputIsKeyPressed(LC_KEY_D))
         {
             float offset[] = { -cameraSpeed, 0.0f };
-            lc_CameraMove(offset);
+            lcCameraMove(offset);
         }
 
-        lc_RendererRender();
+        lcRendererRender();
 
-        lc_WindowUpdate();
+        lcWindowUpdate();
     }
 
     /* cleanup */
-    lc_ShaderDestroy(shader);
-    lc_SceneDestroy(&scene1);
-    lc_CameraDestroy();
-    lc_RendererDestroy();
-    lc_WindowDestroy();
-    lc_LogDestroy();
-    lc_MessageSystemDestroy();
+    lcShaderDestroy(shader);
+    lcSceneDestroy(&scene1);
+    lcRendererDestroy();
+    lcCameraDestroy();
+    lcWindowDestroy();
 }

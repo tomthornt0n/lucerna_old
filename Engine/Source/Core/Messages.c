@@ -2,81 +2,25 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 July 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define LC_MESSAGE_TYPE_COUNT 7
+static lcMessageListener_t *lcMessageListeners[LC_MESSAGE_TYPE_COUNT];
 
-typedef enum
-{
-    LC_MESSAGE_TYPE_WINDOW_CLOSE,
-    LC_MESSAGE_TYPE_WINDOW_RESIZE,
-
-    LC_MESSAGE_TYPE_KEY_PRESS,
-    LC_MESSAGE_TYPE_KEY_RELEASE,
-
-    LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS,
-    LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE,
-    LC_MESSAGE_TYPE_MOUSE_SCROLL
-} lcMessageType_t;
-
-typedef struct lcMessage_t
-{
-    lcMessageType_t Type;
-
-    union
-    {
-        struct lcMessageWindowResize_t
-        {
-            uint32_t Width, Height;
-        } WindowResize;
-
-        struct lcMessageKeyPress_t
-        {
-            int KeyCode;
-            uint8_t Repeat;
-        } KeyPress;
-
-        struct lcMessageKeyRelease_t
-        {
-            int KeyCode;
-        } KeyRelease;
-
-        struct lcMessageMouseButtonPress_t
-        {
-            int KeyCode;
-        } MouseButtonPress;
-
-        struct lcMessageMouseButtonRelease_t
-        {
-            int KeyCode;
-        } MouseButtonRelease;
-
-        struct lcMessageMouseScroll_t
-        {
-            int XOffset, YOffset;
-        } MouseScroll;
-    };
-} lcMessage_t;
-
-typedef void (*lcMessageListener_t)(lcMessage_t);
-
-lcMessageListener_t *_lc_MessageListeners[LC_MESSAGE_TYPE_COUNT];
-
-void
-lc_MessageSystemInit(void)
+static void
+lcMessageSystemInit(void)
 {
     int i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        _lc_MessageListeners[i] = NULL; 
-        LC_LIST_CREATE(_lc_MessageListeners[i], lcMessageListener_t); 
+        lcMessageListeners[i] = NULL; 
+        LC_LIST_CREATE(lcMessageListeners[i], lcMessageListener_t); 
     }
 }
 
-lcMessage_t
-lc_WindowCloseMessageCreate(void)
+static lcMessage_t
+lcWindowCloseMessageCreate(void)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_WINDOW_CLOSE;
@@ -84,9 +28,9 @@ lc_WindowCloseMessageCreate(void)
     return message;
 }
 
-lcMessage_t
-lc_WindowResizeMessageCreate(uint32_t width,
-                             uint32_t height)
+static lcMessage_t
+lcWindowResizeMessageCreate(uint32_t width,
+                            uint32_t height)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_WINDOW_RESIZE;
@@ -97,9 +41,9 @@ lc_WindowResizeMessageCreate(uint32_t width,
     return message;
 }
 
-lcMessage_t
-lc_KeyPressMessageCreate(int keyCode,
-                         uint8_t repeat)
+static lcMessage_t
+lcKeyPressMessageCreate(int keyCode,
+                        uint8_t repeat)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_KEY_PRESS;
@@ -110,8 +54,8 @@ lc_KeyPressMessageCreate(int keyCode,
     return message;
 }
 
-lcMessage_t
-lc_KeyReleaseMessageCreate(int keyCode)
+static lcMessage_t
+lcKeyReleaseMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_KEY_RELEASE;
@@ -121,8 +65,8 @@ lc_KeyReleaseMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t
-lc_MouseButtonPressMessageCreate(int keyCode)
+static lcMessage_t
+lcMouseButtonPressMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS;
@@ -132,8 +76,8 @@ lc_MouseButtonPressMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t
-lc_MouseButtonReleaseMessageCreate(int keyCode)
+static lcMessage_t
+lcMouseButtonReleaseMessageCreate(int keyCode)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE;
@@ -143,9 +87,9 @@ lc_MouseButtonReleaseMessageCreate(int keyCode)
     return message;
 }
 
-lcMessage_t
-lc_MouseScrollMessageCreate(int xOffset,
-                            int yOffset)
+static lcMessage_t
+lcMouseScrollMessageCreate(int xOffset,
+                           int yOffset)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_MOUSE_SCROLL;
@@ -157,31 +101,31 @@ lc_MouseScrollMessageCreate(int xOffset,
 }
 
 void
-lc_MessageBind(lcMessageType_t messageType,
-               lcMessageListener_t message)
+lcMessageBind(int messageType,
+              lcMessageListener_t action)
 {
-    LC_LIST_PUSH_BACK(_lc_MessageListeners[messageType],
+    LC_LIST_PUSH_BACK(lcMessageListeners[messageType],
                       lcMessageListener_t,
-                      &message);
+                      &action);
 }
 
-void
-lc_MessageEmit(lcMessage_t message)
+static void
+lcMessageEmit(lcMessage_t message)
 {
     int i;
-    for (i = 0; i < LC_LIST_LEN(_lc_MessageListeners[message.Type]); ++i)
+    for (i = 0; i < LC_LIST_LEN(lcMessageListeners[message.Type]); ++i)
     {
-        (*_lc_MessageListeners[message.Type][i])(message);
+        (*lcMessageListeners[message.Type][i])(message);
     }
 }
 
-void
-lc_MessageSystemDestroy(void)
+static void
+lcMessageSystemDestroy(void)
 {
     int i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        LC_LIST_DESTROY(_lc_MessageListeners[i]);
+        LC_LIST_DESTROY(lcMessageListeners[i]);
     }
 }
 
