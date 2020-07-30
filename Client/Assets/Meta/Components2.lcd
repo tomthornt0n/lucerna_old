@@ -1,4 +1,4 @@
-struct : Test
+struct Test
 {
     double *: ThisIsATest;
 }

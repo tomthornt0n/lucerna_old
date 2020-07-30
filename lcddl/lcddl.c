@@ -7,13 +7,34 @@
 
 #include "lcddl.h"
 
+#define LCDDL_WARN(message) fprintf(stderr,                                    \
+                                    "\x1b[33mWARNING: "                        \
+                                    message                                    \
+                                    "\x1b[0m\n")
+
+#define LCDDL_ERROR(line, message) fprintf(stderr,                             \
+                                           "\x1b[31mERROR at line %d: "        \
+                                           message                             \
+                                           "\x1b[0m\n",                        \
+                                           line);                              \
+                             lcddlUserCleanupCallback();                       \
+                             exit(-1)
+
+#define LCDDL_ERRORF(line, message, ...) fprintf(stderr,                       \
+                                                 "\x1b[31mERROR at line %d: "  \
+                                                 message                       \
+                                                 "\x1b[0m\n",                  \
+                                                 line,                         \
+                                                 __VA_ARGS__);                 \
+                             lcddlUserCleanupCallback();                       \
+                             exit(-1)
+
 enum
 {
     LCDDL_TOKEN_TYPE_NONE,
     LCDDL_TOKEN_TYPE_UNKNOWN,
     LCDDL_TOKEN_TYPE_EOF,
     LCDDL_TOKEN_TYPE_TYPENAME,
-    LCDDL_TOKEN_TYPE_COLON,
     LCDDL_TOKEN_TYPE_IDENTIFIER,
     LCDDL_TOKEN_TYPE_SEMICOLON,
     LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET,
@@ -31,58 +52,8 @@ typedef struct
         uint32_t Integer;
     } Value;
     int Type;
+    int LineNumber;
 } lcddlToken_t;
-
-typedef struct lcddlLexerInputStream_t lcddlLexerInputStream_t;
-struct lcddlLexerInputStream_t
-{
-    int PreviousTokenType;
-
-    int ContentsSize;
-    char *ContentsStart;
-    char *Contents;
-};
-
-
-static void
-lcddl_ReadFile(char *filename,
-               lcddlLexerInputStream_t *result)
-{
-    int size = 0;
-    FILE *f = fopen(filename, "rb");
-    if (f == NULL)
-    {
-        result->Contents = NULL;
-        fprintf(stderr, "\x1b[31mERROR: could not open file.\x1b[0m\n");
-        lcddlUserCleanupCallback();
-        exit(-1);
-    }
-    fseek(f, 0, SEEK_END);
-    size = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    result->Contents = malloc(size + 1);
-    if (size != fread(result->Contents, sizeof(char), size, f))
-    {
-        free(result->Contents);
-        fprintf(stderr, "\x1b[31mERROR: could not open file.\x1b[0m\n");
-        lcddlUserCleanupCallback();
-        exit(-1);
-    }
-    fclose(f);
-    (result->Contents)[size] = 0;
-
-    result->ContentsStart = result->Contents;
-    result->ContentsSize = size;
-    result->PreviousTokenType = LCDDL_TOKEN_TYPE_NONE;
-}
-
-static char
-lcddl_ConsumeChar(lcddlLexerInputStream_t *stream)
-{
-    if (stream->ContentsSize == 0) return -1;
-    --stream->ContentsSize;
-    return *(stream->Contents++);
-}
 
 static char *
 lcddl_TokenTypeToString(int type)
@@ -97,8 +68,6 @@ lcddl_TokenTypeToString(int type)
             return "TOKEN_TYPE_EOF";
         case LCDDL_TOKEN_TYPE_TYPENAME:
             return "TOKEN_TYPE_TYPENAME";
-        case LCDDL_TOKEN_TYPE_COLON:
-            return "TOKEN_TYPE_COLON";
         case LCDDL_TOKEN_TYPE_IDENTIFIER:
             return "TOKEN_TYPE_IDENTIFIER";
         case LCDDL_TOKEN_TYPE_SEMICOLON:
@@ -109,26 +78,72 @@ lcddl_TokenTypeToString(int type)
             return "TOKEN_TYPE_CLOSE_CURLY_BRACKET";
         case LCDDL_TOKEN_TYPE_ASTERIX:
             return "TOKEN_TYPE_ASTERIX";
+        case LCDDL_TOKEN_TYPE_ANNOTATION:
+            return "TOKEN_TYPE_ANNOTATION";
+        case LCDDL_TOKEN_TYPE_SQUARE_BRACKETS:
+            return "TOKEN_TYPE_SQUARE_BRACKETS";
         default:
             return "\x1b[31mERROR converting to string: "
                    "Unknown token type\x1b[0m";
     }
 }
 
-static lcddlToken_t
-lcddl_GetToken(lcddlLexerInputStream_t *stream)
+static char
+lcddl_FilePeekChar(FILE *file)
 {
-    char lastChar = lcddl_ConsumeChar(stream);
+    char c = getc(file);
+    return c == EOF ? EOF : ungetc(c, file);
+}
 
+static int
+lcddl_ReadIntFromFile(FILE *file,
+                      int *lastChar)
+{
+    int result = 0;
 
-    /* skip over white space */
-    while (isspace((unsigned char) lastChar))
+    char c = fgetc(file);
+    while (c >= 48 &&
+           c <= 57)
     {
-        lastChar = lcddl_ConsumeChar(stream);
-        if (lastChar == -1)
+        result *= 10;
+        result += c - 48;
+        c = fgetc(file);
+    }
+
+    *lastChar = c;
+    return result;
+}
+
+static lcddlToken_t
+lcddl_GetToken(FILE *file)
+{
+    static char expectingIdentifier = 0;
+    static int lineCount = 1;
+    static int lineNumber = 1;
+
+    int lastChar = fgetc(file);
+
+    if (lastChar == EOF)
+    {
+        LCDDL_ERROR(0, "Unexpected EOF");
+    }
+    else if (lastChar == '\n')
+    {
+        ++lineCount;
+    }
+
+    /* NOTE(tbt): skip over white space */
+    while (isspace((unsigned char)lastChar))
+    {
+        lastChar = fgetc(file);
+        if (lastChar == EOF)
         {
             lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_EOF };
             return token;
+        }
+        else if (lastChar == '\n')
+        {
+            ++lineCount;
         }
     }
     
@@ -141,133 +156,126 @@ lcddl_GetToken(lcddlLexerInputStream_t *stream)
         uint8_t isAnnotation = (lastChar == '@');
 
         int identifierLength = 1;
-        char *identifier = malloc(sizeof*identifier);
+        char identifier[32];
 
         identifier[identifierLength - 1] = lastChar;
-        identifier = realloc(identifier, ++identifierLength *
-                                         sizeof *identifier);
+        ++identifierLength;
 
-        while (isalnum(stream->Contents[0]) ||
-               stream->Contents[0] == '_')
+        while ((isalnum(lcddl_FilePeekChar(file)) ||
+               lcddl_FilePeekChar(file) == '_'    ||
+               lcddl_FilePeekChar(file) == '-')   &&
+               identifierLength <= 32)
+
         {
-            lastChar = lcddl_ConsumeChar(stream);
-            if (lastChar == -1)
-            {
-                token.Type = LCDDL_TOKEN_TYPE_EOF;
-                free(identifier);
-                return token;
-            }
+            lastChar = fgetc(file);
             identifier[identifierLength - 1] = lastChar;
-            identifier = realloc(identifier, ++identifierLength *
-                                             sizeof *identifier);
+            ++identifierLength;
         }
 
         identifier[identifierLength - 1] = 0;
         memcpy(token.Value.String,
-               identifier, identifierLength < 32 ? identifierLength : 32);
+               identifier, 32);
 
-        free(identifier);
+        token.LineNumber = lineNumber;
+        lineNumber = lineCount;
 
         if (isAnnotation)
         {
             token.Type = LCDDL_TOKEN_TYPE_ANNOTATION;
-            stream->PreviousTokenType = LCDDL_TOKEN_TYPE_ANNOTATION;
             return token;
         }
-        else if (stream->PreviousTokenType == LCDDL_TOKEN_TYPE_COLON)
+        else if (expectingIdentifier)
         {
             token.Type = LCDDL_TOKEN_TYPE_IDENTIFIER;
-            stream->PreviousTokenType = LCDDL_TOKEN_TYPE_IDENTIFIER;
+            expectingIdentifier = 0;
             return token;
         }
         else
         {
             token.Type = LCDDL_TOKEN_TYPE_TYPENAME;
-            stream->PreviousTokenType = LCDDL_TOKEN_TYPE_TYPENAME;
+            expectingIdentifier = 1;
             return token;
         }
     }
-    else if (lastChar == ':')
-    {
-        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_COLON };
-        stream->PreviousTokenType = LCDDL_TOKEN_TYPE_COLON;
-        return token;
-    }
     else if (lastChar == ';')
     {
-        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_SEMICOLON };
-        stream->PreviousTokenType = LCDDL_TOKEN_TYPE_SEMICOLON;
+        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_SEMICOLON,
+                               .LineNumber = lineNumber};
+        lineNumber = lineCount;
         return token;
     }
     else if (lastChar == '{')
     {
-        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET };
-        stream->PreviousTokenType = LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET;
+        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET,
+                               .LineNumber = lineNumber};
+        lineNumber = lineCount;
         return token;
     }
     else if (lastChar == '}')
     {
-        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_CLOSE_CURLY_BRACKET };
-        stream->PreviousTokenType = LCDDL_TOKEN_TYPE_CLOSE_CURLY_BRACKET;
+        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_CLOSE_CURLY_BRACKET,
+                               .LineNumber = lineNumber};
+        lineNumber = lineCount;
         return token;
     }
     else if (lastChar == '*')
     {
         lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_ASTERIX,
+                               .LineNumber = lineNumber,
                                .Value.Integer = 1
                              };
-        while(stream->Contents[0] == '*')
+        lineNumber = lineCount;
+        while(lcddl_FilePeekChar(file) == '*')
         {
-            lastChar = lcddl_ConsumeChar(stream);
+            lastChar = fgetc(file);
             ++token.Value.Integer;
         }
         return token;
     }
     else if (lastChar == '[')
     {
-        if (isdigit(stream->Contents[0]))
+        if (isdigit(lcddl_FilePeekChar(file)))
         {
             uint32_t arrayCount;
-            arrayCount = atoi(stream->Contents);
-            while (isdigit(lastChar = lcddl_ConsumeChar(stream)));
+            arrayCount = lcddl_ReadIntFromFile(file, &lastChar);
+
             if (lastChar != ']')
             {
-                fprintf(stderr,
-                        "\x1b[31m"
-                        "ERROR: Expected ']'. Instead got: '%c'."
-                        "\x1b[0m\n",
-                        lastChar);
-                lcddlUserCleanupCallback();
-                exit(-1);
+                LCDDL_ERRORF(lineCount,
+                             "Expected ']'. Instead got: '%c'.",
+                             lastChar);
             }
 
             lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_SQUARE_BRACKETS,
+                                   .LineNumber = lineNumber,
                                    .Value.Integer = arrayCount
                                  };
+            lineNumber = lineCount;
             return token;
         }
         else
         {
-            fprintf(stderr,
-                    "\x1b[31mERROR: expected a numeric value.\x1b[0m\n");
-            lcddlUserCleanupCallback();
-            exit(-1);
+            LCDDL_ERROR(lineCount, "Expected a numeric value.");
         }
     }
     else if (lastChar == '#')
     {
-        for (;(lastChar = lcddl_ConsumeChar(stream)) != '\n';);
-        return lcddl_GetToken(stream);
+        for (;(lastChar = fgetc(file)) != '\n';);
+        ++lineCount;
+        return lcddl_GetToken(file);
     }
     else
     {
-        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_UNKNOWN };
+        lcddlToken_t token = { .Type = LCDDL_TOKEN_TYPE_UNKNOWN,
+                               .LineNumber = lineNumber};
+        lineNumber = lineCount;
         return token;
     }
 
 }
 
-static lcddlNode_t *lcddl_Parse(lcddlLexerInputStream_t *stream)
+static lcddlNode_t *
+lcddl_Parse(FILE *file)
 {
     lcddlNode_t *topLevelFirst = NULL;
     lcddlNode_t *topLevelLast = NULL;
@@ -276,8 +284,8 @@ static lcddlNode_t *lcddl_Parse(lcddlLexerInputStream_t *stream)
 
     lcddlAnnotation_t *annotations = NULL;
 
-    lcddlToken_t token = lcddl_GetToken(stream);
-    for (; token.Type != LCDDL_TOKEN_TYPE_EOF; token = lcddl_GetToken(stream))
+    lcddlToken_t token = lcddl_GetToken(file);
+    for (; token.Type != LCDDL_TOKEN_TYPE_EOF; token = lcddl_GetToken(file))
     {
         if (token.Type == LCDDL_TOKEN_TYPE_ANNOTATION)
         {
@@ -304,55 +312,40 @@ static lcddlNode_t *lcddl_Parse(lcddlLexerInputStream_t *stream)
         {
             lcddlNode_t *node = malloc(sizeof *node);
 
+            node->Tags = annotations;
             node->Children = NULL;
             node->Next = NULL;
-
+            annotations = NULL;
             node->IndirectionLevel = 0;
             node->ArrayCount = 1;
-
-            node->Tags = annotations;
-            annotations = NULL;
 
             memcpy(node->Type,
                    token.Value.String, 32);
 
-            token = lcddl_GetToken(stream);
+            token = lcddl_GetToken(file);
 
             if (token.Type == LCDDL_TOKEN_TYPE_ASTERIX) 
             {
                 node->IndirectionLevel = token.Value.Integer;
-                token = lcddl_GetToken(stream);
+                token = lcddl_GetToken(file);
+            }
+
+            if (token.Type == LCDDL_TOKEN_TYPE_IDENTIFIER)
+            {
+                memcpy(node->Name,
+                       token.Value.String, 32);
+                token = lcddl_GetToken(file);
+            }
+            else
+            {
+                LCDDL_ERROR(token.LineNumber, "Expected an identifier.");
             }
 
             if (token.Type == LCDDL_TOKEN_TYPE_SQUARE_BRACKETS)
             {
                 node->ArrayCount = token.Value.Integer;
-                token = lcddl_GetToken(stream);
+                token = lcddl_GetToken(file);
             }
-
-            if (token.Type == LCDDL_TOKEN_TYPE_COLON)
-            {
-                lcddlToken_t identifier = lcddl_GetToken(stream);
-                if (identifier.Type != LCDDL_TOKEN_TYPE_IDENTIFIER)
-                {
-                    fprintf(stderr,
-                            "\x1b[31mERROR: Expected an identifier.\x1b[0m\n");
-                    lcddlUserCleanupCallback();
-                    exit(-1);
-                }
-
-                memcpy(node->Name,
-                       identifier.Value.String, 32);
-            }
-            else
-            {
-                fprintf(stderr,
-                        "\x1b[31mERROR: Unexpected token: %s.\x1b[0m\n",
-                        lcddl_TokenTypeToString(token.Type));
-                lcddlUserCleanupCallback();
-                exit(-1);
-            }
-
 
             if (parent)
             {
@@ -383,33 +376,23 @@ static lcddlNode_t *lcddl_Parse(lcddlLexerInputStream_t *stream)
             {
                 if (parent != NULL)
                 {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: Nested structs are not allowed."
-                            "\x1b[0m\n");
-                    lcddlUserCleanupCallback();
-                    exit(-1);
+                    LCDDL_ERROR(token.LineNumber,
+                                "Nested structs are not allowed.");
                 }
-                if (lcddl_GetToken(stream).Type != LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET)
+                if (token.Type != LCDDL_TOKEN_TYPE_OPEN_CURLY_BRACKET)
                 {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: Struct declarations must be followed by a"
-                            "curly bracket block."
-                            "\x1b[0m\n");
-                    lcddlUserCleanupCallback();
-                    exit(-1);
+                    LCDDL_ERROR(token.LineNumber,
+                                "Struct declarations must be followed by a "
+                                "curly bracket block.");
                 }
                 parent = node;
             }
             else
             {
-                if(lcddl_GetToken(stream).Type != LCDDL_TOKEN_TYPE_SEMICOLON)
+                if(token.Type != LCDDL_TOKEN_TYPE_SEMICOLON)
                 {
-                    fprintf(stderr,
-                            "\x1b[31mERROR: Expected a semicolon.\x1b[0m\n");
-                    lcddlUserCleanupCallback();
-                    exit(-1);
+                    LCDDL_ERROR(token.LineNumber,
+                                "Expected a semicolon.");
                 }
             }
         }
@@ -419,14 +402,17 @@ static lcddlNode_t *lcddl_Parse(lcddlLexerInputStream_t *stream)
         }
         else
         {
-            fprintf(stderr,
-                    "\x1b[31mERROR: Unexpected token %s.\x1b[0m\n",
-                    lcddl_TokenTypeToString(token.Type));
-            lcddlUserCleanupCallback();
-            exit(-1);
+            LCDDL_ERRORF(token.LineNumber,
+                         "Unexpected token %s.",
+                         lcddl_TokenTypeToString(token.Type));
         }
 
         
+    }
+
+    if (parent)
+    {
+        LCDDL_WARN("Missing '}'");
     }
 
     return topLevelFirst;
@@ -461,10 +447,13 @@ int main(int argc, char **argv)
     int i;
     for (i = 1; i < argc; ++i)
     {
-        lcddlLexerInputStream_t file;
-        lcddl_ReadFile(argv[i], &file);
+        FILE *file = fopen(argv[i], "rt");
+        if (!file)
+        {
+            LCDDL_ERRORF(0, "Could not open input file: %s", argv[i]);
+        }
 
-        lcddlNode_t *ast = lcddl_Parse(&file);
+        lcddlNode_t *ast = lcddl_Parse(file);
 
         lcddlNode_t *node = ast;
         lcddlUserTopLevelCallback(node);
@@ -483,15 +472,15 @@ int main(int argc, char **argv)
             lcddl_FreeNode(prev);
         }
 
-        free(file.ContentsStart);
+        fclose(file);
     }
 
     lcddlUserCleanupCallback();
 }
 
-/*****************************************************************/
-/* utility functions to assist introspection and code generation */
-/*****************************************************************/
+/*****************************************************************************/
+/* utility functions to assist introspection and code generation             */
+/*****************************************************************************/
 
 static void
 lcddl_WriteFieldToFileAsC(FILE *file,
@@ -564,7 +553,9 @@ uint8_t lcddl_NodeHasTag(lcddlNode_t *node, char *tag)
          annotation;
          annotation = annotation->Next)
     {
-        /* increment the annotation's string to ignore the '@' symbol */
+        /* NOTE(tbt): increment the annotation's string to ignore the '@'
+           symbol
+        */
         if (0 == strcmp(annotation->Tag + 1, tag)) return 1;
     }
     return 0;

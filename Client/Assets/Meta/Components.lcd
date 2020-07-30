@@ -1,12 +1,12 @@
 @Component
-struct : ComponentName
+struct ComponentName
 {
-    char *: Name;
+    char *Name;
 }
 
 @Component
-struct : ComponentPosition
+struct ComponentPosition
 {
-    float : X;
-    float : Y;
+    float X;
+    float Y;
 }
