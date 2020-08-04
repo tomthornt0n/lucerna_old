@@ -1,4 +1,0 @@
-struct Test
-{
-    double *: ThisIsATest;
-}

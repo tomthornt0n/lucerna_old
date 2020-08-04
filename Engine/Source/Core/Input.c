@@ -6,14 +6,14 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-uint8_t
+bool
 lcInputIsKeyPressed(int keycode)
 {
     int state = glfwGetKey(lcWindow, keycode);
     return state == GLFW_PRESS || state == GLFW_REPEAT;
 }
 
-uint8_t
+bool
 lcInputIsMouseButtonPressed(int button)
 {
     int state = glfwGetMouseButton(lcWindow, button);

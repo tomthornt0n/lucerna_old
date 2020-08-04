@@ -73,16 +73,6 @@
     }
 #endif
 
-enum
-{
-    LC_LOG_LEVEL_TRACE,
-    LC_LOG_LEVEL_DEBUG,
-    LC_LOG_LEVEL_INFO,
-    LC_LOG_LEVEL_WARN,
-    LC_LOG_LEVEL_ERROR,
-    LC_LOG_LEVEL_FATAL
-};
-
 static char *
 lcLogLevelNames[] =
 {

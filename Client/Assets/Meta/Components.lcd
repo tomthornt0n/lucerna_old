@@ -1,12 +1,8 @@
 @Component
-struct ComponentName
+struct ComponentPhysics
 {
-    char *Name;
+    float Minimum[2];
+    float Maximum[2];
+    float Velocity[2];
 }
 
-@Component
-struct ComponentPosition
-{
-    float X;
-    float Y;
-}

@@ -30,7 +30,7 @@ EXIT /B 0
 
 :RUN_LCDDL
 PUSHD bin
-lcddl ../Client/Assets/Meta/Components.lcd
+lcddl ../Client/Assets/Meta/*.lcd
 POPD
 EXIT /B 0
 
@@ -85,11 +85,11 @@ POPD
 EXIT /B 0
 
 :BUILD_LUCERNA_DEBUG
-cl /nologo /c /I Engine\Vendor\glfw\include /I Engine\Vendor\glad\include /I Client\Source /I Engine\Source /D GLFW_INCLUDE_NONE /D LC_PLATFORM_WINDOWS /D LC_DEBUG /Zi /Fo:bin\Main.obj Engine\Source\Lucerna.c Client\Source\Main.c /Fd:bin\LucernaProject.pdb
+cl /nologo /c /I Engine\Vendor\glfw\include /I Engine\Vendor\glad\include /I Client\Source /I Engine\Source /D GLFW_INCLUDE_NONE /D LC_PLATFORM_WINDOWS /D LC_DEBUG /Zi /Fo:bin\Main.obj Engine\Source\Lucerna.c Client\Source\Main.c Engine\Source\Lucerna.c /Fd:bin\LucernaProject.pdb
 link /nologo /subsystem:console Gdi32.lib User32.lib Shell32.lib opengl32.lib Engine\Vendor\glfw\bin\glfw.lib Engine\Vendor\glad\bin\glad.lib bin\main.obj /out:bin\LucernaProject.exe
 EXIT /B 0
 
 :BUILD_LUCERNA_RELEASE
-cl /nologo /c /I Engine\Vendor\glfw\include /I Engine\Vendor\glad\include /I Client\Source /I Engine\Source /D GLFW_INCLUDE_NONE /D LC_PLATFORM_WINDOWS /D LC_DEBUG /O2 /Fo:bin\Main.obj Engine\Source\Lucerna.c Client\Source\Main.c /Fd:bin\LucernaProject.pdb
+cl /nologo /c /I Engine\Vendor\glfw\include /I Engine\Vendor\glad\include /I Client\Source /I Engine\Source /D GLFW_INCLUDE_NONE /D LC_PLATFORM_WINDOWS /D LC_DEBUG /O2 /Fo:bin\Main.obj Engine\Source\Lucerna.c Client\Source\Main.c Engine\Source\Lucerna.c /Fd:bin\LucernaProject.pdb
 link /nologo /subsystem:console Gdi32.lib User32.lib Shell32.lib opengl32.lib Engine\Vendor\glfw\bin\glfw.lib Engine\Vendor\glad\bin\glad.lib bin\main.obj /out:bin\LucernaProject.exe
 EXIT /B 0

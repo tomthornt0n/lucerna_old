@@ -62,7 +62,8 @@ void fWriteStringAsTitleCase(FILE *file, char *string)
     {
         if (string[i] != '_')
         {
-            if (string[i - 1] == '_')
+            if (string[i - 1] == '_' &&
+                i > 0)
                 needsUppercase = 1;
         }
 
@@ -83,7 +84,7 @@ void fWriteStringAsTitleCase(FILE *file, char *string)
 void GenerateComponent(lcddlNode_t *component)
 {
     fprintf(stderr, "        Generating component struct...\n");
-    fprintf(ComponentsFile, "#define LC_COMPONENT_");
+    fprintf(ComponentsFile, "#define ");
     fWriteStringAsUppercaseWithUnderscores(ComponentsFile, component->Name);
     fprintf(ComponentsFile, " (1 << %i)\n", bitOffset++);
     if(bitOffset == 0xffffffffffffffff)
@@ -119,25 +120,43 @@ void GenerateComponent(lcddlNode_t *component)
     while (member)
     {
         int pointerCount = member->IndirectionLevel;
+        uint32_t arrayCount = member->ArrayCount;
+
         fprintf(FunctionsFile,
                 ", %s ", member->Type);
         fprintf(FunctionsHeaderFile,
                 ", %s ", member->Type);
+
         int i;
         for (i = 0; i < pointerCount; ++i)
         {
             fprintf(FunctionsFile, "*");
             fprintf(FunctionsHeaderFile, "*");
         }
+
         fWriteStringAsLowercaseWithUnderscores(FunctionsFile,
                                                member->Name);
         fWriteStringAsLowercaseWithUnderscores(FunctionsHeaderFile,
                                                member->Name);
+
+        if (arrayCount > 1)
+        {
+            fprintf(FunctionsFile,
+                    "[%u]",
+                    arrayCount);
+
+            fprintf(FunctionsHeaderFile,
+                    "[%u]",
+                    arrayCount);
+        }
+
         member = member->Next;
     }
+
     fprintf(FunctionsHeaderFile, ");");
+
     fprintf(FunctionsFile,
-            ")\n{\n    scene->EntitySignatures[entity] |= LC_COMPONENT_");
+            ")\n{\n    scene->EntitySignatures[entity] |= ");
     fWriteStringAsUppercaseWithUnderscores(FunctionsFile,
                                            component->Name);
     fprintf(FunctionsFile, ";\n");
@@ -145,17 +164,41 @@ void GenerateComponent(lcddlNode_t *component)
     member = component->Children;
     while (member)
     {
-        fprintf(FunctionsFile,
-                "    scene->");
-        fWriteStringAsTitleCase(FunctionsFile,
-                                component->Name);
-        fprintf(FunctionsFile,
-                "[entity].%s = ", member->Name);
-        fWriteStringAsLowercaseWithUnderscores(FunctionsFile,
-                                               member->Name);
-        fprintf(FunctionsFile, ";\n");
+        uint32_t arrayCount = member->ArrayCount;
+
+        if (arrayCount > 1)
+        {
+            int i;
+            for (i = 0; i < arrayCount; ++i)
+            {
+                fprintf(FunctionsFile,
+                        "    scene->");
+                fWriteStringAsTitleCase(FunctionsFile,
+                                        component->Name);
+                fprintf(FunctionsFile,
+                        "[entity].%s[%d] = ", member->Name, i);
+                fWriteStringAsLowercaseWithUnderscores(FunctionsFile,
+                                                       member->Name);
+                fprintf(FunctionsFile, "[%d];\n", i);
+            }
+        }
+        else
+        {
+            fprintf(FunctionsFile,
+                    "    scene->");
+            fWriteStringAsTitleCase(FunctionsFile,
+                                    component->Name);
+
+            fprintf(FunctionsFile,
+                    "[entity].%s = ", member->Name);
+            fWriteStringAsLowercaseWithUnderscores(FunctionsFile,
+                                                   member->Name);
+            fprintf(FunctionsFile, ";\n");
+        }
+
         member = member->Next;
     }
+
     fprintf(FunctionsFile, "}\n\n");
 }
 

@@ -111,7 +111,7 @@ lcWindowUpdate(void)
 }
 
 void
-lcWindowSetVSync(uint8_t enabled)
+lcWindowSetVSync(bool enabled)
 {
     glfwSwapInterval(enabled);
 }

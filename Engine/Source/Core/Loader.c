@@ -43,8 +43,8 @@ lcLoaderReadFile(const char *filename,
 }
 
 
-/* stop the compiler introducing padding, so these structs match exactly to
-   what is in the file
+/* NOTE(tbt): stop the compiler introducing padding, so these structs match
+   exactly to what is in the file
 */
 #pragma pack(push, 1)
 
@@ -90,6 +90,29 @@ typedef struct
 
 #pragma pack(pop)
 
+typedef struct
+{
+    uint16_t Symbol;
+    uint16_t BitsUsed;
+} lcPNGHuffmanEntry_t;
+
+#define LC_PNG_HUFFMAN_MAX_BIT_COUNT 16
+typedef struct
+{
+    uint32_t MaxCodeLengthInBits;
+    uint32_t EntryCount;
+    lcPNGHuffmanEntry_t *Entries;
+} lcPNGHuffman_t;
+
+typedef struct
+{
+    uint32_t ContentsSize;
+    uint8_t *Contents;
+
+    uint32_t BitBuffer;
+    uint32_t BitCount;
+} lcPNGBitStream_t;
+
 static void
 lcPNGEndianSwap(uint32_t *value)
 {
@@ -101,18 +124,9 @@ lcPNGEndianSwap(uint32_t *value)
              (v >> 24);
 }
 
-typedef struct
-{
-    uint32_t ContentsSize;
-    uint8_t *Contents;
-
-    uint32_t BitBuffer;
-    uint32_t BitCount;
-} lcPNGBitStream_t;
-
 static uint32_t
-lcPNGConsumeBits(lcPNGBitStream_t *buffer,
-                        uint8_t bitCount)
+lcPNGPeekBits(lcPNGBitStream_t *buffer,
+              uint8_t bitCount)
 {
     LC_ASSERT(bitCount <= 32, "bitCount cannot be greater than 32!"); 
 
@@ -128,36 +142,110 @@ lcPNGConsumeBits(lcPNGBitStream_t *buffer,
         buffer->BitCount += 8;
     }
 
-    if(buffer->BitCount >= bitCount)
-    {
-        buffer->BitCount -= bitCount;
-        result = buffer->BitBuffer & ((1 << bitCount) - 1);
-        buffer->BitBuffer >>= bitCount;
-    }
+    result = buffer->BitBuffer & ((1 << bitCount) - 1);
 
     return result;
 }
 
-typedef struct
+static void
+lcPNGDiscardBits(lcPNGBitStream_t *buffer,
+                 uint8_t bitCount)
 {
-    /* TODO(tbt): decode huffman stuff */
-} lcPNGHuffman_t;
+    buffer->BitCount -= bitCount;
+    buffer->BitBuffer >>= bitCount;
+}
 
+static uint32_t
+lcPNGConsumeBits(lcPNGBitStream_t *buffer,
+                 uint8_t bitCount)
+{
+    uint32_t result = lcPNGPeekBits(buffer, bitCount);
+    lcPNGDiscardBits(buffer, bitCount);
+    return result;
+}
+
+static lcPNGHuffman_t
+lcPNGHuffmanCreate(uint32_t maxCodeLengthInBits)
+{
+    LC_ASSERT(maxCodeLengthInBits <= LC_PNG_HUFFMAN_MAX_BIT_COUNT,
+              "Huffman code length exceeds maximum");
+
+    lcPNGHuffman_t result;
+    result.MaxCodeLengthInBits = maxCodeLengthInBits;
+    result.EntryCount = 1 << maxCodeLengthInBits;
+    result.Entries = malloc(result.EntryCount * sizeof(lcPNGHuffmanEntry_t));
+
+    return result;
+}
 
 static void
-lcPNGComputeHuffman(uint32_t inputCount,
-                    uint32_t *input,
+lcPNGComputeHuffman(uint32_t symbolCount,
+                    uint32_t *symbolCodeLength,
+                    uint32_t offset,
                     lcPNGHuffman_t *result)
 {
-    /* TODO(tbt): implement me */
+    LC_CORE_LOG_DEBUG("lcPNGComputeHuffman");
+    int i, j;
+
+    uint32_t codeLengthHist[LC_PNG_HUFFMAN_MAX_BIT_COUNT] = {0};
+    uint32_t nextUnusedCode[LC_PNG_HUFFMAN_MAX_BIT_COUNT];
+
+    for (i = 0; i < symbolCount; ++i)
+    {
+        uint32_t count = symbolCodeLength[i];
+        LC_ASSERT(count < LC_PNG_HUFFMAN_MAX_BIT_COUNT,
+                  "Corrupt PNG");
+        ++codeLengthHist[count];
+    }
+
+    codeLengthHist[0] = 0;
+    nextUnusedCode[0] = 0;
+
+    for (i = 0; i < LC_PNG_HUFFMAN_MAX_BIT_COUNT; ++i)
+    {
+        nextUnusedCode[i] = (nextUnusedCode[i - 1] +
+                             codeLengthHist[i - 1])
+                            << 1;
+    }
+
+    for (i = 0; i < symbolCount; ++i)
+    {
+        uint32_t codeLengthInBits = symbolCodeLength[i];
+        if (!codeLengthInBits) continue;
+
+        uint32_t code = nextUnusedCode[codeLengthInBits]++;
+
+        LC_ASSERT(result->MaxCodeLengthInBits > codeLengthInBits,
+                  "Error decoding PNG huffman. "
+                  "MaxCodeLengthInBits was %u but codeLengthInBits was %u",
+                  result->MaxCodeLengthInBits,
+                  codeLengthInBits);
+        uint32_t entryCount = 1 << (result->MaxCodeLengthInBits -
+                                    codeLengthInBits);
+        LC_CORE_LOG_DEBUG("%u", entryCount);
+        for(j = 0; j < entryCount; ++j)
+        {
+            uint32_t index = (j << codeLengthInBits) | code;
+            lcPNGHuffmanEntry_t *entry = result->Entries + index;
+            entry->BitsUsed = (uint16_t)codeLengthInBits;
+            entry->Symbol = (uint16_t)(i + offset);
+        }
+    }
 }
 
 static uint32_t
 lcPNGHuffmanDecode(lcPNGHuffman_t *huffman,
                    lcPNGBitStream_t *input)
 {
-    /* TODO(tbt): implement me */
-    return 0;
+    uint32_t entryIndex = lcPNGPeekBits(input,
+                                        huffman->MaxCodeLengthInBits);
+
+    lcPNGHuffmanEntry_t entry = huffman->Entries[entryIndex];
+    uint32_t result = entry.Symbol;
+    lcPNGDiscardBits(input, entry.BitsUsed);
+    LC_ASSERT(entry.BitsUsed, "Error decoding PNG huffman");
+
+    return result;
 }
 
 /* NOTE(tbt): Very minimal png loading.
@@ -189,7 +277,6 @@ lcImage_t lcLoaderParsePNG(char *filename)
 
     while (1)
     {
-        /* NOTE(tbt): 'extract' components of each chunk */
         lcPNGChunkHeader_t *chunkHeader = (lcPNGChunkHeader_t *)at;
         at += sizeof(lcPNGChunkHeader_t);
         void *chunkData = at;
@@ -302,9 +389,8 @@ lcImage_t lcLoaderParsePNG(char *filename)
                 }
                 else
                 {
-                    /* TODO(tbt): decode huffman stuff */
-                    lcPNGHuffman_t litLenHuffman;
-                    lcPNGHuffman_t distanceHuffman;
+                    lcPNGHuffman_t litLenHuffman = lcPNGHuffmanCreate(15);
+                    lcPNGHuffman_t distanceHuffman = lcPNGHuffmanCreate(15);
 
                     uint32_t hlit = lcPNGConsumeBits(&idatData, 5);
                     uint32_t hdist = lcPNGConsumeBits(&idatData, 5);
@@ -327,7 +413,7 @@ lcImage_t lcLoaderParsePNG(char *filename)
                         11, 4, 12, 3, 13, 2, 14, 1, 15
                     };
                     
-                    uint32_t hclenTable[20] = {0};
+                    uint32_t hclenTable[arraycount(hclenSwizzle)] = {0};
 
                     int i;
 
@@ -337,10 +423,11 @@ lcImage_t lcLoaderParsePNG(char *filename)
                             lcPNGConsumeBits(&idatData, 3);
                     }
 
-                    lcPNGHuffman_t dictionaryHuffman;
-                    lcPNGComputeHuffman(hclen,
-                                          hclenTable,
-                                          &dictionaryHuffman);
+                    lcPNGHuffman_t dictionaryHuffman = lcPNGHuffmanCreate(7);
+                    lcPNGComputeHuffman(arraycount(hclenSwizzle),
+                                        hclenTable,
+                                        0,
+                                        &dictionaryHuffman);
 
                     uint32_t litLenDistTable[512];
                     uint32_t litLenCount = 0;
@@ -349,7 +436,7 @@ lcImage_t lcLoaderParsePNG(char *filename)
                     {
                         uint32_t encodedLength =
                             lcPNGHuffmanDecode(&dictionaryHuffman,
-                                                 &idatData);
+                                               &idatData);
                         uint32_t repeatCount = 1;
                         uint32_t repeatValue = 0;
 
@@ -360,11 +447,11 @@ lcImage_t lcLoaderParsePNG(char *filename)
                         else if (encodedLength == 16)
                         {
                             repeatCount = lcPNGConsumeBits(&idatData, 2) + 3;
-                            repeatValue = litLenDistTable[hlit + hdist - 1];
+                            repeatValue = litLenDistTable[litLenCount - 1];
                         }
                         else if (encodedLength == 17)
                         {
-                            repeatCount = lcPNGConsumeBits(&idatData, 2) + 3;
+                            repeatCount = lcPNGConsumeBits(&idatData, 3) + 3;
                         }
                         else if (encodedLength == 18)
                         {
@@ -385,10 +472,12 @@ lcImage_t lcLoaderParsePNG(char *filename)
 
                     lcPNGComputeHuffman(hlit,
                                           litLenDistTable,
+                                          0,
                                           &litLenHuffman);
 
                     lcPNGComputeHuffman(hdist,
                                           litLenDistTable + hlit,
+                                          0,
                                           &distanceHuffman);
 
                     while (1)

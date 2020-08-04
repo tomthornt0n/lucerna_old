@@ -52,12 +52,12 @@ lcRendererBufferData(void)
 }
 
 void
-lcAddRenderable(lcEntity_t entity, lcScene_t *scene,
-                float x, float y,
-                float width, float height,
-                float *colour)
+lcAddComponentRenderable(lcScene_t *scene, lcEntity_t entity,
+                         float x, float y,
+                         float width, float height,
+                         float *colour)
 {
-    scene->EntitySignatures[entity] |= LC__RENDERABLE;
+    scene->EntitySignatures[entity] |= COMPONENT_RENDERABLE;
     scene->LcRenderable[entity].Position1[0] = x - width;
     scene->LcRenderable[entity].Position1[1] = y - height;
     memcpy(&(scene->LcRenderable[entity].Colour1),
@@ -100,8 +100,8 @@ void
 lcRenderableMove(lcEntity_t entity, lcScene_t *scene,
                   float xOffset, float yOffset)
 {
-    LC_ASSERT((scene->EntitySignatures[entity] & LC__RENDERABLE)
-              == LC__RENDERABLE,
+    LC_ASSERT((scene->EntitySignatures[entity] & COMPONENT_RENDERABLE)
+              == COMPONENT_RENDERABLE,
               "Entity does not have renderable component!");
 
     scene->LcRenderable[entity].Position1[0] += xOffset;
@@ -205,7 +205,7 @@ lcRendererBindScene(lcScene_t *scene)
         lcSubsetDestroy(lcRenderer.Renderables);
 
     lcRenderer.Renderables = lcSubsetCreate(scene);
-    lcSubsetSetSignature(lcRenderer.Renderables, LC__RENDERABLE);
+    lcSubsetSetSignature(lcRenderer.Renderables, COMPONENT_RENDERABLE);
     lcSubsetRefresh(lcRenderer.Renderables);
 
     lcRenderer.ModifiedStart =

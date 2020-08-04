@@ -43,7 +43,7 @@ lcWindowResizeMessageCreate(uint32_t width,
 
 static lcMessage_t
 lcKeyPressMessageCreate(int keyCode,
-                        uint8_t repeat)
+                        bool repeat)
 {
     lcMessage_t message;
     message.Type = LC_MESSAGE_TYPE_KEY_PRESS;

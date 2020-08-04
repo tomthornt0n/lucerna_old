@@ -5,7 +5,7 @@ set -e
 build_lcddl(){
     echo -e "\033[35mBuilding lcddl...\033[0m"
     pushd lcddl
-    gcc lcddl.c lcddlUserLayer.c -o ../bin/lcddl
+    gcc -O2 lcddl.c lcddlUserLayer.c -o ../bin/lcddl
     popd
     echo -e "\033[32mDone!\n\033[0m"
 }
@@ -19,7 +19,7 @@ run_lcddl(){
 build_glad(){
     echo -e "\033[35mBuilding glad...\033[0m"
     pushd Engine/Vendor/glad
-    gcc -c -Iinclude src/glad.c -ldl -o bin-int/glad.o
+    gcc -c -O2 -Iinclude src/glad.c -ldl -o bin-int/glad.o
     ar rcs bin/libglad.a bin-int/glad.o
     popd
     echo -e "\033[32mDone!\n\033[0m"
@@ -87,19 +87,27 @@ build_lucerna_release(){
 
 #------------------------------------------------------------------------------
 
-
-if [ "$1" == "Debug" ]; then
+debug(){
     build_lcddl
     build_glad
     build_glfw_debug
     run_lcddl
     build_lucerna_debug
-elif [ "$1" == "Release" ]; then
+}
+
+release(){
     build_lcddl
     build_glad
     build_glfw_release
     run_lcddl
     build_lucerna_release
+}
+
+
+if [ "$1" == "Debug" ]; then
+    TIMEFORMAT="compiled in %Rs"; time debug
+elif [ "$1" == "Release" ]; then
+    TIMEFORMAT="compiled in %Rs"; time release
 else
     echo -e "\033[31mInvalid configuration.\033[0m"
     echo -e "\033[31mUsage:\033[0m"
