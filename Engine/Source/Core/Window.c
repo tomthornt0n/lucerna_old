@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 05 August 2020
   License : MIT, at end of file
   Notes   : Uses GLFW for now, will hopefully write own platform layer at some
             point

@@ -11,8 +11,6 @@ FILE *ComponentsFile = NULL;
 FILE *FunctionsFile = NULL;
 FILE *FunctionsHeaderFile = NULL;
 FILE *ComponentArraysFile = NULL;
-FILE *AllocationsFile = NULL;
-FILE *DeallocationsFile = NULL;
 
 int bitOffset = 1;
 
@@ -95,18 +93,9 @@ void GenerateComponent(lcddlNode_t *component)
     lcddl_WriteNodeToFileAsC(ComponentsFile, component);
 
     fprintf(stderr, "        Creating component array...\n");
-    fprintf(ComponentArraysFile, "    %s *", component->Name);
+    fprintf(ComponentArraysFile, "    %s ", component->Name);
     fWriteStringAsTitleCase(ComponentArraysFile, component->Name);
-    fprintf(ComponentArraysFile, ";\n");
-    fprintf(AllocationsFile, "scene.");
-    fWriteStringAsTitleCase(AllocationsFile, component->Name);
-    fprintf(AllocationsFile,
-            " = malloc(LC_MAX_ENTITIES * sizeof(%s));\n",
-            component->Name);
-    fprintf(DeallocationsFile,
-            "    free(scene->");
-    fWriteStringAsTitleCase(DeallocationsFile, component->Name);
-    fprintf(DeallocationsFile, ");\n");
+    fprintf(ComponentArraysFile, "[%u];\n", component->IndirectionLevel);
 
     fprintf(stderr, "        Generating add function...\n\n");
 
@@ -219,12 +208,6 @@ void lcddlUserInitCallback(void)
     ComponentArraysFile = fopen(
         "Engine/Source/ECS/ComponentArrays.gen.h",
         "w");
-    AllocationsFile = fopen(
-        "Engine/Source/ECS/ComponentArraysAllocation.gen.c",
-        "w");
-    DeallocationsFile = fopen(
-        "Engine/Source/ECS/lcSceneDestroy.gen.c",
-        "w");
 
     if (!ComponentArraysFile ||
         !FunctionsFile       ||
@@ -238,9 +221,6 @@ void lcddlUserInitCallback(void)
             "#ifndef COMPONENTS_H\n#define COMPONENTS_H\n\n");
     fprintf(ComponentsFile,
             "#define LC_COMPONENT_NONE 0\n\n");
-
-    fprintf(DeallocationsFile,
-            "void lcSceneDestroy(lcScene_t *scene)\n{\n");
 }
 
 void lcddlUserTopLevelCallback(lcddlNode_t *node)
@@ -259,11 +239,7 @@ void lcddlUserCleanupCallback(void)
     fprintf(stderr, "    \033[34mFinishing up...\n\n");
 
     fprintf(ComponentsFile, "#endif\n");
-    fprintf(DeallocationsFile, "}\n");
-
     fclose(ComponentsFile);
     fclose(FunctionsFile);
     fclose(ComponentArraysFile);
-    fclose(AllocationsFile);
-    fclose(DeallocationsFile);
 }

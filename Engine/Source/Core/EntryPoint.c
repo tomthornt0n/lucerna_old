@@ -2,33 +2,22 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 05 August 2020
+  Updated : 30 July 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-bool
-lcInputIsKeyPressed(int keycode)
+int
+main(int argc,
+     char **argv)
 {
-    int state = glfwGetKey(lcWindow, keycode);
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
-}
+    lcMessageSystemInit();
+    lcLogInit();
 
-bool
-lcInputIsMouseButtonPressed(int button)
-{
-    int state = glfwGetMouseButton(lcWindow, button);
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
-}
+    lcClientMain(argc, argv);
 
-void
-lcInputGetMousePos(float *result) /* NOTE(tbt): result is a 2 element array */
-{
-    double x, y;
-    glfwGetCursorPos(lcWindow, &x, &y);
-    result[0] = (float)x;
-    result[1] = (float)y;
+    lcLogDestroy();
+    lcMessageSystemDestroy();
 }
-
 
 /*
 MIT License

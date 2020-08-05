@@ -2,136 +2,88 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 05 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 static struct
 {
-    uint32_t VertexArray, VertexBuffer, IndexBuffer;
-
     lcScene_t *BoundScene;
-
-    lcSubset_t *Renderables;
-
+    uint32_t VertexArray, VertexBuffer, IndexBuffer;
     uint8_t *ModifiedStart, *ModifiedEnd;
 } lcRenderer;
 
-static void
-lcRendererBufferData(void)
+/* static void */
+/* lcRendererBufferData(void) */
+#define lcRendererBufferData()                                                 \
+    glBufferSubData(GL_ARRAY_BUFFER,                                           \
+                    0,                                                         \
+                    lcRenderer.BoundScene->RenderableCount *                   \
+                    sizeof(ComponentRenderable),                               \
+                    lcRenderer.BoundScene->ComponentRenderable);
+
+void
+ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
+                       float x, float y,
+                       float width, float height,
+                       float *colour)
 {
-    if (lcRenderer.ModifiedStart == NULL ||
-        lcRenderer.ModifiedEnd == NULL)
+    uint32_t index = scene->RenderableCount;
+
+    scene->EntitySignatures[index] |= COMPONENT_RENDERABLE;
+    scene->ComponentRenderable[index].Position1[0] = x - width;
+    scene->ComponentRenderable[index].Position1[1] = y - height;
+    memcpy(&(scene->ComponentRenderable[index].Colour1),
+           colour, 4 * sizeof(float));
+
+    scene->ComponentRenderable[index].Position2[0] = x + width;
+    scene->ComponentRenderable[index].Position2[1] = y - height;
+    memcpy(&(scene->ComponentRenderable[index].Colour2),
+           colour, 4 * sizeof(float));
+
+    scene->ComponentRenderable[index].Position3[0] = x + width;
+    scene->ComponentRenderable[index].Position3[1] = y + height;
+    memcpy(&(scene->ComponentRenderable[index].Colour3),
+           colour, 4 * sizeof(float));
+
+    scene->ComponentRenderable[index].Position4[0] = x - width;
+    scene->ComponentRenderable[index].Position4[1] = y + height;
+    memcpy(&(scene->ComponentRenderable[index].Colour4),
+           colour, 4 * sizeof(float));
+
+
+    if (scene == lcRenderer.BoundScene)
     {
+        lcRendererBufferData();
+    }
+
+    scene->EntityToRenderable[entity] = index;
+    ++scene->RenderableCount;
+}
+
+void
+ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
+                        float xOffset, float yOffset)
+{
+    if((scene->EntitySignatures[entity] & COMPONENT_RENDERABLE) == 0)
+    {
+        /* NOTE(tbt): Early exit if the renderable component is not in use */
         return;
     }
 
-    lcSubsetRefresh(lcRenderer.Renderables);
+    uint32_t index = scene->EntityToRenderable[entity];
 
-    uint32_t renderableCount = LC_LIST_LEN(lcRenderer.Renderables->Entities);
- 
-    glBindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
-    
-    lcRenderable *renderData = calloc(renderableCount, sizeof(lcRenderable));
-    LC_SUBSET_LOOP(lcRenderer.Renderables)
-        renderData[i] = lcRenderer.BoundScene->LcRenderable[entity];
-    LC_END_SUBSET_LOOP
- 
-    ptrdiff_t offset = lcRenderer.ModifiedStart -
-             (uint8_t*)(lcRenderer.BoundScene->LcRenderable);
-    ptrdiff_t size = lcRenderer.ModifiedEnd - lcRenderer.ModifiedStart;
+    scene->ComponentRenderable[index].Position1[0] += xOffset;
+    scene->ComponentRenderable[index].Position1[1] += yOffset;
 
-    glBufferSubData(GL_ARRAY_BUFFER,
-                    offset, size,
-                    (uint8_t*)renderData + offset);
+    scene->ComponentRenderable[index].Position2[0] += xOffset;
+    scene->ComponentRenderable[index].Position2[1] += yOffset;
 
-    free(renderData);
+    scene->ComponentRenderable[index].Position3[0] += xOffset;
+    scene->ComponentRenderable[index].Position3[1] += yOffset;
 
-    lcRenderer.ModifiedStart = NULL;
-    lcRenderer.ModifiedEnd = NULL;
-}
-
-void
-lcAddComponentRenderable(lcScene_t *scene, lcEntity_t entity,
-                         float x, float y,
-                         float width, float height,
-                         float *colour)
-{
-    scene->EntitySignatures[entity] |= COMPONENT_RENDERABLE;
-    scene->LcRenderable[entity].Position1[0] = x - width;
-    scene->LcRenderable[entity].Position1[1] = y - height;
-    memcpy(&(scene->LcRenderable[entity].Colour1),
-           colour, 4 * sizeof(float));
-
-    scene->LcRenderable[entity].Position2[0] = x + width;
-    scene->LcRenderable[entity].Position2[1] = y - height;
-    memcpy(&(scene->LcRenderable[entity].Colour2),
-           colour, 4 * sizeof(float));
-
-    scene->LcRenderable[entity].Position3[0] = x + width;
-    scene->LcRenderable[entity].Position3[1] = y + height;
-    memcpy(&(scene->LcRenderable[entity].Colour3),
-           colour, 4 * sizeof(float));
-
-    scene->LcRenderable[entity].Position4[0] = x - width;
-    scene->LcRenderable[entity].Position4[1] = y + height;
-    memcpy(&(scene->LcRenderable[entity].Colour4),
-           colour, 4 * sizeof(float));
-
-    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity])) <
-        lcRenderer.ModifiedStart
-        || lcRenderer.ModifiedStart == NULL)
-        && lcRenderer.BoundScene == scene)
-    {
-        lcRenderer.ModifiedStart =
-             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]));
-    }
-    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1) >
-        lcRenderer.ModifiedEnd
-        || lcRenderer.ModifiedEnd == NULL)
-        && lcRenderer.BoundScene == scene)
-    {
-        lcRenderer.ModifiedEnd =
-             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1);
-    }
-}
-
-void
-lcRenderableMove(lcEntity_t entity, lcScene_t *scene,
-                  float xOffset, float yOffset)
-{
-    LC_ASSERT((scene->EntitySignatures[entity] & COMPONENT_RENDERABLE)
-              == COMPONENT_RENDERABLE,
-              "Entity does not have renderable component!");
-
-    scene->LcRenderable[entity].Position1[0] += xOffset;
-    scene->LcRenderable[entity].Position1[1] += yOffset;
-
-    scene->LcRenderable[entity].Position2[0] += xOffset;
-    scene->LcRenderable[entity].Position2[1] += yOffset;
-
-    scene->LcRenderable[entity].Position3[0] += xOffset;
-    scene->LcRenderable[entity].Position3[1] += yOffset;
-
-    scene->LcRenderable[entity].Position4[0] += xOffset;
-    scene->LcRenderable[entity].Position4[1] += yOffset;
-
-    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity])) <
-        lcRenderer.ModifiedStart
-        || lcRenderer.ModifiedStart == NULL)
-        && lcRenderer.BoundScene == scene)
-    {
-        lcRenderer.ModifiedStart =
-             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]));
-    }
-    if (((uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1) >
-        lcRenderer.ModifiedEnd
-        || lcRenderer.ModifiedEnd == NULL)
-        && lcRenderer.BoundScene == scene)
-    {
-        lcRenderer.ModifiedEnd =
-             (uint8_t*)(&(lcRenderer.BoundScene->LcRenderable[entity]) + 1);
-    }
+    scene->ComponentRenderable[index].Position4[0] += xOffset;
+    scene->ComponentRenderable[index].Position4[1] += yOffset;
 }
 
 static void
@@ -163,7 +115,7 @@ lcRendererInit(void)
                           6 * sizeof(float), (const void*)(2 * sizeof(float)));
 
     glBufferData(GL_ARRAY_BUFFER,
-                 LC_MAX_ENTITIES * sizeof(lcRenderable), NULL,
+                 LC_MAX_ENTITIES * sizeof(ComponentRenderable), NULL,
                  GL_DYNAMIC_DRAW);
 
     glGenBuffers(1, &(lcRenderer.IndexBuffer));
@@ -193,29 +145,17 @@ lcRendererInit(void)
 
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    lcRenderer.Renderables = NULL;
-
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
 }
 
 void
 lcRendererBindScene(lcScene_t *scene)
 {
-    if (lcRenderer.Renderables != NULL)
-        lcSubsetDestroy(lcRenderer.Renderables);
-
-    lcRenderer.Renderables = lcSubsetCreate(scene);
-    lcSubsetSetSignature(lcRenderer.Renderables, COMPONENT_RENDERABLE);
-    lcSubsetRefresh(lcRenderer.Renderables);
-
     lcRenderer.ModifiedStart =
-        (uint8_t *)(scene->LcRenderable);
+        (uint8_t *)(scene->ComponentRenderable);
 
     lcRenderer.ModifiedEnd =
-        (uint8_t *)
-        (&(scene->LcRenderable[
-            LC_LIST_LEN(lcRenderer.Renderables->Entities)
-        ]));
+        (uint8_t *)(scene->ComponentRenderable + scene->RenderableCount);
 
     lcRenderer.BoundScene = scene;
 
@@ -237,7 +177,7 @@ lcRendererBindShader(lcShader_t shader)
 }
 
 void
-lcRendererRender(void)
+lcRendererRenderToWindow(void)
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -248,14 +188,13 @@ lcRendererRender(void)
     }
 
     glDrawElements(GL_TRIANGLES,
-                   LC_LIST_LEN(lcRenderer.Renderables->Entities) * 6,
+                   lcRenderer.BoundScene->RenderableCount * 6,
                    GL_UNSIGNED_INT, NULL);
 }
 
 void
 lcRendererDestroy(void)
 {
-    lcSubsetDestroy(lcRenderer.Renderables);
     glDeleteBuffers(1, &(lcRenderer.VertexBuffer));
     glDeleteBuffers(1, &(lcRenderer.IndexBuffer));
     glDeleteVertexArrays(1, &(lcRenderer.VertexArray));

@@ -2,46 +2,42 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 05 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #define LC_NO_ENTITY 0xffffffffffffffff
 
-lcScene_t
+lcScene_t *
 lcSceneCreate(void)
 {
-    lcScene_t scene;
+    lcScene_t *result = malloc(sizeof(lcScene_t));
 
     lcEntity_t i;
     for (i = 0; i < LC_MAX_ENTITIES; ++i)
-        scene.EntitySignatures[i] = LC_NO_ENTITY;
+        result->EntitySignatures[i] = LC_NO_ENTITY;
 
-#include "ComponentArraysAllocation.gen.c"
+    result->RenderableCount = 0;
 
-    return scene;
+    return result;
 }
 
-#include "lcSceneDestroy.gen.c"
-
-lcSubset_t *
-lcSubsetCreate(lcScene_t *scene)
+lcSubset_t 
+lcSubsetCreate(void)
 {
-    lcSubset_t *subset = malloc(sizeof(lcSubset_t));
+    lcSubset_t subset;
 
-    subset->Signature = LC_COMPONENT_NONE;
-    subset->Entities = NULL;
-    LC_LIST_CREATE(subset->Entities, lcEntity_t);
-    subset->Parent = scene;
+    subset.Signature = LC_COMPONENT_NONE;
+    subset.Entities = NULL;
+    LC_LIST_CREATE(subset.Entities, lcEntity_t);
 
     return subset;
 }
 
 void
-lcSubsetDestroy(lcSubset_t *subset)
+lcSubsetDestroy(lcSubset_t subset)
 {
-    LC_LIST_DESTROY(subset->Entities);
-    free(subset);
+    LC_LIST_DESTROY(subset.Entities);
 }
 
 void
@@ -52,21 +48,17 @@ lcSubsetSetSignature(lcSubset_t *subset,
 }
 
 void
-lcSubsetRefresh(lcSubset_t *subset)
+lcSubsetRefresh(lcScene_t *scene,
+                lcSubset_t *subset)
 {
-    LC_LIST_DESTROY(subset->Entities);
-    subset->Entities = NULL;
-    LC_LIST_CREATE(subset->Entities, lcEntity_t);
+    LC_LIST_CLEAR(subset->Entities);
+
     lcEntity_t i;
     for (i = 0; i < LC_MAX_ENTITIES; ++i)
     {
-        if (
-                ((subset->Signature & subset->Parent->EntitySignatures[i])
+        if (((subset->Signature & scene->EntitySignatures[i])
                     == subset->Signature)
-
-                &&
-
-                subset->Parent->EntitySignatures[i]
+              && scene->EntitySignatures[i]
                     != LC_NO_ENTITY
             )
         {
@@ -95,6 +87,14 @@ void
 lcEntityDestroy(lcScene_t *scene,
                 lcEntity_t entity)
 {
+    if ((scene->EntitySignatures[entity] & COMPONENT_RENDERABLE) ==
+        COMPONENT_RENDERABLE)
+    {
+       memcpy(scene->ComponentRenderable + scene->EntityToRenderable[entity],
+              scene->ComponentRenderable + (scene->RenderableCount - 1),
+              sizeof(ComponentRenderable)); 
+       --scene->RenderableCount;
+    }
     scene->EntitySignatures[entity] = LC_COMPONENT_NONE;
 }
 
