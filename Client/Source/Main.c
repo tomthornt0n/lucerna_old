@@ -2,8 +2,6 @@
 
 #include "Lucerna.h"
 
-#include "GLFW/glfw3.h"
-
 #define PlayerAcceleration 40.0f
 #define PlayerSpeed 450.0f
 #define OponentSpeed 450.0f
@@ -15,16 +13,18 @@ static uint8_t running = 1;
 static float winBounds[2]; /* top and bottom of screen so the ball can bounce */
 
 static void
-OnWindowClose(lcMessage_t message)
+OnWindowClose(lcGenericMessage_t *message)
 {
     running = 0;
 }
 
 static void
-OnWindowResize(lcMessage_t message)
+OnWindowResize(lcGenericMessage_t *message)
 {
-    winBounds[0] = -((float)message.WindowResize.Height / 2.0f);
-    winBounds[1] = +((float)message.WindowResize.Height / 2.0f);
+    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
+
+    winBounds[0] = -((float)resize->Height / 2.0f);
+    winBounds[1] = +((float)resize->Height / 2.0f);
 }
 
 static void
@@ -75,29 +75,31 @@ UpdateComputerPaddle(lcScene_t *scene,
     {
         scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
     }
+    /*
     else
     {
         if (scene->ComponentPhysics[paddle].Velocity[1] < -0.05f)
         {
-            scene->ComponentPhysics[paddle].Velocity[1] += PlayerAcceleration;
+            scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
         }
         else if (scene->ComponentPhysics[paddle].Velocity[1] > 0.05f)
         {
-            scene->ComponentPhysics[paddle].Velocity[1] -= PlayerAcceleration;
+            scene->ComponentPhysics[paddle].Velocity[1] -= OponentAcceleration;
         }
     }
+    */
 }
 
 static void
 UpdatePlayerPaddle(lcScene_t *scene,
                    lcEntity_t paddle)
 {
-    if (lcInputIsKeyPressed(LC_KEY_S) &&
+    if (lcInputIsKeyPressed[LC_KEY_S] &&
         scene->ComponentPhysics[paddle].Velocity[1] < PlayerSpeed)
     {
         scene->ComponentPhysics[paddle].Velocity[1] += PlayerAcceleration;
     }
-    else if (lcInputIsKeyPressed(LC_KEY_W) &&
+    else if (lcInputIsKeyPressed[LC_KEY_W] &&
              scene->ComponentPhysics[paddle].Velocity[1] > -PlayerSpeed)
     {
         scene->ComponentPhysics[paddle].Velocity[1] -= PlayerAcceleration;
@@ -169,8 +171,6 @@ PaddleCreate(lcScene_t *scene,
     float vel[] = { 0.0f, 0.0f };
     lcAddComponentPhysics(scene, result, min, max, vel);
 
-    LC_LOG_DEBUG("Paddle: %u", result);
-
     return result;
 }
 
@@ -189,8 +189,6 @@ BallCreate(lcScene_t *scene,
     float vel[] = { -BallSpeed, 0.0f };
     lcAddComponentPhysics(scene, result, min, max, vel);
 
-    LC_LOG_DEBUG("Ball: %u", result);
-
     return result;
 }
 
@@ -199,9 +197,8 @@ lcClientMain(int argc,
              char** argv)
 {
     /* create the window */
-    lcWindowInit("Lucerna test!", 960, 540);
+    lcWindowInit("Lucerna test!", 1920, 1080, true);
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
-    lcWindowSetVSync(false);
     winBounds[0] = -480.0f;
     winBounds[1] = 480.0f;
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
@@ -210,7 +207,7 @@ lcClientMain(int argc,
     lcScene_t *scene = lcSceneCreate();
 
     /* setup the renderer */
-    float cameraPos[2] = {0.0f, 0.0f};
+    float cameraPos[2] = { 0.0f, 0.0f };
     lcCameraInit("u_ViewProjectionMatrix",
                   cameraPos);
 
@@ -241,16 +238,16 @@ lcClientMain(int argc,
 
     /* main loop */
     double frameTime;
-    double previousTime = glfwGetTime();
-    double time = glfwGetTime();
+    double previousTime = lcGetTime();
+    double time = lcGetTime();
     int count = 0;
     while (running)
     {
         previousTime = time;
-        time = glfwGetTime();
+        time = lcGetTime();
         frameTime = time - previousTime;
 
-        if (count++ == 10000)
+        if (count++ == 7000)
         {
             count = 0;
             fprintf(stderr, "FPS: %f\nFrame Time: %f\n\n",

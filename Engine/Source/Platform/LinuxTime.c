@@ -2,17 +2,22 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 August 2020
+  Updated : 07 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#if defined(LC_PLATFORM_LINUX)
-#include "Platform/LinuxWindow.c"
-#elif defined(LC_PLATFORM_WINDOWS)
-#include "Platform/WindowsWindow.c"
-#else
-#error "Platform macro not defined"
-#endif
+#include "sys/time.h"
+
+double
+lcGetTime(void)
+{
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    return (double)tv.tv_usec / 1000000.0 +
+           (double)tv.tv_sec;
+}
 
 /*
 MIT License

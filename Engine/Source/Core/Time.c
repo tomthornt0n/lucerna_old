@@ -2,14 +2,15 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 August 2020
+  Updated : 15 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
+
 #if defined(LC_PLATFORM_LINUX)
-#include "Platform/LinuxWindow.c"
+#include "Platform/LinuxTime.c"
 #elif defined(LC_PLATFORM_WINDOWS)
-#include "Platform/WindowsWindow.c"
+#include "Platform/WindowsTime.c"
 #else
 #error "Platform macro not defined"
 #endif

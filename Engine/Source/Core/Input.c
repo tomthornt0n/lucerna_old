@@ -2,33 +2,23 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 05 August 2020
+  Updated : 21 August 2020
   License : MIT, at end of file
+  Notes   : Mouse functions return placeholder values for now while the custom
+            platform layer is a work in progress.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-bool
-lcInputIsKeyPressed(int keycode)
-{
-    int state = glfwGetKey(lcWindow, keycode);
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
-}
+bool    lcInputIsKeyPressed[256];
+bool    lcInputIsMouseButtonPressed[8];
+int16_t lcInputMousePosition[2];
 
-bool
-lcInputIsMouseButtonPressed(int button)
+static void
+lcInputInit(void)
 {
-    int state = glfwGetMouseButton(lcWindow, button);
-    return state == GLFW_PRESS || state == GLFW_REPEAT;
+    memset(lcInputIsKeyPressed, false, 256);
+    memset(lcInputIsMouseButtonPressed, false, 8);
+    memset(lcInputMousePosition, 0, 2);
 }
-
-void
-lcInputGetMousePos(float *result) /* NOTE(tbt): result is a 2 element array */
-{
-    double x, y;
-    glfwGetCursorPos(lcWindow, &x, &y);
-    result[0] = (float)x;
-    result[1] = (float)y;
-}
-
 
 /*
 MIT License

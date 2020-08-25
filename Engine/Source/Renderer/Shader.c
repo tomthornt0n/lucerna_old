@@ -19,89 +19,89 @@ lcShaderCreate(char *vertexPath,
 	uint8_t *fragmentSrc;
 	LC_ASSERT(lcLoaderReadFile(fragmentPath, &fragmentSrc) != -1, "Could not load fragment src!");
     
-	program = glCreateProgram();
+	program = gl.CreateProgram();
 	
 	uint32_t vertexID;
 	uint32_t fragmentID;
 
-	vertexID = glCreateShader(GL_VERTEX_SHADER);
+	vertexID = gl.CreateShader(GL_VERTEX_SHADER);
 
-	glShaderSource(vertexID, 1, (const char**)&vertexSrc, 0);
-	glCompileShader(vertexID);
+	gl.ShaderSource(vertexID, 1, (const char**)&vertexSrc, 0);
+	gl.CompileShader(vertexID);
 
 	int isCompiled;
-	glGetShaderiv(vertexID, GL_COMPILE_STATUS, &isCompiled);
+	gl.GetShaderiv(vertexID, GL_COMPILE_STATUS, &isCompiled);
 
 	if (isCompiled == GL_FALSE)
 	{
 	    int maxLength;
-		glGetShaderiv(vertexID, GL_INFO_LOG_LENGTH, &maxLength);
+		gl.GetShaderiv(vertexID, GL_INFO_LOG_LENGTH, &maxLength);
 		char *msg = malloc(sizeof(char) * maxLength);
-		glGetShaderInfoLog(vertexID, maxLength, &maxLength, msg);
+		gl.GetShaderInfoLog(vertexID, maxLength, &maxLength, msg);
 
-		glDeleteShader(vertexID);
+		gl.DeleteShader(vertexID);
 
 		LC_ASSERT(0, "Vertex shader compilation failure! %s", msg);
 
 		free(msg);
 	}
 
-	glAttachShader(program, vertexID);
+	gl.AttachShader(program, vertexID);
 	
-	fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
+	fragmentID = gl.CreateShader(GL_FRAGMENT_SHADER);
 
-	glShaderSource(fragmentID, 1, (const char**)&fragmentSrc, 0);
+	gl.ShaderSource(fragmentID, 1, (const char**)&fragmentSrc, 0);
 
-	glCompileShader(fragmentID);
+	gl.CompileShader(fragmentID);
 
-	isCompiled;
-	glGetShaderiv(fragmentID, GL_COMPILE_STATUS, &isCompiled);
+	gl.GetShaderiv(fragmentID, GL_COMPILE_STATUS, &isCompiled);
+
 	if (isCompiled == GL_FALSE)
 	{
 		int maxLength;
-		glGetShaderiv(fragmentID, GL_INFO_LOG_LENGTH, &maxLength);
+		gl.GetShaderiv(fragmentID, GL_INFO_LOG_LENGTH, &maxLength);
 
 		char *msg = malloc(sizeof(char) * maxLength);
-		glGetShaderInfoLog(fragmentID, maxLength, &maxLength, msg);
+		gl.GetShaderInfoLog(fragmentID, maxLength, &maxLength, msg);
 
-		glDeleteShader(fragmentID);
+		gl.DeleteShader(fragmentID);
 
 		LC_ASSERT(0, "Fragment shader compilation failure! %s", msg);
 
 		free(msg);
 	}
 
-	glAttachShader(program, fragmentID);
+	gl.AttachShader(program, fragmentID);
 
-	glLinkProgram(program);
+	gl.LinkProgram(program);
 
 	GLint isLinked;
-	glGetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
+	gl.GetProgramiv(program, GL_LINK_STATUS, (int*)&isLinked);
 	if (isLinked == GL_FALSE)
 	{
 		int maxLength;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+		gl.GetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
 
 		char *msg = malloc(sizeof(char) * maxLength);
-		glGetShaderInfoLog(program, maxLength, &maxLength, msg);
+		gl.GetShaderInfoLog(program, maxLength, &maxLength, msg);
 
-		glDeleteProgram(program);
+		gl.DeleteProgram(program);
 
-		glDeleteShader(vertexID);
-		glDeleteShader(fragmentID);
+		gl.DeleteShader(vertexID);
+		gl.DeleteShader(fragmentID);
 
 		LC_ASSERT(0, "Shader link failure! %s", msg);
 
 		free(msg);
 	}
 
-	glDetachShader(program, vertexID);
-	glDetachShader(program, fragmentID);
+	gl.DetachShader(program, vertexID);
+	gl.DetachShader(program, fragmentID);
 
 	free(vertexSrc);
 	free(fragmentSrc);
 
-    glUseProgram(program);
+    gl.UseProgram(program);
 
 	return program;
 }
@@ -109,15 +109,7 @@ lcShaderCreate(char *vertexPath,
 void
 lcShaderDestroy(lcShader_t shader)
 {
-	glDeleteProgram(shader);
-}
-
-static void
-lcShaderUploadUniformMatrix4(char *name,
-                              float *matrix)
-{
-	GLint location = glGetUniformLocation(lcRendererBoundShader, name);
-	glUniformMatrix4fv(location, 1, GL_FALSE, matrix);
+	gl.DeleteProgram(shader);
 }
 
 /*

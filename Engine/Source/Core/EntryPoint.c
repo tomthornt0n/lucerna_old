@@ -10,6 +10,8 @@ int
 main(int argc,
      char **argv)
 {
+    lcGLLoad();
+    lcInputInit();
     lcMessageSystemInit();
     lcLogInit();
 

@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 05 August 2020
+  Updated : 24 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -19,85 +19,84 @@ lcMessageSystemInit(void)
     }
 }
 
-static lcMessage_t
+static lcGenericMessage_t *
 lcWindowCloseMessageCreate(void)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_WINDOW_CLOSE;
+    lcGenericMessage_t *message = malloc(sizeof(lcGenericMessage_t));
+    message->Type = LC_MESSAGE_TYPE_WINDOW_CLOSE;
 
     return message;
 }
 
-static lcMessage_t
+static lcGenericMessage_t *
 lcWindowResizeMessageCreate(uint32_t width,
                             uint32_t height)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_WINDOW_RESIZE;
+    lcWindowResizeMessage_t *message = malloc(sizeof(lcWindowResizeMessage_t));
 
-    message.WindowResize.Width = width;
-    message.WindowResize.Height = height;
+    message->Header.Type = LC_MESSAGE_TYPE_WINDOW_RESIZE;
+    message->Width = width;
+    message->Height = height;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
-static lcMessage_t
-lcKeyPressMessageCreate(int keyCode,
-                        bool repeat)
+static lcGenericMessage_t *
+lcKeyPressMessageCreate(int keyCode)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_KEY_PRESS;
+    lcKeyPressMessage_t *message = malloc(sizeof(lcKeyPressMessage_t));
 
-    message.KeyPress.KeyCode = keyCode;
-    message.KeyPress.Repeat = repeat;
+    message->Header.Type = LC_MESSAGE_TYPE_KEY_PRESS;
+    message->KeyCode = keyCode;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
-static lcMessage_t
+static lcGenericMessage_t *
 lcKeyReleaseMessageCreate(int keyCode)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_KEY_RELEASE;
+    lcKeyReleaseMessage_t *message = malloc(sizeof(lcKeyReleaseMessage_t));
 
-    message.KeyRelease.KeyCode = keyCode;
+    message->Header.Type = LC_MESSAGE_TYPE_KEY_RELEASE;
+    message->KeyCode = keyCode;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
-static lcMessage_t
+static lcGenericMessage_t *
 lcMouseButtonPressMessageCreate(int keyCode)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS;
+    lcMouseButtonPressMessage_t *message =
+        malloc(sizeof(lcMouseButtonPressMessage_t));
 
-    message.MouseButtonPress.KeyCode = keyCode;
+    message->Header.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS;
+    message->KeyCode = keyCode;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
-static lcMessage_t
+static lcGenericMessage_t *
 lcMouseButtonReleaseMessageCreate(int keyCode)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE;
+    lcMouseButtonReleaseMessage_t *message =
+        malloc(sizeof(lcMouseButtonReleaseMessage_t));
 
-    message.MouseButtonRelease.KeyCode = keyCode;
+    message->Header.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE;
+    message->KeyCode = keyCode;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
-static lcMessage_t
-lcMouseScrollMessageCreate(int xOffset,
-                           int yOffset)
+static lcGenericMessage_t *
+lcMouseScrollMessageCreate(int offset)
 {
-    lcMessage_t message;
-    message.Type = LC_MESSAGE_TYPE_MOUSE_SCROLL;
+    lcMouseScrollMessage_t *message =
+        malloc(sizeof(lcMouseScrollMessage_t));
 
-    message.MouseScroll.XOffset = xOffset;
-    message.MouseScroll.YOffset = yOffset;
+    message->Header.Type = LC_MESSAGE_TYPE_MOUSE_SCROLL;
+    message->ScrollOffset = offset;
 
-    return message;
+    return (lcGenericMessage_t *)message;
 }
 
 void
@@ -110,13 +109,14 @@ lcMessageBind(int messageType,
 }
 
 static void
-lcMessageEmit(lcMessage_t message)
+lcMessageEmit(lcGenericMessage_t *message)
 {
     int i;
-    for (i = 0; i < LC_LIST_LEN(lcMessageListeners[message.Type]); ++i)
+    for (i = 0; i < LC_LIST_LEN(lcMessageListeners[message->Type]); ++i)
     {
-        (*lcMessageListeners[message.Type][i])(message);
+        (*lcMessageListeners[message->Type][i])(message);
     }
+    free(message);
 }
 
 static void

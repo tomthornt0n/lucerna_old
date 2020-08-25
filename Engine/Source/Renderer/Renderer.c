@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 05 August 2020
+  Updated : 24 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -13,13 +13,11 @@ static struct
     uint8_t *ModifiedStart, *ModifiedEnd;
 } lcRenderer;
 
-/* static void */
-/* lcRendererBufferData(void) */
 #define lcRendererBufferData()                                                 \
-    glBufferSubData(GL_ARRAY_BUFFER,                                           \
-                    0,                                                         \
-                    lcRenderer.BoundScene->RenderableCount *                   \
-                    sizeof(ComponentRenderable),                               \
+    gl.BufferSubData(GL_ARRAY_BUFFER,                                          \
+                     0,                                                        \
+                     lcRenderer.BoundScene->RenderableCount *                  \
+                     sizeof(ComponentRenderable),                              \
                     lcRenderer.BoundScene->ComponentRenderable);
 
 void
@@ -87,11 +85,13 @@ ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity,
 }
 
 static void
-lcRendererUpdateViewport(lcMessage_t message)
+lcRendererUpdateViewport(lcGenericMessage_t *message)
 {
-    glViewport(0, 0,
-               message.WindowResize.Width,
-               message.WindowResize.Height);
+    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
+
+    gl.Viewport(0, 0,
+                resize->Width,
+                resize->Height);
 }
 
 void
@@ -100,25 +100,33 @@ lcRendererInit(void)
     lcRenderer.ModifiedStart = NULL;
     lcRenderer.ModifiedEnd = NULL;
 
-    glGenVertexArrays(1, &(lcRenderer.VertexArray));
-    glBindVertexArray(lcRenderer.VertexArray);
+    gl.GenVertexArrays(1, &(lcRenderer.VertexArray));
+    gl.BindVertexArray(lcRenderer.VertexArray);
 
-    glGenBuffers(1, &(lcRenderer.VertexBuffer));
-    glBindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
+    gl.GenBuffers(1, &(lcRenderer.VertexBuffer));
+    gl.BindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
 
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE,
-                          6 * sizeof(float), NULL);
+    gl.EnableVertexAttribArray(0);
+    gl.VertexAttribPointer(0,
+                           2,
+                           GL_FLOAT,
+                           GL_FALSE,
+                           6 * sizeof(float),
+                           NULL);
 
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE,
-                          6 * sizeof(float), (const void*)(2 * sizeof(float)));
+    gl.EnableVertexAttribArray(1);
+    gl.VertexAttribPointer(1,
+                           4,
+                           GL_FLOAT,
+                           GL_FALSE,
+                           6 * sizeof(float),
+                           (const void*)(2 * sizeof(float)));
 
-    glBufferData(GL_ARRAY_BUFFER,
-                 LC_MAX_ENTITIES * sizeof(ComponentRenderable), NULL,
-                 GL_DYNAMIC_DRAW);
+    gl.BufferData(GL_ARRAY_BUFFER,
+                  LC_MAX_ENTITIES * sizeof(ComponentRenderable), NULL,
+                  GL_DYNAMIC_DRAW);
 
-    glGenBuffers(1, &(lcRenderer.IndexBuffer));
+    gl.GenBuffers(1, &(lcRenderer.IndexBuffer));
     unsigned int *indices = calloc(LC_MAX_ENTITIES * 6, sizeof(uint32_t));
     unsigned int offset = 0;
 
@@ -136,14 +144,14 @@ lcRendererInit(void)
         offset += 4;
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lcRenderer.IndexBuffer);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
-                 LC_MAX_ENTITIES * 6 * sizeof(uint32_t), indices,
-                 GL_STATIC_DRAW);
+    gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, lcRenderer.IndexBuffer);
+    gl.BufferData(GL_ELEMENT_ARRAY_BUFFER,
+                  LC_MAX_ENTITIES * 6 * sizeof(uint32_t), indices,
+                  GL_STATIC_DRAW);
 
     free(indices);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
 }
@@ -165,21 +173,21 @@ lcRendererBindScene(lcScene_t *scene)
 void
 lcRendererBindShader(lcShader_t shader)
 {
-    glUseProgram(shader);
+    gl.UseProgram(shader);
     lcRendererBoundShader = shader;
 
-    lcCamera.UniformLocation = glGetUniformLocation(shader,
-                                                    lcCamera.UniformName);
+    lcCamera.UniformLocation = gl.GetUniformLocation(shader,
+                                                     lcCamera.UniformName);
 
-    glUniformMatrix4fv(lcCamera.UniformLocation,
-                       1, GL_FALSE,
-                       lcCamera.ViewProjectionMatrix);
+    gl.UniformMatrix4fv(lcCamera.UniformLocation,
+                        1, GL_FALSE,
+                        lcCamera.ViewProjectionMatrix);
 }
 
 void
 lcRendererRenderToWindow(void)
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (lcRenderer.ModifiedStart != NULL &&
         lcRenderer.ModifiedEnd   != NULL)
@@ -187,17 +195,18 @@ lcRendererRenderToWindow(void)
         lcRendererBufferData();
     }
 
-    glDrawElements(GL_TRIANGLES,
-                   lcRenderer.BoundScene->RenderableCount * 6,
-                   GL_UNSIGNED_INT, NULL);
+    gl.DrawElements(GL_TRIANGLES,
+                    lcRenderer.BoundScene->RenderableCount * 6,
+                    GL_UNSIGNED_INT, NULL);
 }
+
 
 void
 lcRendererDestroy(void)
 {
-    glDeleteBuffers(1, &(lcRenderer.VertexBuffer));
-    glDeleteBuffers(1, &(lcRenderer.IndexBuffer));
-    glDeleteVertexArrays(1, &(lcRenderer.VertexArray));
+    gl.DeleteBuffers(1, &(lcRenderer.VertexBuffer));
+    gl.DeleteBuffers(1, &(lcRenderer.IndexBuffer));
+    gl.DeleteVertexArrays(1, &(lcRenderer.VertexArray));
 }
 
 /*

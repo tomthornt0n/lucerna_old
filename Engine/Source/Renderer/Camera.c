@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 24 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -25,23 +25,23 @@ lcCameraRecalculateViewProjectionMatrix(void)
                       lcCamera.ProjectionMatrix,
                       lcCamera.ViewMatrix);
 
-    glUniformMatrix4fv(lcCamera.UniformLocation,
+    gl.UniformMatrix4fv(lcCamera.UniformLocation,
                        1, GL_FALSE,
                        lcCamera.ViewProjectionMatrix);
 }
 
 
 static void
-lcCameraUpdateProjectionMatrix(lcMessage_t message)
+lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
 {
-    LC_CORE_LOG_DEBUG("Window size changed. Recalculating projection matrix");
+    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
 
     lcMatrix4CreateOrthographicProjectionMatrix(
          lcCamera.ProjectionMatrix,
-        -((float) message.WindowResize.Width / 2.0f),
-         ((float) message.WindowResize.Width / 2.0f),
-        -((float) message.WindowResize.Height / 2.0f),
-         ((float) message.WindowResize.Height / 2.0f)
+        -((float) resize->Width / 2.0f),
+         ((float) resize->Width / 2.0f),
+        -((float) resize->Height / 2.0f),
+         ((float) resize->Height / 2.0f)
     );
 
    lcCameraRecalculateViewProjectionMatrix(); 
@@ -60,16 +60,15 @@ lcCameraInit(char *uniformName,
 
     lcCamera.UniformName = uniformName;
 
-    int windowWidth, windowHeight;
-    glfwGetFramebufferSize(lcWindow,
-                           &windowWidth, &windowHeight);
+    uint32_t windowSize[2];
+    lcWindowGetSize(windowSize);
 
     lcMatrix4CreateOrthographicProjectionMatrix(
          lcCamera.ProjectionMatrix,
-        -((float)windowWidth  / 2.0f),
-         ((float)windowWidth  / 2.0f),
-        -((float)windowHeight / 2.0f),
-         ((float)windowHeight / 2.0f)
+        -((float)windowSize[0]  / 2.0f),
+         ((float)windowSize[0]  / 2.0f),
+        -((float)windowSize[1] / 2.0f),
+         ((float)windowSize[1] / 2.0f)
     );
 
     lcMatrix4CreateTranslationMatrix(lcCamera.ViewMatrix,

@@ -88,6 +88,16 @@ void lcLogInit(void);
 void lcLogDestroy(void);
 void lcLog(int level, char *prefix, char *fmt, ...);
 
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Time                                                                    
+  
+  Author  : Tom Thornton
+  License : MIT, at end of file
+  Notes   : NA
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+double lcGetTime(void);
+
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Array Backed List
   
@@ -200,43 +210,31 @@ enum
 typedef struct
 {
     int Type;
+} lcGenericMessage_t;
 
+typedef struct
+{
+    lcGenericMessage_t Header;
+    uint32_t Width;
+    uint32_t Height;
+} lcWindowResizeMessage_t;
+
+struct lcInputMessage_t
+{
+    lcGenericMessage_t Header;
     union
     {
-        struct lcMessageWindowResize_t
-        {
-            uint32_t Width, Height;
-        } WindowResize;
-
-        struct lcMessageKeyPress_t
-        {
-            int KeyCode;
-            uint8_t Repeat;
-        } KeyPress;
-
-        struct lcMessageKeyRelease_t
-        {
-            int KeyCode;
-        } KeyRelease;
-
-        struct lcMessageMouseButtonPress_t
-        {
-            int KeyCode;
-        } MouseButtonPress;
-
-        struct lcMessageMouseButtonRelease_t
-        {
-            int KeyCode;
-        } MouseButtonRelease;
-
-        struct lcMessageMouseScroll_t
-        {
-            int XOffset, YOffset;
-        } MouseScroll;
+        int KeyCode;
+        int ScrollOffset;
     };
-} lcMessage_t;
+};
+typedef struct lcInputMessage_t lcKeyPressMessage_t;
+typedef struct lcInputMessage_t lcKeyReleaseMessage_t;
+typedef struct lcInputMessage_t lcMouseButtonPressMessage_t;
+typedef struct lcInputMessage_t lcMouseButtonReleaseMessage_t;
+typedef struct lcInputMessage_t lcMouseScrollMessage_t;
 
-typedef void (*lcMessageListener_t)(lcMessage_t);
+typedef void (*lcMessageListener_t)(lcGenericMessage_t *);
 
 void lcMessageBind(int messageType, lcMessageListener_t action);
 
@@ -267,9 +265,10 @@ lcImage_t lcLoaderParsePNG(char *filename);
             point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-void lcWindowInit(const char *title, int width, int height);
+void lcWindowInit(char *title, uint32_t width, uint32_t height, bool vSyncEnabled);
 void lcWindowUpdate(void);
 void lcWindowSetVSync(bool enabled);
+void lcWindowGetSize(uint32_t *result);
 void lcWindowDestroy(void);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -280,144 +279,147 @@ void lcWindowDestroy(void);
   Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define LC_KEY_SPACE         32
-#define LC_KEY_APOSTROPHE    39  
-#define LC_KEY_COMMA         44  
-#define LC_KEY_MINUS         45  
-#define LC_KEY_PERIOD        46  
-#define LC_KEY_SLASH         47  
-#define LC_KEY_0             48
-#define LC_KEY_1             49
-#define LC_KEY_2             50
-#define LC_KEY_3             51
-#define LC_KEY_4             52
-#define LC_KEY_5             53
-#define LC_KEY_6             54
-#define LC_KEY_7             55
-#define LC_KEY_8             56
-#define LC_KEY_9             57
-#define LC_KEY_SEMICOLON     59
-#define LC_KEY_EQUAL         61
-#define LC_KEY_A             65
-#define LC_KEY_B             66
-#define LC_KEY_C             67
-#define LC_KEY_D             68
-#define LC_KEY_E             69
-#define LC_KEY_F             70
-#define LC_KEY_G             71
-#define LC_KEY_H             72
-#define LC_KEY_I             73
-#define LC_KEY_J             74
-#define LC_KEY_K             75
-#define LC_KEY_L             76
-#define LC_KEY_M             77
-#define LC_KEY_N             78
-#define LC_KEY_O             79
-#define LC_KEY_P             80
-#define LC_KEY_Q             81
-#define LC_KEY_R             82
-#define LC_KEY_S             83
-#define LC_KEY_T             84
-#define LC_KEY_U             85
-#define LC_KEY_V             86
-#define LC_KEY_W             87
-#define LC_KEY_X             88
-#define LC_KEY_Y             89
-#define LC_KEY_Z             90
-#define LC_KEY_LEFT_BRACKET  91
-#define LC_KEY_BACKSLASH     92
-#define LC_KEY_RIGHT_BRACKET 93
-#define LC_KEY_GRAVE_ACCENT  96
-#define LC_KEY_WORLD_1       161
-#define LC_KEY_WORLD_2       162
+#define LC_KEY_NONE                0
+#define LC_KEY_A                   4
+#define LC_KEY_B                   5
+#define LC_KEY_C                   6
+#define LC_KEY_D                   7
+#define LC_KEY_E                   8
+#define LC_KEY_F                   9
+#define LC_KEY_G                   10
+#define LC_KEY_H                   11
+#define LC_KEY_I                   12
+#define LC_KEY_J                   13
+#define LC_KEY_K                   14
+#define LC_KEY_L                   15
+#define LC_KEY_M                   16
+#define LC_KEY_N                   17
+#define LC_KEY_O                   18
+#define LC_KEY_P                   19
+#define LC_KEY_Q                   20
+#define LC_KEY_R                   21
+#define LC_KEY_S                   22
+#define LC_KEY_T                   23
+#define LC_KEY_U                   24
+#define LC_KEY_V                   25
+#define LC_KEY_W                   26
+#define LC_KEY_X                   27
+#define LC_KEY_Y                   28
+#define LC_KEY_Z                   29
+#define LC_KEY_1                   30
+#define LC_KEY_2                   31
+#define LC_KEY_3                   32
+#define LC_KEY_4                   33
+#define LC_KEY_5                   34
+#define LC_KEY_6                   35
+#define LC_KEY_7                   36
+#define LC_KEY_8                   37
+#define LC_KEY_9                   38
+#define LC_KEY_0                   39
+#define LC_KEY_ESCAPE              41
+#define LC_KEY_DELETE              42
+#define LC_KEY_TAB                 43
+#define LC_KEY_SPACE               44
+#define LC_KEY_MINUS               45
+#define LC_KEY_EQUALS              46
+#define LC_KEY_LEFT_BRACKET        47
+#define LC_KEY_RIGHT_BRACKET       48
+#define LC_KEY_BACKSLASH           49
+#define LC_KEY_SEMICOLON           51
+#define LC_KEY_QUOTE               52
+#define LC_KEY_GRAVE               53
+#define LC_KEY_COMMA               54
+#define LC_KEY_PERIOD              55
+#define LC_KEY_SLASH               56
+#define LC_KEY_CAPS_LOCK           57
+#define LC_KEY_F1                  58
+#define LC_KEY_F2                  59
+#define LC_KEY_F3                  60
+#define LC_KEY_F4                  61
+#define LC_KEY_F5                  62
+#define LC_KEY_F6                  63
+#define LC_KEY_F7                  64
+#define LC_KEY_F8                  65
+#define LC_KEY_F9                  66
+#define LC_KEY_F10                 67
+#define LC_KEY_F11                 68
+#define LC_KEY_F12                 69
+#define LC_KEY_PRINT_SCREEN        70
+#define LC_KEY_SCROLL_LOCK         71
+#define LC_KEY_PAUSE               72
+#define LC_KEY_INSERT              73
+#define LC_KEY_HOME                74
+#define LC_KEY_PAGEUP              75
+#define LC_KEY_DEL                 76
+#define LC_KEY_END                 77
+#define LC_KEY_PAGE_DOWN           78
+#define LC_KEY_RIGHT               79
+#define LC_KEY_LEFT                80
+#define LC_KEY_DOWN                81
+#define LC_KEY_UP                  82
+#define LC_KEY_KP_NUM_LOCK         83
+#define LC_KEY_KP_DIVIDE           84
+#define LC_KEY_KP_MULTIPLY         85
+#define LC_KEY_KP_SUBTRACT         86
+#define LC_KEY_KP_ADD              87
+#define LC_KEY_KP_ENTER            88
+#define LC_KEY_KP_1                89
+#define LC_KEY_KP_2                90
+#define LC_KEY_KP_3                91
+#define LC_KEY_KP_4                92
+#define LC_KEY_KP_5                93
+#define LC_KEY_KP_6                94
+#define LC_KEY_KP_7                95
+#define LC_KEY_KP_8                96
+#define LC_KEY_KP_9                97
+#define LC_KEY_KP_0                98
+#define LC_KEY_KP_POINT            99
+#define LC_KEY_NON_US_BACKSLASH    100
+#define LC_KEY_KP_EQUALS           103
+#define LC_KEY_F13                 104
+#define LC_KEY_F14                 105
+#define LC_KEY_F15                 106
+#define LC_KEY_F16                 107
+#define LC_KEY_F17                 108
+#define LC_KEY_F18                 109
+#define LC_KEY_F19                 110
+#define LC_KEY_F20                 111
+#define LC_KEY_F21                 112
+#define LC_KEY_F22                 113
+#define LC_KEY_F23                 114
+#define LC_KEY_F24                 115
+#define LC_KEY_HELP                117
+#define LC_KEY_MENU                118
+#define LC_KEY_MUTE                127
+#define LC_KEY_SYS_REQ             154
+#define LC_KEY_RETURN              158
+#define LC_KEY_KP_CLEAR            216
+#define LC_KEY_KP_DECIMAL          220
+#define LC_KEY_LEFT_CONTROL        224
+#define LC_KEY_LEFT_SHIFT          225
+#define LC_KEY_LEFT_ALT            226
+#define LC_KEY_LEFT_SUPER          227
+#define LC_KEY_RIGHT_CONTROL       228
+#define LC_KEY_RIGHT_SHIFT         229
+#define LC_KEY_RIGHT_ALT           230
+#define LC_KEY_RIGHT_SUPER         231
 
-#define LC_KEY_ESCAPE        256
-#define LC_KEY_ENTER         257
-#define LC_KEY_TAB           258
-#define LC_KEY_BACKSPACE     259
-#define LC_KEY_INSERT        260
-#define LC_KEY_DELETE        261
-#define LC_KEY_RIGHT         262
-#define LC_KEY_LEFT          263
-#define LC_KEY_DOWN          264
-#define LC_KEY_UP            265
-#define LC_KEY_PAGE_UP       266
-#define LC_KEY_PAGE_DOWN     267
-#define LC_KEY_HOME          268
-#define LC_KEY_END           269
-#define LC_KEY_CAPS_LOCK     280
-#define LC_KEY_SCROLL_LOCK   281
-#define LC_KEY_NUM_LOCK      282
-#define LC_KEY_PRINT_SCREEN  283
-#define LC_KEY_PAUSE         284
-#define LC_KEY_F1            290
-#define LC_KEY_F2            291
-#define LC_KEY_F3            292
-#define LC_KEY_F4            293
-#define LC_KEY_F5            294
-#define LC_KEY_F6            295
-#define LC_KEY_F7            296
-#define LC_KEY_F8            297
-#define LC_KEY_F9            298
-#define LC_KEY_F10           299
-#define LC_KEY_F11           300
-#define LC_KEY_F12           301
-#define LC_KEY_F13           302
-#define LC_KEY_F14           303
-#define LC_KEY_F15           304
-#define LC_KEY_F16           305
-#define LC_KEY_F17           306
-#define LC_KEY_F18           307
-#define LC_KEY_F19           308
-#define LC_KEY_F20           309
-#define LC_KEY_F21           310
-#define LC_KEY_F22           311
-#define LC_KEY_F23           312
-#define LC_KEY_F24           313
-#define LC_KEY_F25           314
-#define LC_KEY_KP_0          320
-#define LC_KEY_KP_1          321
-#define LC_KEY_KP_2          322
-#define LC_KEY_KP_3          323
-#define LC_KEY_KP_4          324
-#define LC_KEY_KP_5          325
-#define LC_KEY_KP_6          326
-#define LC_KEY_KP_7          327
-#define LC_KEY_KP_8          328
-#define LC_KEY_KP_9          329
-#define LC_KEY_KP_DECIMAL    330
-#define LC_KEY_KP_DIVIDE     331
-#define LC_KEY_KP_MULTIPLY   332
-#define LC_KEY_KP_SUBTRACT   333
-#define LC_KEY_KP_ADD        334
-#define LC_KEY_KP_ENTER      335
-#define LC_KEY_KP_EQUAL      336
-#define LC_KEY_LEFT_SHIFT    340
-#define LC_KEY_LEFT_CONTROL  341
-#define LC_KEY_LEFT_ALT      342
-#define LC_KEY_LEFT_SUPER    343
-#define LC_KEY_RIGHT_SHIFT   344
-#define LC_KEY_RIGHT_CONTROL 345
-#define LC_KEY_RIGHT_ALT     346
-#define LC_KEY_RIGHT_SUPER   347
-#define LC_KEY_MENU          348
+#define LC_MOUSE_BUTTON_1          0
+#define LC_MOUSE_BUTTON_2          1
+#define LC_MOUSE_BUTTON_3          2
+#define LC_MOUSE_BUTTON_4          3
+#define LC_MOUSE_BUTTON_5          4
+#define LC_MOUSE_BUTTON_6          5
+#define LC_MOUSE_BUTTON_7          6
+#define LC_MOUSE_BUTTON_8          7
+#define LC_MOUSE_BUTTON_LAST       LC_MOUSE_BUTTON_8
+#define LC_MOUSE_BUTTON_LEFT       LC_MOUSE_BUTTON_1
+#define LC_MOUSE_BUTTON_MIDDLE     LC_MOUSE_BUTTON_2
+#define LC_MOUSE_BUTTON_RIGHT      LC_MOUSE_BUTTON_3
 
-#define LC_MOUSE_BUTTON_1      0
-#define LC_MOUSE_BUTTON_2      1
-#define LC_MOUSE_BUTTON_3      2
-#define LC_MOUSE_BUTTON_4      3
-#define LC_MOUSE_BUTTON_5      4
-#define LC_MOUSE_BUTTON_6      5
-#define LC_MOUSE_BUTTON_7      6
-#define LC_MOUSE_BUTTON_8      7
-#define LC_MOUSE_BUTTON_LAST   LC_MOUSE_BUTTON_8
-#define LC_MOUSE_BUTTON_LEFT   LC_MOUSE_BUTTON_1
-#define LC_MOUSE_BUTTON_RIGHT  LC_MOUSE_BUTTON_2
-#define LC_MOUSE_BUTTON_MIDDLE LC_MOUSE_BUTTON_3
-
-bool lcInputIsKeyPressed(int keycode);
-bool lcInputIsMouseButtonPressed(int button);
-void lcInputGetMousePos(float *result);
+extern bool    lcInputIsKeyPressed[256];
+extern bool    lcInputIsMouseButtonPressed[8];
+extern int16_t lcInputMousePosition[2];
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Math
