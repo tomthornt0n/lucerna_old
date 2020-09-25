@@ -10,13 +10,26 @@ int
 main(int argc,
      char **argv)
 {
+    lcInitConfig_t config = lcClientConfig();
+
     lcGLLoad();
     lcInputInit();
     lcMessageSystemInit();
     lcLogInit();
+    lcWindowInit(config.WindowTitle,
+                 config.WindowDimensions[0],
+                 config.WindowDimensions[1],
+                 config.VSyncEnabled);
+    lcRendererInit();
+    lcLoadMasterTexture();
+    lcCameraInit(config.CameraPosition);
+
 
     lcClientMain(argc, argv);
 
+    lcRendererDestroy();
+    lcCameraDestroy();
+    lcWindowDestroy();
     lcLogDestroy();
     lcMessageSystemDestroy();
 }

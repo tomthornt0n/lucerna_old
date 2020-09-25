@@ -2,8 +2,11 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Lucerna.h"
+
+/* NOTE(tbt): Everything about this example game is terrible */
 
 #define PlayerAcceleration 40.0f
 #define PlayerSpeed 450.0f
@@ -14,6 +17,7 @@
 
 static uint8_t g_running = 1;
 static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
+static float g_winXBounds[2]; /* left and right of screen */
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
@@ -28,6 +32,9 @@ OnWindowResize(lcGenericMessage_t *message)
 
     g_winYBounds[0] = -((float)resize->Height / 2.0f);
     g_winYBounds[1] = +((float)resize->Height / 2.0f);
+
+    g_winXBounds[0] = -((float)resize->Width / 2.0f);
+    g_winXBounds[1] = +((float)resize->Width / 2.0f);
 }
 
 static void
@@ -128,6 +135,17 @@ UpdateBall(lcScene_t *scene,
         scene->ComponentPhysics[ball].Velocity[1] *= -1.0f;
     }
 
+    if (ballMin[0] < g_winXBounds[0])
+    {
+        LC_LOG_INFO("Computer wins... :(");
+        exit(0);
+    }
+    else if (ballMax[0] > g_winXBounds[1])
+    {
+        LC_LOG_INFO("Player wins! :)");
+        exit(0);
+    }
+
     lcForEntityInSubset(*physicsSubset)
     {
         if (entity != ball)
@@ -186,15 +204,31 @@ BallCreate(lcScene_t *scene,
     return result;
 }
 
+lcInitConfig_t
+lcClientConfig()
+{
+    lcInitConfig_t config;
+
+    strcpy(config.WindowTitle, "Lucerna test!");
+    config.WindowDimensions[0] = 1920;
+    config.WindowDimensions[1] = 1080;
+    config.CameraPosition[0] = 0.0f;
+    config.CameraPosition[1] = 1.0f;
+    config.VSyncEnabled = true;
+    
+    return config;
+}
+
 void
 lcClientMain(int argc,
              char** argv)
 {
     /* create the window */
-    lcWindowInit("Lucerna test!", 1920, 1080, true);
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
-    g_winYBounds[0] = -480.0f;
-    g_winYBounds[1] = 480.0f;
+    g_winYBounds[0] = -540.0f;
+    g_winYBounds[1] = 540.0f;
+    g_winXBounds[0] = -960.0f;
+    g_winXBounds[1] = 960.0f;
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
 
     /* load assets */
@@ -206,13 +240,8 @@ lcClientMain(int argc,
     lcScene_t *scene = lcSceneCreate();
 
     /* setup the renderer */
-    float cameraPos[2] = { 0.0f, 0.0f };
-    lcCameraInit("u_ViewProjectionMatrix",
-                  cameraPos);
-
     lcShader_t shader = lcShaderCreate(LC_SHADER_PATH("SolidColour.vert"),
                                        LC_SHADER_PATH("SolidColour.frag"));
-    lcRendererInit();
 
     lcRendererBindShader(shader);
     lcRendererBindScene(scene);
@@ -275,7 +304,4 @@ lcClientMain(int argc,
     lcShaderDestroy(shader);
     lcSubsetDestroy(physics);
     free(scene);
-    lcRendererDestroy();
-    lcCameraDestroy();
-    lcWindowDestroy();
 }

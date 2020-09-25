@@ -13,6 +13,18 @@ extern int errno;
   Client Entry Point
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
+#define LC_WINDOW_TITLE_MAX_LEN 64
+
+typedef struct
+{
+    char WindowTitle[LC_WINDOW_TITLE_MAX_LEN];
+    unsigned int WindowDimensions[2];
+    bool VSyncEnabled;
+
+    float CameraPosition[2];
+} lcInitConfig_t;
+
+lcInitConfig_t lcClientConfig(void);
 void lcClientMain(int argc, char **argv);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -238,15 +250,12 @@ void lcMessageBind(int messageType, lcMessageListener_t action);
   
   Author  : Tom Thornton
   License : MIT, at end of file
-  Notes   : Uses GLFW for now, will hopefully write own platform layer at some
-            point
+  Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-void lcWindowInit(char *title, uint32_t width, uint32_t height, bool vSyncEnabled);
 void lcWindowUpdate(void);
 void lcWindowSetVSync(bool enabled);
 void lcWindowGetSize(uint32_t *result);
-void lcWindowDestroy(void);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Input
@@ -558,11 +567,9 @@ typedef uint32_t lcShader_t;
 lcShader_t lcShaderCreate(char *vertexPath, char *fragmentPath);
 void lcShaderDestroy(lcShader_t shader);
 
-void lcRendererInit(void);
 void lcRendererBindScene(lcScene_t *scene);
 void lcRendererBindShader(lcShader_t shader);
 void lcRendererRenderToWindow(void);
-void lcRendererDestroy(void);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Camera
@@ -572,9 +579,7 @@ void lcRendererDestroy(void);
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-void lcCameraInit(char *uniformName, float *position);
 void lcCameraMove(float *offset);
-void lcCameraDestroy(void);
 
 #endif
 

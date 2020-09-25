@@ -2,13 +2,14 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 24 August 2020
+  Updated : 25 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
+#define LC_CAMERA_UNIFORM_NAME "u_ViewProjectionMatrix"
+
 struct
 {
-    char *UniformName;
     GLint UniformLocation;
 
     float *ProjectionMatrix;
@@ -47,9 +48,8 @@ lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
    lcCameraRecalculateViewProjectionMatrix(); 
 }
 
-void
-lcCameraInit(char *uniformName,
-             float *position)
+static void
+lcCameraInit(float *position)
 {
     lcCamera.ViewMatrix = malloc(sizeof(float) * 16);
     lcCamera.ProjectionMatrix = malloc(sizeof(float) * 16);
@@ -58,7 +58,6 @@ lcCameraInit(char *uniformName,
     memcpy(lcCamera.Position,
            position, sizeof(float) * 2);
 
-    lcCamera.UniformName = uniformName;
 
     uint32_t windowSize[2];
     lcWindowGetSize(windowSize);
@@ -84,7 +83,8 @@ void
 lcCameraMove(float* offset)
 {
     lcVector2Add(lcCamera.Position,
-                  lcCamera.Position, offset);
+                 lcCamera.Position,
+                 offset);
 
     lcMatrix4CreateTranslationMatrix(lcCamera.ViewMatrix,
                                       lcCamera.Position[0],
@@ -93,7 +93,7 @@ lcCameraMove(float* offset)
     lcCameraRecalculateViewProjectionMatrix();
 }
 
-void
+static void
 lcCameraDestroy(void)
 {
     free(lcCamera.ViewMatrix);

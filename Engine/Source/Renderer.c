@@ -104,7 +104,7 @@ lcRendererUpdateViewport(lcGenericMessage_t *message)
                 resize->Height);
 }
 
-void
+static void
 lcRendererInit(void)
 {
     lcRenderer.ModifiedStart = NULL;
@@ -169,8 +169,6 @@ lcRendererInit(void)
 
     free(indices);
 
-    lcLoadMasterTexture();
-
     gl.ClearColor(1.0f, 0.0f, 1.0f, 0.0f);
 
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
@@ -197,11 +195,12 @@ lcRendererBindShader(lcShader_t shader)
     lcRendererBoundShader = shader;
 
     lcCamera.UniformLocation = gl.GetUniformLocation(shader,
-                                                     lcCamera.UniformName);
+                                                     LC_CAMERA_UNIFORM_NAME);
 
     if (lcCamera.UniformLocation == -1)
     {
-        LC_CORE_LOG_WARN("Uniform 'u_ViewProjectionMatrix' does not exist!");
+        LC_CORE_LOG_WARN("Uniform '%s' does not exist!",
+                         LC_CAMERA_UNIFORM_NAME);
     }
     gl.UniformMatrix4fv(lcCamera.UniformLocation,
                         1, GL_FALSE,
@@ -225,7 +224,7 @@ lcRendererRenderToWindow(void)
 }
 
 
-void
+static void
 lcRendererDestroy(void)
 {
     gl.DeleteBuffers(1, &(lcRenderer.VertexBuffer));

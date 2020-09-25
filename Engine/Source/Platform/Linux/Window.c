@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 24 August 2020
+  Updated : 25 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -53,7 +53,7 @@ struct
     xcb_atom_t WindowClose;
 } lcWindow;
 
-void
+static void
 lcWindowInit(char *title,
              uint32_t width, uint32_t height,
              bool vSyncEnabled)
@@ -364,7 +364,7 @@ lcWindowGetSize(uint32_t *result)
     result[1] = lcWindow.Height;
 }
 
-void
+static void
 lcWindowDestroy(void)
 {
     gl.XDestroyWindow(lcWindow.Display, lcWindow.Drawable);
