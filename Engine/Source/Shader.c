@@ -2,11 +2,32 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 20 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 static lcShader_t lcRendererBoundShader;
+
+static bool
+lcShaderLoadFile(char *path,
+                 char **result)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) return false;
+
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    rewind(f);
+    
+    *result = malloc(fsize + 1);
+    if (*result == NULL) return false;
+    int status = fread(*result, 1, fsize, f);
+    if (status != fsize) return false;
+    fclose(f);
+    
+    (*result)[fsize] = 0;
+    return true;
+}
 
 lcShader_t
 lcShaderCreate(char *vertexPath,
@@ -14,10 +35,10 @@ lcShaderCreate(char *vertexPath,
 {
 	lcShader_t program;
 
-	uint8_t *vertexSrc;
-	LC_ASSERT(lcLoaderReadFile(vertexPath, &vertexSrc) != -1, "Could not load vertex src!");
-	uint8_t *fragmentSrc;
-	LC_ASSERT(lcLoaderReadFile(fragmentPath, &fragmentSrc) != -1, "Could not load fragment src!");
+	char *vertexSrc;
+	LC_ASSERT(lcShaderLoadFile(vertexPath, &vertexSrc) != false, "Could not load vertex src!");
+	char *fragmentSrc;
+	LC_ASSERT(lcShaderLoadFile(fragmentPath, &fragmentSrc) != false, "Could not load fragment src!");
     
 	program = gl.CreateProgram();
 	

@@ -1,4 +1,7 @@
 #include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "Lucerna.h"
 
@@ -9,13 +12,13 @@
 #define OponentBallRange 0.0f
 #define BallSpeed 500.0f
 
-static uint8_t running = 1;
-static float winBounds[2]; /* top and bottom of screen so the ball can bounce */
+static uint8_t g_running = 1;
+static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
 {
-    running = 0;
+    g_running = 0;
 }
 
 static void
@@ -23,8 +26,8 @@ OnWindowResize(lcGenericMessage_t *message)
 {
     lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
 
-    winBounds[0] = -((float)resize->Height / 2.0f);
-    winBounds[1] = +((float)resize->Height / 2.0f);
+    g_winYBounds[0] = -((float)resize->Height / 2.0f);
+    g_winYBounds[1] = +((float)resize->Height / 2.0f);
 }
 
 static void
@@ -75,19 +78,6 @@ UpdateComputerPaddle(lcScene_t *scene,
     {
         scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
     }
-    /*
-    else
-    {
-        if (scene->ComponentPhysics[paddle].Velocity[1] < -0.05f)
-        {
-            scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
-        }
-        else if (scene->ComponentPhysics[paddle].Velocity[1] > 0.05f)
-        {
-            scene->ComponentPhysics[paddle].Velocity[1] -= OponentAcceleration;
-        }
-    }
-    */
 }
 
 static void
@@ -129,11 +119,11 @@ UpdateBall(lcScene_t *scene,
     float *ballMin = scene->ComponentPhysics[ball].Minimum;
     float *ballMax = scene->ComponentPhysics[ball].Maximum;
 
-    if (ballMin[1] < winBounds[0])
+    if (ballMin[1] < g_winYBounds[0])
     {
         scene->ComponentPhysics[ball].Velocity[1] *= -1.0f;
     }
-    else if (ballMax[1] > winBounds[1])
+    else if (ballMax[1] > g_winYBounds[1])
     {
         scene->ComponentPhysics[ball].Velocity[1] *= -1.0f;
     }
@@ -159,13 +149,15 @@ UpdateBall(lcScene_t *scene,
 static lcEntity_t
 PaddleCreate(lcScene_t *scene,
              float x, float y,
-             float *colour)
+             float *colour,
+             lcAssetSprite_t *sprite)
 {
     lcEntity_t result = lcEntityCreate(scene);
     ComponentRenderableAdd(scene, result,
-                             x, y,
-                             16.0f, 128.0f,
-                             colour);
+                           x, y,
+                           16.0f, 128.0f,
+                           colour,
+                           sprite);
     float min[] = { x - 16.0f, y - 128.0f };
     float max[] = { x + 16.0f, y + 128.0f };
     float vel[] = { 0.0f, 0.0f };
@@ -177,13 +169,15 @@ PaddleCreate(lcScene_t *scene,
 static lcEntity_t
 BallCreate(lcScene_t *scene,
            float x, float y,
-           float *colour)
+           float *colour,
+           lcAssetSprite_t *sprite)
 {
     lcEntity_t result = lcEntityCreate(scene);
     ComponentRenderableAdd(scene, result,
-                             x, y,
-                             12.0f, 12.0f,
-                             colour);
+                           x, y,
+                           12.0f, 12.0f,
+                           colour,
+                           sprite);
     float min[] = { x - 12.0f, y - 12.0f };
     float max[] = { x + 12.0f, y + 12.0f };
     float vel[] = { -BallSpeed, 0.0f };
@@ -199,9 +193,14 @@ lcClientMain(int argc,
     /* create the window */
     lcWindowInit("Lucerna test!", 1920, 1080, true);
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
-    winBounds[0] = -480.0f;
-    winBounds[1] = 480.0f;
+    g_winYBounds[0] = -480.0f;
+    g_winYBounds[1] = 480.0f;
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
+
+    /* load assets */
+    lcAssetSprite_t *backgroundTex = (lcAssetSprite_t *)lcLoadAsset("background");
+    lcAssetSprite_t *ballTex = (lcAssetSprite_t *)lcLoadAsset("ball");
+    lcAssetSprite_t *paddleTex = (lcAssetSprite_t *)lcLoadAsset("paddle");
 
     /* create a scene */
     lcScene_t *scene = lcSceneCreate();
@@ -211,23 +210,30 @@ lcClientMain(int argc,
     lcCameraInit("u_ViewProjectionMatrix",
                   cameraPos);
 
-    lcShader_t shader = lcShaderCreate("Client/Assets/Shaders/SolidColour.vert",
-                                       "Client/Assets/Shaders/SolidColour.frag");
+    lcShader_t shader = lcShaderCreate(LC_SHADER_PATH("SolidColour.vert"),
+                                       LC_SHADER_PATH("SolidColour.frag"));
     lcRendererInit();
 
     lcRendererBindShader(shader);
     lcRendererBindScene(scene);
 
     /* create some entities */
-    float bgCol[4] = { 0.110f, 0.145f, 0.200f, 1.000f };
-    float fgCol[4] = { 0.961f, 0.965f, 0.953f, 1.000f };
+    float bgCol[4] = { 1.0f, 0.5f, 0.8f, 1.0f };
+    float fgCol[4] = { 1.0, 1.0f, 1.0f, 1.0f };
 
     lcEntity_t bg = lcEntityCreate(scene);
-    ComponentRenderableAdd(scene, bg, 0.0f, 0.0f, 2560.0f, 1440.0f, bgCol);
+    ComponentRenderableAdd(scene,
+                           bg,
+                           0.0f,
+                           0.0f,
+                           1080.0f,
+                           1080.0f,
+                           bgCol,
+                           backgroundTex);
 
-    lcEntity_t playerPaddle = PaddleCreate(scene, -540.0f, 0.0f, fgCol);
-    lcEntity_t computerPaddle = PaddleCreate(scene, +540.0f, 0.0f, fgCol);
-    lcEntity_t ball = BallCreate(scene, 0.0f, 0.0f, fgCol);
+    lcEntity_t playerPaddle = PaddleCreate(scene, -540.0f, 0.0f, fgCol, paddleTex);
+    lcEntity_t computerPaddle = PaddleCreate(scene, +540.0f, 0.0f, fgCol, paddleTex);
+    lcEntity_t ball = BallCreate(scene, 0.0f, 0.0f, fgCol, ballTex);
 
     /* setup physics */
     lcSubset_t physics = lcSubsetCreate();
@@ -241,7 +247,7 @@ lcClientMain(int argc,
     double previousTime = lcGetTime();
     double time = lcGetTime();
     int count = 0;
-    while (running)
+    while (g_running)
     {
         previousTime = time;
         time = lcGetTime();

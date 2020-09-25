@@ -2,17 +2,24 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 August 2020
+  Updated : 25 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#if defined(LC_PLATFORM_LINUX)
-#include "Platform/LinuxGL.c"
-#elif defined(LC_PLATFORM_WINDOWS)
-#include "Platform/WindowsGL.c"
-#else
-#error "Platform macro not defined"
-#endif
+int
+main(int argc,
+     char **argv)
+{
+    lcGLLoad();
+    lcInputInit();
+    lcMessageSystemInit();
+    lcLogInit();
+
+    lcClientMain(argc, argv);
+
+    lcLogDestroy();
+    lcMessageSystemDestroy();
+}
 
 /*
 MIT License

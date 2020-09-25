@@ -2,44 +2,43 @@
 
 set -e
 
-build_and_run_lcddl(){
-    echo -e "\033[35mBuilding lcddl...\033[0m"
-    pushd lcddl
-    gcc -O2 lcddl.c lcddlUserLayer.c -o ../bin/lcddl
-    popd
-    echo -e "\033[32mDone!\n\033[0m"
-
-    echo -e "\033[35mRunning lcddl...\033[0m"
-    bin/lcddl Client/Assets/Meta/*.lcd
-    echo -e "\033[32mDone!\n\033[0m"
-}
-
-build_debug(){
-    build_and_run_lcddl
-    echo -e "\033[35mBuilding lucerna...\033[0m"
-    gcc -IEngine/Vendor/glad/include -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -DLC_DEBUG  -LEngine/Vendor/glad/bin -std=c89 -g Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
-    echo -e "\033[32mDone!\n\033[0m"
-}
-
-build_release(){
-    build_and_run_lcddl
-    echo -e "\033[35mBuilding lucerna...\033[0m"
-    gcc -IEngine/Vendor/glad/include -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -DLC_RELEASE -LEngine/Vendor/glad/bin -std=c89 -O2 Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
-    echo -e "\033[32mDone!\n\033[0m"
-}
-
+TIMEFORMAT="took %Rs"
 
 if [ "$1" == "Debug" ]; then
-    TIMEFORMAT="compiled in %Rs"; time build_debug
+    FLAGS="-DLC_DEBUG -g"
 elif [ "$1" == "Release" ]; then
-    TIMEFORMAT="compiled in %Rs"; time build_release
+    FLAGS="-DLC_RELEASE -O2"
 else
-    echo -e "\033[31mInvalid configuration.\033[0m"
-    echo -e "\033[31mUsage:\033[0m"
-    echo -e "\033[31m    ./BuildGCC Debug\033[0m"
-    echo -e "\033[31m        or\033[0m"
-    echo -e "\033[31m    ./BuildGCC Release\033[0m"
+    printf "\033[31mInvalid configuration.\033[0m\n"
+    printf "\033[31mUsage:\033[0m"
+    printf "\033[31m    ./BuildGCC Debug\033[0m\n"
+    printf "\033[31m        or\033[0m\n"
+    printf "\033[31m    ./BuildGCC Release\033[0m\n"
     exit
 fi
+
+printf "\033[35mBuilding lcddl...\033[0m\n"
+pushd lcddl > /dev/null
+time gcc -O2 lcddl.c lcddlUserLayer.c -o ../bin/lcddl
+popd > /dev/null
+printf "\033[32mDone!\n\033[0m\n"
+
+printf "\033[35mRunning lcddl...\033[0m\n"
+time bin/lcddl Client/Assets/Meta/*.lcd
+printf "\033[32mDone!\n\033[0m\n"
+
+printf "\033[35mBuilding asset packer...\033[0m\n"
+pushd AssetPacker > /dev/null
+time gcc -O2 lcap.c -lm -o ../bin/AssetPacker
+popd > /dev/null
+printf "\033[32mDone!\n\033[0m\n"
+
+printf "\033[35mPacking assets...\033[0m\n"
+time bin/AssetPacker Client/Assets/Meta/*.asset -o bin/assets.data
+printf "\033[32mDone!\n\033[0m\n"
+
+printf "\033[35mBuilding lucerna...\033[0m\n"
+time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -std=c89 $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
+printf "\033[32mDone!\n\033[0m\n"
 
 exit 0

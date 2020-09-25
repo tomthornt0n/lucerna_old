@@ -6,7 +6,7 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-static struct
+struct
 {
     char *UniformName;
     GLint UniformLocation;

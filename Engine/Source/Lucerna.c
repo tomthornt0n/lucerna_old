@@ -1,5 +1,15 @@
 #include "Lucerna.h"
 
+#include <ctype.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <immintrin.h>
+
 #if defined(LC_PLATFORM_LINUX)
 #include "GL/gl.h"
 #include "X11/Xlib.h"
@@ -12,20 +22,17 @@
 #error "Platform macro not defined"
 #endif
 
-#include "Core/Log.c"
-#include "Core/GL.c"
-#include "Core/Time.c"
-#include "Core/Messages.c"
-#include "Core/Loader.c"
-#include "Core/Input.c"
-#include "Core/Window.c"
-#include "Core/Math.c"
-
-#include "ECS/ECS.c"
-#include "ECS/EcsFunctions.gen.c"
-
-#include "Renderer/Shader.c"
-#include "Renderer/Camera.c"
-#include "Renderer/Renderer.c"
-
-#include "Core/EntryPoint.c"
+#include "Log.c"
+#include "GL.c"
+#include "Time.c"
+#include "Messages.c"
+#include "Input.c"
+#include "Window.c"
+#include "Math.c"
+#include "ECS.c"
+#include "EcsFunctions.gen.c"
+#include "Shader.c"
+#include "Camera.c"
+#include "AssetLoader.c"
+#include "Renderer.c"
+#include "EntryPoint.c"

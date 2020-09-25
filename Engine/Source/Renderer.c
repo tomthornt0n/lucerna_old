@@ -2,11 +2,11 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 24 August 2020
+  Updated : 25 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-static struct
+struct
 {
     lcScene_t *BoundScene;
     uint32_t VertexArray, VertexBuffer, IndexBuffer;
@@ -18,34 +18,44 @@ static struct
                      0,                                                        \
                      lcRenderer.BoundScene->RenderableCount *                  \
                      sizeof(ComponentRenderable),                              \
-                    lcRenderer.BoundScene->ComponentRenderable);
+                     lcRenderer.BoundScene->ComponentRenderable);
 
 void
 ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
                        float x, float y,
                        float width, float height,
-                       float *colour)
+                       float *colour,
+                       lcAssetSprite_t *texture)
 {
     uint32_t index = scene->RenderableCount;
 
-    scene->EntitySignatures[index] |= COMPONENT_RENDERABLE;
+    scene->EntitySignatures[entity] |= COMPONENT_RENDERABLE;
+
     scene->ComponentRenderable[index].Position1[0] = x - width;
     scene->ComponentRenderable[index].Position1[1] = y - height;
+    scene->ComponentRenderable[index].TexCoords1[0] = texture->Min[0];
+    scene->ComponentRenderable[index].TexCoords1[1] = texture->Min[1];
     memcpy(&(scene->ComponentRenderable[index].Colour1),
            colour, 4 * sizeof(float));
 
     scene->ComponentRenderable[index].Position2[0] = x + width;
     scene->ComponentRenderable[index].Position2[1] = y - height;
+    scene->ComponentRenderable[index].TexCoords2[0] = texture->Max[0];
+    scene->ComponentRenderable[index].TexCoords2[1] = texture->Min[1];
     memcpy(&(scene->ComponentRenderable[index].Colour2),
            colour, 4 * sizeof(float));
 
     scene->ComponentRenderable[index].Position3[0] = x + width;
     scene->ComponentRenderable[index].Position3[1] = y + height;
+    scene->ComponentRenderable[index].TexCoords3[0] = texture->Max[0];
+    scene->ComponentRenderable[index].TexCoords3[1] = texture->Max[1];
     memcpy(&(scene->ComponentRenderable[index].Colour3),
            colour, 4 * sizeof(float));
 
     scene->ComponentRenderable[index].Position4[0] = x - width;
     scene->ComponentRenderable[index].Position4[1] = y + height;
+    scene->ComponentRenderable[index].TexCoords4[0] = texture->Min[0];
+    scene->ComponentRenderable[index].TexCoords4[1] = texture->Max[1];
     memcpy(&(scene->ComponentRenderable[index].Colour4),
            colour, 4 * sizeof(float));
 
@@ -56,14 +66,14 @@ ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
     }
 
     scene->EntityToRenderable[entity] = index;
-    ++scene->RenderableCount;
+    ++(scene->RenderableCount);
 }
 
 void
 ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
                         float xOffset, float yOffset)
 {
-    if((scene->EntitySignatures[entity] & COMPONENT_RENDERABLE) == 0)
+    if (!(scene->EntitySignatures[entity] & COMPONENT_RENDERABLE))
     {
         /* NOTE(tbt): Early exit if the renderable component is not in use */
         return;
@@ -111,7 +121,7 @@ lcRendererInit(void)
                            2,
                            GL_FLOAT,
                            GL_FALSE,
-                           6 * sizeof(float),
+                           8 * sizeof(float),
                            NULL);
 
     gl.EnableVertexAttribArray(1);
@@ -119,8 +129,16 @@ lcRendererInit(void)
                            4,
                            GL_FLOAT,
                            GL_FALSE,
-                           6 * sizeof(float),
+                           8 * sizeof(float),
                            (const void*)(2 * sizeof(float)));
+
+    gl.EnableVertexAttribArray(2);
+    gl.VertexAttribPointer(2,
+                           2,
+                           GL_FLOAT,
+                           GL_FALSE,
+                           8 * sizeof(float),
+                           (const void*)(6 * sizeof(float)));
 
     gl.BufferData(GL_ARRAY_BUFFER,
                   LC_MAX_ENTITIES * sizeof(ComponentRenderable), NULL,
@@ -151,7 +169,9 @@ lcRendererInit(void)
 
     free(indices);
 
-    gl.ClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    lcLoadMasterTexture();
+
+    gl.ClearColor(1.0f, 0.0f, 1.0f, 0.0f);
 
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
 }
@@ -179,6 +199,10 @@ lcRendererBindShader(lcShader_t shader)
     lcCamera.UniformLocation = gl.GetUniformLocation(shader,
                                                      lcCamera.UniformName);
 
+    if (lcCamera.UniformLocation == -1)
+    {
+        LC_CORE_LOG_WARN("Uniform 'u_ViewProjectionMatrix' does not exist!");
+    }
     gl.UniformMatrix4fv(lcCamera.UniformLocation,
                         1, GL_FALSE,
                         lcCamera.ViewProjectionMatrix);
@@ -194,7 +218,7 @@ lcRendererRenderToWindow(void)
     {
         lcRendererBufferData();
     }
-
+    
     gl.DrawElements(GL_TRIANGLES,
                     lcRenderer.BoundScene->RenderableCount * 6,
                     GL_UNSIGNED_INT, NULL);

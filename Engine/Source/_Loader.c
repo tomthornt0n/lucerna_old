@@ -213,19 +213,27 @@ lcPNGComputeHuffman(uint32_t symbolCount,
         uint32_t codeLengthInBits = symbolCodeLength[i];
         if (!codeLengthInBits) continue;
 
+        LC_ASSERT(codeLengthInBits < LC_ARRAY_COUNT(nextUnusedCode),
+                  "Error computing PNG huffman.");
+
         uint32_t code = nextUnusedCode[codeLengthInBits]++;
 
-        LC_ASSERT(result->MaxCodeLengthInBits > codeLengthInBits,
-                  "Error decoding PNG huffman. "
-                  "MaxCodeLengthInBits was %u but codeLengthInBits was %u",
-                  result->MaxCodeLengthInBits,
-                  codeLengthInBits);
         uint32_t entryCount = 1 << (result->MaxCodeLengthInBits -
                                     codeLengthInBits);
-        LC_CORE_LOG_DEBUG("%u", entryCount);
+
         for(j = 0; j < entryCount; ++j)
         {
-            uint32_t index = (j << codeLengthInBits) | code;
+            /* uint32_t index = (j << codeLengthInBits) | code; */
+            uint32_t index = 0;
+            int k;
+            for (k = 0; k <= result->MaxCodeLengthInBits / 2; ++k)
+            {
+                uint32_t inv = (result->MaxCodeLengthInBits - (k + 1));
+                uint32_t baseIndex = (j << codeLengthInBits) | code;
+                index |= ((baseIndex >> k) & 0x1) << inv;
+                index |= ((baseIndex >> inv) & 0x1) << k;
+            }
+
             lcPNGHuffmanEntry_t *entry = result->Entries + index;
             entry->BitsUsed = (uint16_t)codeLengthInBits;
             entry->Symbol = (uint16_t)(i + offset);
@@ -413,7 +421,7 @@ lcImage_t lcLoaderParsePNG(char *filename)
                         11, 4, 12, 3, 13, 2, 14, 1, 15
                     };
                     
-                    uint32_t hclenTable[arraycount(hclenSwizzle)] = {0};
+                    uint32_t hclenTable[LC_ARRAY_COUNT(hclenSwizzle)] = {0};
 
                     int i;
 
@@ -424,7 +432,7 @@ lcImage_t lcLoaderParsePNG(char *filename)
                     }
 
                     lcPNGHuffman_t dictionaryHuffman = lcPNGHuffmanCreate(7);
-                    lcPNGComputeHuffman(arraycount(hclenSwizzle),
+                    lcPNGComputeHuffman(LC_ARRAY_COUNT(hclenSwizzle),
                                         hclenTable,
                                         0,
                                         &dictionaryHuffman);
@@ -466,7 +474,7 @@ lcImage_t lcLoaderParsePNG(char *filename)
 
                         while (repeatCount--)
                         {
-                            litLenDistTable[litLenCount++] = repeatValue; 
+                            litLenDistTable[litLenCount++] = repeatValue;
                         }
                     }
 

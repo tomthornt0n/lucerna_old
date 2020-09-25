@@ -2,12 +2,13 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 19 August 2020
+  Updated : 25 Sep 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 typedef void         (*glAttachShaderProc) (GLuint, GLuint);
 typedef void         (*glBindBufferProc) (GLenum, GLuint);
+typedef void         (*glBindTextureProc) (GLenum, GLuint);
 typedef void         (*glBindVertexArrayProc) (GLuint);
 typedef void         (*glBufferDataProc) (GLenum, GLsizeiptr, const void *, GLenum);
 typedef void         (*glBufferSubDataProc) (GLenum, GLintptr, GLsizeiptr, const void *);
@@ -24,6 +25,7 @@ typedef void         (*glDetachShaderProc) (GLuint, GLuint);
 typedef void         (*glDrawElementsProc) (GLenum, GLsizei, GLenum, const void *);
 typedef void         (*glEnableVertexAttribArrayProc) (GLuint);
 typedef void         (*glGenBuffersProc) (GLsizei, GLuint *);
+typedef void         (*glGenTexturesProc) (GLsizei, GLuint *);
 typedef void         (*glGenVertexArraysProc) (GLsizei, GLuint *);
 typedef void         (*glGetProgramivProc) (GLuint, GLenum, GLint *);
 typedef GLint        (*glGetUniformLocationProc) (GLuint, const GLchar *);
@@ -31,6 +33,8 @@ typedef void         (*glGetShaderInfologProc) (GLuint, GLsizei, GLsizei *, GLch
 typedef void         (*glGetShaderivProc) (GLuint, GLenum, GLint *);
 typedef void         (*glLinkProgramProc) (GLuint);
 typedef void         (*glShaderSourceProc) (GLuint, GLsizei, const GLchar * const *, const GLint *);
+typedef void         (*glTexImage2DProc) (GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
+typedef void         (*glTexParameteriProc) (GLenum, GLenum, GLint);
 typedef void         (*glUniformMatrix4fvProc) (GLint, GLsizei, GLboolean, const GLfloat *);
 typedef void         (*glUseProgramProc) (GLuint);
 typedef void         (*glVertexAttribPointerProc) (GLuint, GLint, GLenum, GLboolean, GLsizei, const void *);
@@ -53,6 +57,7 @@ struct
 {
     glAttachShaderProc            AttachShader;
     glBindBufferProc              BindBuffer;
+    glBindTextureProc             BindTexture;
     glBindVertexArrayProc         BindVertexArray;
     glBufferDataProc              BufferData;
     glBufferSubDataProc           BufferSubData;
@@ -69,6 +74,7 @@ struct
     glDrawElementsProc            DrawElements;
     glEnableVertexAttribArrayProc EnableVertexAttribArray;
     glGenBuffersProc              GenBuffers;
+    glGenTexturesProc             GenTextures;
     glGenVertexArraysProc         GenVertexArrays;
     glGetProgramivProc            GetProgramiv;
     glGetUniformLocationProc      GetUniformLocation;
@@ -76,6 +82,8 @@ struct
     glGetShaderivProc             GetShaderiv;
     glLinkProgramProc             LinkProgram;
     glShaderSourceProc            ShaderSource;
+    glTexImage2DProc              TexImage2D;
+    glTexParameteriProc           TexParameteri;
     glUniformMatrix4fvProc        UniformMatrix4fv;
     glUseProgramProc              UseProgram;
     glVertexAttribPointerProc     VertexAttribPointer;
@@ -130,51 +138,57 @@ lcGLIsExtensionSupported(Display *display,
 void
 lcGLLoad(void)
 {
-    gl.AttachShader            = (glAttachShaderProc           )glXGetProcAddress("glAttachShader");
-    gl.BindBuffer              = (glBindBufferProc             )glXGetProcAddress("glBindBuffer");
-    gl.BindVertexArray         = (glBindVertexArrayProc        )glXGetProcAddress("glBindVertexArray");
-    gl.BufferData              = (glBufferDataProc             )glXGetProcAddress("glBufferData");
-    gl.BufferSubData           = (glBufferSubDataProc          )glXGetProcAddress("glBufferSubData");
-    gl.Clear                   = (glClearProc                  )glXGetProcAddress("glClear");
-    gl.ClearColor              = (glClearColorProc             )glXGetProcAddress("glClearColor");
-    gl.CompileShader           = (glCompileShaderProc          )glXGetProcAddress("glCompileShader");
-    gl.CreateProgram           = (glCreateProgramProc          )glXGetProcAddress("glCreateProgram");
-    gl.CreateShader            = (glCreateShaderProc           )glXGetProcAddress("glCreateShader");
-    gl.DeleteBuffers           = (glDeleteBuffersProc          )glXGetProcAddress("glDeleteBuffers");
-    gl.DeleteProgram           = (glDeleteProgramProc          )glXGetProcAddress("glDeleteProgram");
-    gl.DeleteShader            = (glDeleteShaderProc           )glXGetProcAddress("glDeleteShader");
-    gl.DeleteVertexArrays      = (glDeleteVertexArraysProc     )glXGetProcAddress("glDeleteVertexArrays");
-    gl.DetachShader            = (glDetachShaderProc           )glXGetProcAddress("glDetachShader");
-    gl.DrawElements            = (glDrawElementsProc           )glXGetProcAddress("glDrawElements");
-    gl.EnableVertexAttribArray = (glEnableVertexAttribArrayProc)glXGetProcAddress("glEnableVertexAttribArray");
-    gl.GenBuffers              = (glGenBuffersProc             )glXGetProcAddress("glGenBuffers");
-    gl.GenVertexArrays         = (glGenVertexArraysProc        )glXGetProcAddress("glGenVertexArrays");
-    gl.GetProgramiv            = (glGetProgramivProc           )glXGetProcAddress("glGetProgramiv");
-    gl.GetUniformLocation      = (glGetUniformLocationProc     )glXGetProcAddress("glGetUniformLocation");
-    gl.GetShaderInfoLog        = (glGetShaderInfologProc       )glXGetProcAddress("glGetShaderInfoLog");
-    gl.GetShaderiv             = (glGetShaderivProc            )glXGetProcAddress("glGetShaderiv");
-    gl.LinkProgram             = (glLinkProgramProc            )glXGetProcAddress("glLinkProgram");
-    gl.ShaderSource            = (glShaderSourceProc           )glXGetProcAddress("glShaderSource");
-    gl.UniformMatrix4fv        = (glUniformMatrix4fvProc       )glXGetProcAddress("glUniformMatrix4fv");
-    gl.UseProgram              = (glUseProgramProc             )glXGetProcAddress("glUseProgram");
-    gl.VertexAttribPointer     = (glVertexAttribPointerProc    )glXGetProcAddress("glVertexAttribPointer");
-    gl.Viewport                = (glViewportProc               )glXGetProcAddress("glViewport");
-    gl.XChooseFBConfig         = (glXChooseFBConfigProc        )glXGetProcAddress("glXChooseFBConfig");
-    gl.XCreateNewContext       = (glXCreateNewContextProc      )glXGetProcAddress("glXCreateNewContext");
-    gl.XCreateWindow           = (glXCreateWindowProc          )glXGetProcAddress("glXCreateWindow");
-    gl.XDestroyContext         = (glXDestroyContextProc        )glXGetProcAddress("glXDestroyContext");
-    gl.XDestroyWindow          = (glXDestroyWindowProc         )glXGetProcAddress("glXDestroyWindow");
-    gl.XGetFBConfigAttrib      = (glXGetFBConfigAttribProc     )glXGetProcAddress("glXGetFBConfigAttrib");
-    gl.XMakeContextCurrent     = (glXMakeContextCurrentProc    )glXGetProcAddress("glXMakeContextCurrent");
-    gl.XQueryExtensionsString  = (glXQueryExtensionsStringProc )glXGetProcAddress("glXQueryExtensionsString");
-    gl.XSwapBuffers            = (glXSwapBuffersProc           )glXGetProcAddress("glXSwapBuffers");
+    gl.AttachShader            = (glAttachShaderProc           )glXGetProcAddress((const GLubyte *)"glAttachShader");
+    gl.BindBuffer              = (glBindBufferProc             )glXGetProcAddress((const GLubyte *)"glBindBuffer");
+    gl.BindTexture             = (glBindTextureProc            )glXGetProcAddress((const GLubyte *)"glBindTexture");
+    gl.BindVertexArray         = (glBindVertexArrayProc        )glXGetProcAddress((const GLubyte *)"glBindVertexArray");
+    gl.BufferData              = (glBufferDataProc             )glXGetProcAddress((const GLubyte *)"glBufferData");
+    gl.BufferSubData           = (glBufferSubDataProc          )glXGetProcAddress((const GLubyte *)"glBufferSubData");
+    gl.Clear                   = (glClearProc                  )glXGetProcAddress((const GLubyte *)"glClear");
+    gl.ClearColor              = (glClearColorProc             )glXGetProcAddress((const GLubyte *)"glClearColor");
+    gl.CompileShader           = (glCompileShaderProc          )glXGetProcAddress((const GLubyte *)"glCompileShader");
+    gl.CreateProgram           = (glCreateProgramProc          )glXGetProcAddress((const GLubyte *)"glCreateProgram");
+    gl.CreateShader            = (glCreateShaderProc           )glXGetProcAddress((const GLubyte *)"glCreateShader");
+    gl.DeleteBuffers           = (glDeleteBuffersProc          )glXGetProcAddress((const GLubyte *)"glDeleteBuffers");
+    gl.DeleteProgram           = (glDeleteProgramProc          )glXGetProcAddress((const GLubyte *)"glDeleteProgram");
+    gl.DeleteShader            = (glDeleteShaderProc           )glXGetProcAddress((const GLubyte *)"glDeleteShader");
+    gl.DeleteVertexArrays      = (glDeleteVertexArraysProc     )glXGetProcAddress((const GLubyte *)"glDeleteVertexArrays");
+    gl.DetachShader            = (glDetachShaderProc           )glXGetProcAddress((const GLubyte *)"glDetachShader");
+    gl.DrawElements            = (glDrawElementsProc           )glXGetProcAddress((const GLubyte *)"glDrawElements");
+    gl.EnableVertexAttribArray = (glEnableVertexAttribArrayProc)glXGetProcAddress((const GLubyte *)"glEnableVertexAttribArray");
+    gl.GenBuffers              = (glGenBuffersProc             )glXGetProcAddress((const GLubyte *)"glGenBuffers");
+    gl.GenTextures             = (glGenTexturesProc            )glXGetProcAddress((const GLubyte *)"glGenTextures");
+    gl.GenVertexArrays         = (glGenVertexArraysProc        )glXGetProcAddress((const GLubyte *)"glGenVertexArrays");
+    gl.GetProgramiv            = (glGetProgramivProc           )glXGetProcAddress((const GLubyte *)"glGetProgramiv");
+    gl.GetUniformLocation      = (glGetUniformLocationProc     )glXGetProcAddress((const GLubyte *)"glGetUniformLocation");
+    gl.GetShaderInfoLog        = (glGetShaderInfologProc       )glXGetProcAddress((const GLubyte *)"glGetShaderInfoLog");
+    gl.GetShaderiv             = (glGetShaderivProc            )glXGetProcAddress((const GLubyte *)"glGetShaderiv");
+    gl.LinkProgram             = (glLinkProgramProc            )glXGetProcAddress((const GLubyte *)"glLinkProgram");
+    gl.ShaderSource            = (glShaderSourceProc           )glXGetProcAddress((const GLubyte *)"glShaderSource");
+    gl.TexImage2D              = (glTexImage2DProc             )glXGetProcAddress((const GLubyte *)"glTexImage2D");
+    gl.TexParameteri           = (glTexParameteriProc          )glXGetProcAddress((const GLubyte *)"glTexParameteri");
+    gl.UniformMatrix4fv        = (glUniformMatrix4fvProc       )glXGetProcAddress((const GLubyte *)"glUniformMatrix4fv");
+    gl.UseProgram              = (glUseProgramProc             )glXGetProcAddress((const GLubyte *)"glUseProgram");
+    gl.VertexAttribPointer     = (glVertexAttribPointerProc    )glXGetProcAddress((const GLubyte *)"glVertexAttribPointer");
+    gl.Viewport                = (glViewportProc               )glXGetProcAddress((const GLubyte *)"glViewport");
+    gl.XChooseFBConfig         = (glXChooseFBConfigProc        )glXGetProcAddress((const GLubyte *)"glXChooseFBConfig");
+    gl.XCreateNewContext       = (glXCreateNewContextProc      )glXGetProcAddress((const GLubyte *)"glXCreateNewContext");
+    gl.XCreateWindow           = (glXCreateWindowProc          )glXGetProcAddress((const GLubyte *)"glXCreateWindow");
+    gl.XDestroyContext         = (glXDestroyContextProc        )glXGetProcAddress((const GLubyte *)"glXDestroyContext");
+    gl.XDestroyWindow          = (glXDestroyWindowProc         )glXGetProcAddress((const GLubyte *)"glXDestroyWindow");
+    gl.XGetFBConfigAttrib      = (glXGetFBConfigAttribProc     )glXGetProcAddress((const GLubyte *)"glXGetFBConfigAttrib");
+    gl.XMakeContextCurrent     = (glXMakeContextCurrentProc    )glXGetProcAddress((const GLubyte *)"glXMakeContextCurrent");
+    gl.XQueryExtensionsString  = (glXQueryExtensionsStringProc )glXGetProcAddress((const GLubyte *)"glXQueryExtensionsString");
+    gl.XSwapBuffers            = (glXSwapBuffersProc           )glXGetProcAddress((const GLubyte *)"glXSwapBuffers");
     
-    gl.XSwapIntervalEXT        = (glXSwapIntervalEXTProc       )glXGetProcAddress("glXSwapIntervalEXT");
-    gl.XSwapIntervalMESA       = (glXSwapIntervalMESAProc      )glXGetProcAddress("glXSwapIntervalMESA");
-    gl.XSwapIntervalSGI        = (glXSwapIntervalSGIProc       )glXGetProcAddress("glXSwapIntervalSGI");
+    gl.XSwapIntervalEXT        = (glXSwapIntervalEXTProc       )glXGetProcAddress((const GLubyte *)"glXSwapIntervalEXT");
+    gl.XSwapIntervalMESA       = (glXSwapIntervalMESAProc      )glXGetProcAddress((const GLubyte *)"glXSwapIntervalMESA");
+    gl.XSwapIntervalSGI        = (glXSwapIntervalSGIProc       )glXGetProcAddress((const GLubyte *)"glXSwapIntervalSGI");
     
     if (!gl.AttachShader            ||
         !gl.BindBuffer              ||
+        !gl.BindBuffer              ||
+        !gl.BindTexture             ||
         !gl.BindVertexArray         ||
         !gl.BufferData              ||
         !gl.BufferSubData           ||
@@ -191,6 +205,7 @@ lcGLLoad(void)
         !gl.DrawElements            ||
         !gl.EnableVertexAttribArray ||
         !gl.GenBuffers              ||
+        !gl.GenTextures             ||
         !gl.GenVertexArrays         ||
         !gl.GetProgramiv            ||
         !gl.GetUniformLocation      ||
@@ -198,6 +213,8 @@ lcGLLoad(void)
         !gl.GetShaderiv             ||
         !gl.LinkProgram             ||
         !gl.ShaderSource            ||
+        !gl.TexImage2D              ||
+        !gl.TexParameteri           ||
         !gl.UniformMatrix4fv        ||
         !gl.UseProgram              ||
         !gl.VertexAttribPointer     ||

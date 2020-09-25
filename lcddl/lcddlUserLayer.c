@@ -95,7 +95,7 @@ void GenerateComponent(lcddlNode_t *component)
     fprintf(stderr, "        Creating component array...\n");
     fprintf(ComponentArraysFile, "    %s ", component->Name);
     fWriteStringAsTitleCase(ComponentArraysFile, component->Name);
-    fprintf(ComponentArraysFile, "[%u];\n", component->IndirectionLevel);
+    fprintf(ComponentArraysFile, "[LC_MAX_ENTITIES];\n");
 
     fprintf(stderr, "        Generating add function...\n\n");
 
@@ -197,16 +197,16 @@ void lcddlUserInitCallback(void)
             "\n    \033[34mInitialising LCDDL...\033[0m\n\n");
 
     ComponentsFile = fopen(
-            "Engine/Source/ECS/Components.gen.h",
-            "w");
+        "Engine/Include/Components.gen.h",
+        "w");
     FunctionsFile = fopen(
-        "Engine/Source/ECS/EcsFunctions.gen.c",
+        "Engine/Source/EcsFunctions.gen.c",
         "w");
     FunctionsHeaderFile = fopen(
-        "Engine/Source/ECS/EcsFunctions.gen.h",
+        "Engine/Include/EcsFunctions.gen.h",
         "w");
     ComponentArraysFile = fopen(
-        "Engine/Source/ECS/ComponentArrays.gen.h",
+        "Engine/Include/ComponentArrays.gen.h",
         "w");
 
     if (!ComponentArraysFile ||
@@ -236,7 +236,7 @@ void lcddlUserTopLevelCallback(lcddlNode_t *node)
 
 void lcddlUserCleanupCallback(void)
 {
-    fprintf(stderr, "    \033[34mFinishing up...\n\n");
+    fprintf(stderr, "    \033[34mFinishing up...\n\n\033[0m");
 
     fprintf(ComponentsFile, "#endif\n");
     fclose(ComponentsFile);

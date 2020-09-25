@@ -5,3 +5,7 @@
 **.gen.c
 **.gen.h
 
+#clangd
+compile_flags.txt
+TexturePacker/compile_flags.txt
+

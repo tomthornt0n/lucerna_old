@@ -2,24 +2,18 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 15 August 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-int
-main(int argc,
-     char **argv)
-{
-    lcGLLoad();
-    lcInputInit();
-    lcMessageSystemInit();
-    lcLogInit();
 
-    lcClientMain(argc, argv);
-
-    lcLogDestroy();
-    lcMessageSystemDestroy();
-}
+#if defined(LC_PLATFORM_LINUX)
+#include "Platform/Linux/Time.c"
+#elif defined(LC_PLATFORM_WINDOWS)
+#include "Platform/Windows/Time.c"
+#else
+#error "Platform macro not defined"
+#endif
 
 /*
 MIT License

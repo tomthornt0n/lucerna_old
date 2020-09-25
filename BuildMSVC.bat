@@ -1,5 +1,8 @@
 @echo off
 
+ECHO Windows builds not currently supported
+EXIT /B %ERRORLEVEL%
+
 IF "%1"=="Debug" GOTO :DEBUG_BUILD
 IF "%1"=="Release" GOTO :RELEASE_BUILD
 
@@ -20,7 +23,7 @@ EXIT /B %ERRORLEVEL%
 
 :BUILD_LCDDL
 PUSHD lcddl
-cl /nologo lcddl.c lcddlUserLayer.c /link /out:../bin/lcddl.exe
+cl /nologo lcddl.c lcddlUserLayer.c /link /out:../lcddl.exe
 DEL lcddl.obj
 DEL lcddlUserLayer.obj
 POPD

@@ -7,9 +7,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #if defined(LC_PLATFORM_LINUX)
-#include "Platform/LinuxWindow.c"
+#include "Platform/Linux/GL.c"
 #elif defined(LC_PLATFORM_WINDOWS)
-#include "Platform/WindowsWindow.c"
+#include "Platform/Windows/GL.c"
 #else
 #error "Platform macro not defined"
 #endif
