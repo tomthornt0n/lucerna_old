@@ -38,7 +38,7 @@ time bin/AssetPacker Client/Assets/Meta/*.asset -o bin/assets.data
 printf "\033[32mDone!\n\033[0m\n"
 
 printf "\033[35mBuilding lucerna...\033[0m\n"
-time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -std=c89 $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
+time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -std=c99 -Wall -pedantic $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
 printf "\033[32mDone!\n\033[0m\n"
 
 exit 0

@@ -6,6 +6,10 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
+typedef void ( *PFNGLXDESTROYCONTEXTPROC) (Display *dpy, GLXContext ctx);
+typedef const char *( *PFNGLXQUERYEXTENSIONSSTRINGPROC) (Display *dpy, int screen);
+typedef void ( *PFNGLXSWAPBUFFERSPROC) (Display *dpy, GLXDrawable drawable);
+
 struct
 {
     PFNGLATTACHSHADERPROC            AttachShader;
@@ -29,6 +33,7 @@ struct
     PFNGLGENBUFFERSPROC              GenBuffers;
     PFNGLGENTEXTURESPROC             GenTextures;
     PFNGLGENVERTEXARRAYSPROC         GenVertexArrays;
+    PFNGLGETERRORPROC                GetError;
     PFNGLGETPROGRAMIVPROC            GetProgramiv;
     PFNGLGETUNIFORMLOCATIONPROC      GetUniformLocation;
     PFNGLGETSHADERINFOLOGPROC        GetShaderInfoLog;
@@ -112,6 +117,7 @@ lcGLLoad(void)
     gl.GenBuffers              = (PFNGLGENBUFFERSPROC             )glXGetProcAddress((const GLubyte *)"glGenBuffers");
     gl.GenTextures             = (PFNGLGENTEXTURESPROC            )glXGetProcAddress((const GLubyte *)"glGenTextures");
     gl.GenVertexArrays         = (PFNGLGENVERTEXARRAYSPROC        )glXGetProcAddress((const GLubyte *)"glGenVertexArrays");
+    gl.GetError                = (PFNGLGETERRORPROC               )glXGetProcAddress((const GLubyte *)"glGetError");
     gl.GetProgramiv            = (PFNGLGETPROGRAMIVPROC           )glXGetProcAddress((const GLubyte *)"glGetProgramiv");
     gl.GetUniformLocation      = (PFNGLGETUNIFORMLOCATIONPROC     )glXGetProcAddress((const GLubyte *)"glGetUniformLocation");
     gl.GetShaderInfoLog        = (PFNGLGETSHADERINFOLOGPROC       )glXGetProcAddress((const GLubyte *)"glGetShaderInfoLog");

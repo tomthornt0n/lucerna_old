@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 21 August 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
   Notes   : Mouse functions return placeholder values for now while the custom
             platform layer is a work in progress.
@@ -17,7 +17,7 @@ lcInputInit(void)
 {
     memset(lcInputIsKeyPressed, false, 256);
     memset(lcInputIsMouseButtonPressed, false, 8);
-    memset(lcInputMousePosition, 0, 2);
+    memset(lcInputMousePosition, 0, 2 * sizeof(int16_t));
 }
 
 /*

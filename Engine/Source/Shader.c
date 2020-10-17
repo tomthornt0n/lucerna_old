@@ -46,7 +46,7 @@ lcShaderCreate(char *vertexPath,
 
     vertexID = gl.CreateShader(GL_VERTEX_SHADER);
 
-    gl.ShaderSource(vertexID, 1, &vertexSrc, NULL);
+    gl.ShaderSource(vertexID, 1, (const char * const *)&vertexSrc, NULL);
     gl.CompileShader(vertexID);
 
     int isCompiled;
@@ -68,7 +68,7 @@ lcShaderCreate(char *vertexPath,
     
     fragmentID = gl.CreateShader(GL_FRAGMENT_SHADER);
 
-    gl.ShaderSource(fragmentID, 1, &fragmentSrc, NULL);
+    gl.ShaderSource(fragmentID, 1, (const char * const *)&fragmentSrc, NULL);
 
     gl.CompileShader(fragmentID);
 

@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -58,6 +58,8 @@ lcWindowInit(char *title,
              uint32_t width, uint32_t height,
              bool vSyncEnabled)
 {
+    lcWindow.Width = width;
+    lcWindow.Height = height;
 
     lcWindow.Display = XOpenDisplay(0);
     LC_ASSERT(lcWindow.Display, "Could not open X display");
@@ -306,6 +308,8 @@ lcWindowUpdate(void)
                 {
                     lcWindow.Width = config->width;
                     lcWindow.Height = config->height;
+
+                    LC_CORE_LOG_DEBUG("%u x %u", lcWindow.Width, lcWindow.Height);
 
                     lcMessageEmit(lcWindowResizeMessageCreate(lcWindow.Width,
                                                               lcWindow.Height));
