@@ -211,7 +211,7 @@ lcClientConfig()
 
     strcpy(config.WindowTitle, "Lucerna test!");
     config.WindowDimensions[0] = 1920;
-    config.WindowDimensions[1] = 1080;
+    config.WindowDimensions[1] = 1017;
     config.CameraPosition[0] = 0.0f;
     config.CameraPosition[1] = 1.0f;
     config.VSyncEnabled = true;
@@ -272,29 +272,29 @@ lcClientMain(int argc,
     lcSubsetRefresh(scene, &physics);
 
     /* main loop */
-    double frameTime;
-    double previousTime = lcGetTime();
-    double time = lcGetTime();
+    double frameTimeInSeconds;
+    uint64_t previousTime = lcClockGetTime();
+    uint64_t time = lcClockGetTime();
     int count = 0;
     while (g_running)
     {
         previousTime = time;
-        time = lcGetTime();
-        frameTime = time - previousTime;
+        time = lcClockGetTime();
+        frameTimeInSeconds = (time - previousTime) / 1000000.0;
 
-        if (count++ == 7000)
+        if (count++ == 60)
         {
             count = 0;
-            fprintf(stderr, "FPS: %f\nFrame Time: %f\n\n",
-                    1.0 / frameTime,
-                    frameTime);
+            LC_LOG_INFO("FPS: %f; Frame Time (in seconds): %f\n",
+                        1.0 / frameTimeInSeconds,
+                        frameTimeInSeconds);
         }
 
         UpdateBall(scene, &physics, ball);
         UpdateComputerPaddle(scene, ball, computerPaddle);
         UpdatePlayerPaddle(scene, playerPaddle);
 
-        UpdatePhysics(&physics, scene, frameTime);
+        UpdatePhysics(&physics, scene, frameTimeInSeconds);
 
         lcRendererRenderToWindow();
         lcWindowUpdate();

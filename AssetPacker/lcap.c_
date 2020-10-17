@@ -1,0 +1,147 @@
+#include <ctype.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include "lcap.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+#define EAT_WHITE_SPACE(file) for(;isspace(fpeekc(file)); fgetc(file))
+
+typedef struct
+{
+    char Name[LCAP_NAME_MAX_LEN];
+
+    uint8_t *Pixels;
+    uint32_t Size;
+
+    float Min[2];
+    float Max[2];
+} texture_t;
+
+static void
+Swap(texture_t *a,
+     texture_t *b)
+{
+    texture_t t = *a;
+    *a = *b;
+    *b = t;
+}
+
+static uint32_t
+Partition(texture_t *array,
+          int low,
+          int high)
+{
+    texture_t pivot = array[high];
+    int i = low - 1;
+
+    int j;
+    for (j = low; j <= (high - 1); ++j)
+    {
+        if (array[j].Size < pivot.Size)
+        {
+            ++i;
+            Swap(array + i, array + j);
+        }
+    }
+    Swap(&array[i + 1], &array[high]);
+    return (i + 1);
+}
+
+static void
+Sort(texture_t *array,
+     int low,
+     int high)
+{
+    if (low < high)
+    {
+        uint32_t p = Partition(array, low, high);
+
+        Sort(array, low, p - 1);
+        Sort(array, p + 1, high);
+    }
+}
+
+static void
+WriteTexture(uint8_t*bin,
+             uint8_t *mask,
+             uint32_t binWidth,
+             texture_t *texture,
+             uint32_t xOffset,
+             uint32_t yOffset)
+{
+    int i;
+    for (i = 0; i < texture->Size; ++i)
+    {
+        memcpy(bin + ((((i + yOffset) * binWidth) + xOffset) * 4),
+               texture->Pixels + (i * texture->Size * 4),
+               texture->Size * 4);
+        memset(mask + (((i + yOffset) * binWidth) + xOffset),
+               0xff,
+               texture->Size);
+    }
+}
+
+int
+main(int argc,
+     char **argv)
+{
+    char *outputPath = NULL;
+
+    int inputCount = 0;
+    char **inputPaths = NULL;
+
+    int i;
+    bool expectingOutputPath = false;
+    for (i = 1; i < argc; ++i)
+    {
+        if (0 == strcmp(argv[i], "-o"))
+        {
+            expectingOutputPath = true;
+        }
+        else if (expectingOutputPath)
+        {
+            int size = strlen(argv[i]) + 1;
+
+            outputPath = malloc(size);
+            memcpy(outputPath, argv[i], size);
+
+            expectingOutputPath = false;
+        }
+        else
+        {
+            int size = strlen(argv[i]) + 1;
+
+            inputPaths = realloc(inputPaths,
+                                 sizeof(*inputPaths) * ++inputCount);
+            inputPaths[inputCount - 1] = malloc(size);
+            memcpy(inputPaths[inputCount - 1], argv[i], size);
+        }
+    }
+
+    fprintf(stderr,
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+            "|               LCAP               |\n"
+            "|       lucerna asset packer       |\n"
+            "|                                  |\n"
+            "| Input Paths (%2d):                |\n",
+            inputCount);
+    for (i = 0; i < inputCount; ++i)
+    {
+        fprintf(stderr, "|    %-30s|\n", inputPaths[i]);
+    }
+    fprintf(stderr,
+            "| Output Path: %-20s|\n"
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
+            outputPath);
+
+    for (i = 0; i < inputCount; ++i)
+    {
+        fprintf(stderr, "%s\n", inputPaths[i]);
+    }
+}
+

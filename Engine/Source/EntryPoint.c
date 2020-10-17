@@ -2,9 +2,11 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+#ifdef LC_PLATFORM_LINUX
 
 int
 main(int argc,
@@ -15,7 +17,6 @@ main(int argc,
     lcGLLoad();
     lcInputInit();
     lcMessageSystemInit();
-    lcLogInit();
     lcWindowInit(config.WindowTitle,
                  config.WindowDimensions[0],
                  config.WindowDimensions[1],
@@ -30,9 +31,51 @@ main(int argc,
     lcRendererDestroy();
     lcCameraDestroy();
     lcWindowDestroy();
-    lcLogDestroy();
     lcMessageSystemDestroy();
 }
+
+#elif defined LC_PLATFORM_WINDOWS
+
+int
+WinMain(HINSTANCE hInstance,
+        HINSTANCE hPrevInstance,
+        LPSTR lpCmdLine,
+        int nShowCmd)
+{
+    lcClockInit();
+
+    lcInitConfig_t config = lcClientConfig();
+
+#ifdef LC_LOGGING_ENABLED
+    lcLogInitWindowsConsole();
+#endif
+    lcInputInit();
+    lcMessageSystemInit();
+    lcWindowInit(hInstance,
+                 config.WindowTitle,
+                 config.WindowDimensions[0],
+                 config.WindowDimensions[1],
+                 config.VSyncEnabled);
+    lcGLLoad();
+    lcRendererInit();
+    lcLoadMasterTexture();
+    lcCameraInit(config.CameraPosition);
+
+    lcClientMain(__argc, __argv);
+
+    lcRendererDestroy();
+    lcCameraDestroy();
+    lcMessageSystemDestroy();
+}
+
+int
+main(void)
+{
+    return WinMain(GetModuleHandle(NULL), NULL, GetCommandLine(), SW_SHOWNORMAL);
+}
+#else
+#error No platform macro defined
+#endif
 
 /*
 MIT License

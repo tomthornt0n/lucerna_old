@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -26,9 +26,12 @@ lcCameraRecalculateViewProjectionMatrix(void)
                       lcCamera.ProjectionMatrix,
                       lcCamera.ViewMatrix);
 
-    gl.UniformMatrix4fv(lcCamera.UniformLocation,
-                       1, GL_FALSE,
-                       lcCamera.ViewProjectionMatrix);
+    if (lcCamera.UniformLocation != -1)
+    {
+        gl.UniformMatrix4fv(lcCamera.UniformLocation,
+                            1, GL_FALSE,
+                            lcCamera.ViewProjectionMatrix);
+    }
 }
 
 
@@ -55,6 +58,8 @@ lcCameraInit(float *position)
     lcCamera.ProjectionMatrix = malloc(sizeof(float) * 16);
     lcCamera.ViewProjectionMatrix = malloc(sizeof(float) * 16);
 
+    lcCamera.UniformLocation = -1;
+
     memcpy(lcCamera.Position,
            position, sizeof(float) * 2);
 
@@ -80,15 +85,15 @@ lcCameraInit(float *position)
 }
 
 void
-lcCameraMove(float* offset)
+lcCameraMove(float *offset)
 {
     lcVector2Add(lcCamera.Position,
                  lcCamera.Position,
                  offset);
 
     lcMatrix4CreateTranslationMatrix(lcCamera.ViewMatrix,
-                                      lcCamera.Position[0],
-                                      lcCamera.Position[1]);
+                                     lcCamera.Position[0],
+                                     lcCamera.Position[1]);
 
     lcCameraRecalculateViewProjectionMatrix();
 }
@@ -100,7 +105,6 @@ lcCameraDestroy(void)
     free(lcCamera.ProjectionMatrix);
     free(lcCamera.ViewProjectionMatrix);
 }
-
 
 /*
 MIT License

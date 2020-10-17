@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 25 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -42,7 +42,6 @@ lcLoadMasterTexture(void)
             gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
             gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
             gl.TexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            gl.TexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_FALSE);
 
             gl.TexImage2D(GL_TEXTURE_2D,
                          0,
@@ -115,11 +114,12 @@ lcLoadAsset(char *name)
         }
         else
         {
-            LC_ASSERT(false, "Could not load asset: corrupt assets file.");
+            LC_ASSERT(false, "Could not load asset '%s': corrupt assets file.", name);
         }
     }
 
-    LC_ASSERT(false, "Could not load asset: asset not found.");
+    LC_ASSERT(false, "Could not load asset '%s': asset not found.", name);
+    return NULL;
 }
 
 /*

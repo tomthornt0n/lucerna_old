@@ -1,3 +1,10 @@
+#ifdef _WIN32
+#include <windows.h>
+
+HANDLE _stdoutHandle;
+DWORD _outModeInit;
+#endif
+
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdlib.h>

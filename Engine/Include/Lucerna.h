@@ -103,7 +103,7 @@ void lcLog(int level, char *prefix, char *fmt, ...);
   Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-double lcGetTime(void);
+uint64_t lcClockGetTime(void);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Array Backed List
@@ -398,10 +398,11 @@ void lcWindowGetSize(uint32_t *result);
 #define LC_MOUSE_BUTTON_6          5
 #define LC_MOUSE_BUTTON_7          6
 #define LC_MOUSE_BUTTON_8          7
-#define LC_MOUSE_BUTTON_LAST       LC_MOUSE_BUTTON_8
 #define LC_MOUSE_BUTTON_LEFT       LC_MOUSE_BUTTON_1
 #define LC_MOUSE_BUTTON_MIDDLE     LC_MOUSE_BUTTON_2
 #define LC_MOUSE_BUTTON_RIGHT      LC_MOUSE_BUTTON_3
+#define LC_MOUSE_SCROLL_UP         LC_MOUSE_BUTTON_5
+#define LC_MOUSE_SCROLL_DOWN       LC_MOUSE_BUTTON_6
 
 extern bool    lcInputIsKeyPressed[256];
 extern bool    lcInputIsMouseButtonPressed[8];

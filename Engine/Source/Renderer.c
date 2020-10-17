@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -75,7 +75,7 @@ ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity,
 {
     if (!(scene->EntitySignatures[entity] & COMPONENT_RENDERABLE))
     {
-        /* NOTE(tbt): Early exit if the renderable component is not in use */
+        LC_CORE_LOG_WARN("Attempting to move unused renderable component.");
         return;
     }
 
@@ -107,6 +107,7 @@ lcRendererUpdateViewport(lcGenericMessage_t *message)
 static void
 lcRendererInit(void)
 {
+    lcRendererBoundShader = -1;
     lcRenderer.ModifiedStart = NULL;
     lcRenderer.ModifiedEnd = NULL;
 
@@ -169,7 +170,7 @@ lcRendererInit(void)
 
     free(indices);
 
-    gl.ClearColor(1.0f, 0.0f, 1.0f, 0.0f);
+    gl.ClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
 }
@@ -191,8 +192,9 @@ lcRendererBindScene(lcScene_t *scene)
 void
 lcRendererBindShader(lcShader_t shader)
 {
-    gl.UseProgram(shader);
     lcRendererBoundShader = shader;
+
+    gl.UseProgram(shader);
 
     lcCamera.UniformLocation = gl.GetUniformLocation(shader,
                                                      LC_CAMERA_UNIFORM_NAME);
@@ -202,14 +204,18 @@ lcRendererBindShader(lcShader_t shader)
         LC_CORE_LOG_WARN("Uniform '%s' does not exist!",
                          LC_CAMERA_UNIFORM_NAME);
     }
-    gl.UniformMatrix4fv(lcCamera.UniformLocation,
-                        1, GL_FALSE,
-                        lcCamera.ViewProjectionMatrix);
+
+    uint32_t windowSize[2];
+    lcWindowGetSize(windowSize);
+    lcMessageEmit(lcWindowResizeMessageCreate(windowSize[0], windowSize[1]));
 }
+
 
 void
 lcRendererRenderToWindow(void)
 {
+    lcGLGetErrors();
+
     gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (lcRenderer.ModifiedStart != NULL &&

@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 20 Sep 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -28,49 +28,41 @@
     
 #endif
 
-#if defined(LC_PLATFORM_WINDOWS) && defined(LC_LOGGING_ENABLED)
-    #include <windows.h>
+#if defined LC_PLATFORM_WINDOWS && defined LC_LOGGING_ENABLED
 
-    static HANDLE stdoutHandle;
-    static DWORD outModeInit;
-    
-    void
-    lcLogInit(void)
+void
+lcLogInitWindowsConsole(void)
+{
+    DWORD outMode = 0;
+    HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (stdoutHandle == INVALID_HANDLE_VALUE)
     {
-        DWORD outMode = 0;
-        stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-        if (stdoutHandle == INVALID_HANDLE_VALUE)
-            exit(GetLastError());
-
-        if(!GetConsoleMode(stdoutHandle, &outMode))
-            exit(GetLastError());
-
-        outModeInit = outMode;
-        outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-        if (!SetConsoleMode(stdoutHandle, outMode))
-            exit(GetLastError());
+        MessageBox(NULL, TEXT("Could not get stdout handle!"),
+                   TEXT("Error"),
+                   MB_OK | MB_ICONERROR);
+        exit(-1);
+    }
+    if (!GetConsoleMode(stdoutHandle, &outMode))
+    {
+        MessageBox(NULL,
+                   TEXT("Could not get console mode!"),
+                   TEXT("Error"),
+                   MB_OK | MB_ICONERROR);
+        exit(-1);
     }
 
-    void
-    lcLogDestroy(void)
-    {
-        printf("\x1b[0m");
+    outMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
-        if (!SetConsoleMode(stdoutHandle, outModeInit))
-            exit(GetLastError());
-    }
-#else
-    void
-    lcLogInit(void)
+    if (!SetConsoleMode(stdoutHandle, outMode))
     {
+        MessageBox(NULL,
+                   TEXT("Could not set console mode!"),
+                   TEXT("Warning"),
+                   MB_OK | MB_ICONWARNING);
     }
-    
-    void
-    lcLogDestroy(void)
-    {
-    }
+}
+
 #endif
 
 static char *

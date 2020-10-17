@@ -2,21 +2,21 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 07 August 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #include "sys/time.h"
 
-double
-lcGetTime(void)
+uint64_t
+lcClockGetTime(void)
 {
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
 
-    return (double)tv.tv_usec / 1000000.0 +
-           (double)tv.tv_sec;
+    return tv.tv_sec * 1000000 +
+           tv.tv_usec;
 }
 
 /*

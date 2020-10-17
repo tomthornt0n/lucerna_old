@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 05 August 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -81,6 +81,7 @@ lcEntityCreate(lcScene_t *scene)
     }
 
     LC_ASSERT(0, "Too many entities in scene!");
+    return 0;
 }
 
 void

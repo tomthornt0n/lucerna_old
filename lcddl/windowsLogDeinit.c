@@ -4,3 +4,4 @@ if (!SetConsoleMode(_stdoutHandle, _outModeInit))
 {
     exit(GetLastError());
 }
+

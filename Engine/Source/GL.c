@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 25 August 2020
+  Updated : 17 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -13,6 +13,25 @@
 #else
 #error "Platform macro not defined"
 #endif
+
+static void
+lcGLGetErrors(void)
+{
+#ifdef LC_DEBUG
+    GLenum error;
+    while ((error = gl.GetError()) != GL_NO_ERROR)
+    {
+        LC_CORE_LOG_ERROR("OpenGL error: %s", error == GL_INVALID_ENUM ? "GL_INVALID_ENUM" :
+                                              error == GL_INVALID_VALUE ? "GL_INVALID_VALUE":
+                                              error == GL_INVALID_OPERATION ? "GL_INVALID_OPERATION":
+                                              error == GL_INVALID_FRAMEBUFFER_OPERATION ? "GL_INVALID_FRAMEBUFFER_OPERATION":
+                                              error == GL_OUT_OF_MEMORY ? "GL_OUT_OF_MEMORY":
+                                              error == GL_STACK_UNDERFLOW ? "GL_STACK_UNDERFLOW":
+                                              error == GL_STACK_OVERFLOW ? "GL_STACK_OVERFLOW":
+                                              NULL);
+    }
+#endif
+}
 
 /*
 MIT License

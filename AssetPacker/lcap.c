@@ -101,6 +101,11 @@ int
 main(int argc,
      char **argv)
 {
+    fprintf(stderr,
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+            "|               LCAP               |\n"
+            "|       lucerna asset packer       |\n"
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
     int i;
 
     int textureCount = 0;
@@ -129,6 +134,7 @@ main(int argc,
         {
             /* assume textures (only asset type currently supported) */
             /* TODO: parse file extension to determine asset type */
+            fprintf(stderr, "%s\n", argv[argrumentIndex]);
             FILE *textureList = fopen(argv[argrumentIndex], "r");
             char c;
             while (fpeekc(textureList) != EOF)
@@ -151,6 +157,7 @@ main(int argc,
                 }
                 name[nameLen] = 0;
 
+
                 EatWhiteSpace(textureList);
 
                 int pathLen = 0;
@@ -161,6 +168,8 @@ main(int argc,
                     path = realloc(path, pathLen + 1);
                 }
                 path[pathLen] = 0;
+
+                fprintf(stderr, "%s -> %s\n", name, path);
 
                 int width, height, components;
 

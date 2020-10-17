@@ -11,13 +11,18 @@
 #include <immintrin.h>
 
 #if defined(LC_PLATFORM_LINUX)
-#include "GL/gl.h"
+#include "gl/glcorearb.h"
 #include "X11/Xlib.h"
 #include "xcb/xcb.h"
 #include "X11/Xlib-xcb.h"
 #include "GL/glx.h"
+#include "gl/glxext.h"
 #elif defined(LC_PLATFORM_WINDOWS)
 #include "windows.h"
+#include "windowsx.h"
+#include "Fcntl.h"
+#include "gl/glcorearb.h"
+#include "gl/wglext.h"
 #else
 #error "Platform macro not defined"
 #endif

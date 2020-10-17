@@ -1,47 +1,47 @@
 @echo off
 
-ECHO Windows builds not currently supported
-EXIT /B %ERRORLEVEL%
-
 IF "%1"=="Debug" GOTO :DEBUG_BUILD
 IF "%1"=="Release" GOTO :RELEASE_BUILD
 
 ECHO Invalid Configuration
-EXIT /B %ERRORLEVEL%
+EXIT /B 0
 
-:DEBUG_BUILD
-CALL :BUILD_LCDDL
-CALL :RUN_LCDDL
-CALL :BUILD_LUCERNA_DEBUG
-EXIT /B %ERRORLEVEL%
-
-:RELEASE_BUILD
-CALL :BUILD_LCDDL
-CALL :RUN_LCDDL
-CALL :BUILD_LUCERNA_RELEASE
-EXIT /B %ERRORLEVEL%
-
-:BUILD_LCDDL
+:COMMON
 PUSHD lcddl
-cl /nologo lcddl.c lcddlUserLayer.c /link /out:../lcddl.exe
+cl /nologo lcddl.c lcddlUserLayer.c /link Kernel32.lib /out:..\bin\lcddl.exe
 DEL lcddl.obj
 DEL lcddlUserLayer.obj
 POPD
-EXIT /B 0
 
-:RUN_LCDDL
-COPY Client\Assets\Meta\*.lcd Client\Assets\Meta\tmp.lcd
-bin\lcddl "Client\Assets\Meta\tmp.lcd"
+COPY /a Client\Assets\Meta\*.lcd Client\Assets\Meta\tmp.lcd
+bin\lcddl Client\Assets\Meta\tmp.lcd
 DEL Client\Assets\Meta\tmp.lcd
+
+PUSHD AssetPacker
+cl /nologo lcap.c /link /out:..\bin\AssetPacker.exe
+DEL lcap.obj
+POPD
+
+COPY /a Client\Assets\Meta\*.asset Client\Assets\Meta\tmp.asset
+bin\AssetPacker Client\Assets\Meta\tmp.asset -o bin\assets.data
+DEL Client\Assets\Meta\tmp.asset
+
 EXIT /B 0
 
-:BUILD_LUCERNA_DEBUG
-cl /nologo /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_DEBUG /Zi Engine\Source\Lucerna.c Client\Source\Main.c /link /nologo /subsystem:console Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
+:DEBUG_BUILD
+CALL :COMMON
+cl /nologo /Zi /Fd:bin\LucernaProject.pdb /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_DEBUG Engine\Source\Lucerna.c Client\Source\Main.c
+link /nologo /debug /subsystem:console Lucerna.obj Main.obj Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
 DEL Main.obj
+DEL Lucerna.obj
 EXIT /B 0
 
-:BUILD_LUCERNA_RELEASE
-cl /nologo /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_RELEASE /O2 Engine\Source\Lucerna.c Client\Source\Main.c /link /nologo /subsystem:console Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
+:RELEASE_BUILD
+CALL :COMMON
+cl /nologo /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_RELEASE /O2 Engine\Source\Lucerna.c Client\Source\Main.c
+link /nologo /debug /subsystem:windows Lucerna.obj Main.obj Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
 DEL Main.obj
+DEL Lucerna.obj
 EXIT /B 0
+
 
