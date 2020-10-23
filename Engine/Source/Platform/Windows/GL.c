@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -52,7 +52,9 @@ struct
 static bool
 lcGLIsExtensionSupported(HDC deviceContext, char *extension)
 {
-    const char *start = gl.wglGetExtensionsStringARB(deviceContext);
+    const char *start;
+    start = gl.wglGetExtensionsStringARB(deviceContext);
+
     LC_ASSERT(start, "Error getting gl extensions string");
 
     for (;;)
@@ -80,7 +82,8 @@ lcGLIsExtensionSupported(HDC deviceContext, char *extension)
 static void *
 lcGLLoadFunctionWindows(char *name, HMODULE opengl32)
 {
-    void *p = wglGetProcAddress(name);
+    void *p;
+    p = wglGetProcAddress(name);
 
     if(p == NULL        ||
       (p == (void*)0x1) ||
@@ -103,7 +106,9 @@ lcGLLoadFunctionWindows(char *name, HMODULE opengl32)
 static void
 lcGLLoad(void)
 {
-    HMODULE opengl32 = LoadLibrary(TEXT("opengl32.dll"));
+    HMODULE opengl32;
+
+    opengl32 = LoadLibrary(TEXT("opengl32.dll"));
     gl.AttachShader            = (PFNGLATTACHSHADERPROC           )lcGLLoadFunctionWindows("glAttachShader",            opengl32);
     gl.BindBuffer              = (PFNGLBINDBUFFERPROC             )lcGLLoadFunctionWindows("glBindBuffer",              opengl32);
     gl.BindTexture             = (PFNGLBINDTEXTUREPROC            )lcGLLoadFunctionWindows("glBindTexture",             opengl32);
@@ -138,6 +143,7 @@ lcGLLoad(void)
     gl.UseProgram              = (PFNGLUSEPROGRAMPROC             )lcGLLoadFunctionWindows("glUseProgram",              opengl32);
     gl.VertexAttribPointer     = (PFNGLVERTEXATTRIBPOINTERPROC    )lcGLLoadFunctionWindows("glVertexAttribPointer",     opengl32);
     gl.Viewport                = (PFNGLVIEWPORTPROC               )lcGLLoadFunctionWindows("glViewport",                opengl32);
+
     FreeModule(opengl32);
 }
 

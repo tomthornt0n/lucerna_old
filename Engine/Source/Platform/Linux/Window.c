@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 23 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -58,6 +58,22 @@ lcWindowInit(char *title,
              uint32_t width, uint32_t height,
              bool vSyncEnabled)
 {
+    xcb_screen_t *screen;
+    const xcb_setup_t *setup;
+    xcb_screen_iterator_t screenIterator;
+    GLXFBConfig *frameBufferConfigs;
+    int frameBufferConfigCount;
+    GLXFBConfig frameBufferConfig;
+    xcb_colormap_t colourMap;
+    uint32_t eventMask;
+    uint32_t valueList[3];
+    uint32_t valueMask;
+    xcb_intern_atom_cookie_t wmProtocolCookie;
+    xcb_intern_atom_reply_t *wmProtocolReply;
+    xcb_intern_atom_cookie_t windowCloseCookie;
+    int i;
+    int visualID;
+    
     lcWindow.Width = width;
     lcWindow.Height = height;
 
@@ -77,22 +93,21 @@ lcWindowInit(char *title,
 
     XSetEventQueueOwner(lcWindow.Display, XCBOwnsEventQueue);
 
-    xcb_screen_t *screen = 0;
+    screen = 0;
 
-    const xcb_setup_t *setup = xcb_get_setup(lcWindow.Connection);
-    xcb_screen_iterator_t screenIterator = xcb_setup_roots_iterator(setup);
+    setup = xcb_get_setup(lcWindow.Connection);
+    screenIterator = xcb_setup_roots_iterator(setup);
 
-    int i;
     for(i = lcWindow.DefaultScreenID;
         screenIterator.rem && i > 0;
         --i, xcb_screen_next(&screenIterator));
 
     screen = screenIterator.data;
-    
-    int visualID = 0;
 
-    GLXFBConfig *frameBufferConfigs = NULL;
-    int frameBufferConfigCount = 0;
+    visualID = 0;
+
+    frameBufferConfigs = NULL;
+    frameBufferConfigCount = 0;
 
     frameBufferConfigs = gl.XChooseFBConfig(lcWindow.Display,
                                            lcWindow.DefaultScreenID,
@@ -102,7 +117,7 @@ lcWindowInit(char *title,
     LC_ASSERT(frameBufferConfigs && frameBufferConfigCount != 0,
               "Error getting frame buffer configs");
 
-    GLXFBConfig frameBufferConfig = frameBufferConfigs[0];
+    frameBufferConfig = frameBufferConfigs[0];
     gl.XGetFBConfigAttrib(lcWindow.Display, frameBufferConfig, GLX_VISUAL_ID, &visualID);
 
     lcWindow.Context = gl.XCreateNewContext(lcWindow.Display,
@@ -113,7 +128,7 @@ lcWindowInit(char *title,
 
     LC_ASSERT(lcWindow.Context, "OpenGL context creation failed");
 
-    xcb_colormap_t colourMap = xcb_generate_id(lcWindow.Connection);
+    colourMap = xcb_generate_id(lcWindow.Connection);
     lcWindow.NativeWindow = xcb_generate_id(lcWindow.Connection);
 
     xcb_create_colormap(lcWindow.Connection,
@@ -122,16 +137,19 @@ lcWindowInit(char *title,
                         screen->root,
                         visualID);
 
-    uint32_t eventMask = XCB_EVENT_MASK_EXPOSURE         |
-                         XCB_EVENT_MASK_KEY_PRESS        |
-                         XCB_EVENT_MASK_KEY_RELEASE      |
-                         XCB_EVENT_MASK_BUTTON_PRESS     |
-                         XCB_EVENT_MASK_BUTTON_RELEASE   |
-                         XCB_EVENT_MASK_POINTER_MOTION   |
-                         XCB_EVENT_MASK_ENTER_WINDOW     |
-                         XCB_EVENT_MASK_STRUCTURE_NOTIFY;
-    uint32_t valueList[] = { eventMask, colourMap, 0 };
-    uint32_t valueMask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
+    eventMask = XCB_EVENT_MASK_EXPOSURE         |
+                XCB_EVENT_MASK_KEY_PRESS        |
+                XCB_EVENT_MASK_KEY_RELEASE      |
+                XCB_EVENT_MASK_BUTTON_PRESS     |
+                XCB_EVENT_MASK_BUTTON_RELEASE   |
+                XCB_EVENT_MASK_POINTER_MOTION   |
+                XCB_EVENT_MASK_ENTER_WINDOW     |
+                XCB_EVENT_MASK_STRUCTURE_NOTIFY;
+
+    valueList[0] = eventMask;
+    valueList[1] = colourMap;
+    valueList[2] = 0;
+    valueMask = XCB_CW_EVENT_MASK | XCB_CW_COLORMAP;
 
     xcb_create_window(lcWindow.Connection,
                       XCB_COPY_FROM_PARENT,
@@ -145,18 +163,15 @@ lcWindowInit(char *title,
                       valueMask,
                       valueList);
 
-    xcb_intern_atom_cookie_t
     wmProtocolCookie = xcb_intern_atom(lcWindow.Connection,
                                        1,
                                        12,
                                        "WM_PROTOCOLS");
 
-    xcb_intern_atom_reply_t *
     wmProtocolReply = xcb_intern_atom_reply(lcWindow.Connection,
                                             wmProtocolCookie,
                                             0);
 
-    xcb_intern_atom_cookie_t
     windowCloseCookie = xcb_intern_atom(lcWindow.Connection,
                                         0,
                                         16,
@@ -221,7 +236,8 @@ lcWindowInit(char *title,
 void
 lcWindowUpdate(void)
 {
-    xcb_generic_event_t *event = xcb_poll_for_event(lcWindow.Connection);
+    xcb_generic_event_t *event;
+    event = xcb_poll_for_event(lcWindow.Connection);
 
     if (event)
     {
@@ -229,11 +245,13 @@ lcWindowUpdate(void)
         {
             case XCB_KEY_PRESS:
             {
-                xcb_key_press_event_t *press = 
-                    (xcb_key_press_event_t *)event;
+                xcb_key_press_event_t *press;
+                uint8_t key;
+
+                press = (xcb_key_press_event_t *)event;
 
                 /* HACK(tbt): assume evdev driver so subtract offset of 8 */
-                uint8_t key = KeyLUT[press->detail - 8];
+                key = KeyLUT[press->detail - 8];
 
                 lcMessageEmit(lcKeyPressMessageCreate(key));
                 lcInputIsKeyPressed[key] = true;
@@ -242,18 +260,23 @@ lcWindowUpdate(void)
             }
             case XCB_KEY_RELEASE:
             {
-                /* HACK(tbt): assume evdev driver so subtract offset of 8 */
-                uint32_t key = ((xcb_key_press_event_t *)event)->detail - 8;
-                uint8_t lcKeyCode = KeyLUT[key];
+                uint32_t key;
+                xcb_key_press_event_t *release;
 
-                lcMessageEmit(lcKeyReleaseMessageCreate(lcKeyCode));
-                lcInputIsKeyPressed[lcKeyCode] = false;
+                release = (xcb_key_press_event_t *)event;
+                
+                /* HACK(tbt): assume evdev driver so subtract offset of 8 */
+                key = KeyLUT[release->detail - 8];
+
+                lcMessageEmit(lcKeyReleaseMessageCreate(key));
+                lcInputIsKeyPressed[key] = false;
 
                 break;
             }
             case XCB_BUTTON_PRESS:
             {
-                uint8_t code = ((xcb_button_press_event_t *)event)->detail - 1;
+                uint8_t code;
+                code = ((xcb_button_press_event_t *)event)->detail - 1;
 
                 if (code == 3)
                 {
@@ -271,7 +294,8 @@ lcWindowUpdate(void)
             }
             case XCB_BUTTON_RELEASE:
             {
-                uint8_t code = ((xcb_button_press_event_t *)event)->detail - 1;
+                uint8_t code;
+                code = ((xcb_button_press_event_t *)event)->detail - 1;
 
                 lcMessageEmit(lcMouseButtonReleaseMessageCreate(code));
                 lcInputIsMouseButtonPressed[code] = false;
@@ -280,8 +304,8 @@ lcWindowUpdate(void)
             }
             case XCB_ENTER_NOTIFY:
             {
-                xcb_enter_notify_event_t *enter =
-                    (xcb_enter_notify_event_t *)event;
+                xcb_enter_notify_event_t *enter;
+                enter = (xcb_enter_notify_event_t *)event;
 
                 lcInputMousePosition[0] = enter->event_x;
                 lcInputMousePosition[1] = enter->event_y;
@@ -290,8 +314,8 @@ lcWindowUpdate(void)
             }
             case XCB_MOTION_NOTIFY:
             {
-                xcb_motion_notify_event_t *motion =
-                    (xcb_motion_notify_event_t *)event;
+                xcb_motion_notify_event_t *motion;
+                motion = (xcb_motion_notify_event_t *)event;
 
                 lcInputMousePosition[0] = motion->event_x;
                 lcInputMousePosition[1] = motion->event_y;
@@ -300,8 +324,8 @@ lcWindowUpdate(void)
             }
             case XCB_CONFIGURE_NOTIFY:
             {
-                xcb_configure_notify_event_t *config =
-                    (xcb_configure_notify_event_t *)event;
+                xcb_configure_notify_event_t *config;
+                config = (xcb_configure_notify_event_t *)event;
 
                 if (lcWindow.Width != config->width ||
                     lcWindow.Height != config->height)

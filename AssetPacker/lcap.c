@@ -4,7 +4,16 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(unix) || defined(__unix__) || defined(__unix)
+#include <dirent.h>
+#endif
+
 #include "lcap.h"
+
+#define LCAP_TEXTURES_DIRECTORY "../Client/Assets/Textures/"
+#define LCAP_SHADERS_DIRECTORY "../Client/Assets/Shaders/"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -20,18 +29,12 @@ typedef struct
     float Max[2];
 } texture_t;
 
-static char
-fpeekc(FILE *file)
+typedef struct
 {
-    char c = getc(file);
-    return c == EOF ? EOF : ungetc(c, file);
-}
-
-static void
-EatWhiteSpace(FILE *file)
-{
-    for (;isspace(fpeekc(file));fgetc(file));
-}
+    char Name[LCAP_NAME_MAX_LEN];
+    char *VertexSource;
+    char *FragmentSource;
+} shader_t;
 
 static void
 Swap(texture_t *a,
@@ -97,165 +100,187 @@ WriteTexture(uint8_t*bin,
     }
 }
 
-int
-main(int argc,
-     char **argv)
+void
+GetAllFilesInDir(char *path,
+                 int *count,
+                 char ***list)
 {
-    fprintf(stderr,
-            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-            "|               LCAP               |\n"
-            "|       lucerna asset packer       |\n"
-            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
-    int i;
+#ifdef _WIN32
+    WIN32_FIND_DATA dir;
+    HANDLE d = INVALID_HANDLE_VALUE;
 
-    int textureCount = 0;
-    texture_t *textures = NULL;
+    *count = 0;
+    *list = NULL;
 
-    /* parse file paths and load images */    
-    char *outputPath = NULL;
-
-    int argrumentIndex;
-    bool expectingOutputPath;
-    for (argrumentIndex = 1;
-         argrumentIndex < argc;
-         ++argrumentIndex)
-    {
-
-        if (0 == strcmp("-o", argv[argrumentIndex]))
-        {
-            expectingOutputPath = true;
-        }
-        else if (expectingOutputPath)
-        {
-            outputPath = argv[argrumentIndex];
-            expectingOutputPath = false;
-        }
-        else
-        {
-            /* assume textures (only asset type currently supported) */
-            /* TODO: parse file extension to determine asset type */
-            fprintf(stderr, "%s\n", argv[argrumentIndex]);
-            FILE *textureList = fopen(argv[argrumentIndex], "r");
-            char c;
-            while (fpeekc(textureList) != EOF)
-            {
-                int nameLen = 0;
-                char name[LCAP_NAME_MAX_LEN];
-                while ((c = fgetc(textureList)) != ':' &&
-                       nameLen < (LCAP_NAME_MAX_LEN - 1))
-                {
-                        name[nameLen++] = c;
-                }
-                if (nameLen >= LCAP_NAME_MAX_LEN)
-                {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: name longer than %d characters."
-                            "\x1b[0m\n",
-                            (LCAP_NAME_MAX_LEN - 1));
-                    exit(-1);
-                }
-                name[nameLen] = 0;
-
-
-                EatWhiteSpace(textureList);
-
-                int pathLen = 0;
-                char *path = malloc(1);
-                while ((c = fgetc(textureList)) != '\n')
-                {
-                    path[pathLen++] = c;
-                    path = realloc(path, pathLen + 1);
-                }
-                path[pathLen] = 0;
-
-                fprintf(stderr, "%s -> %s\n", name, path);
-
-                int width, height, components;
-
-                textures = realloc(textures, sizeof *textures * (textureCount + 1));
-
-                memcpy(textures[textureCount].Name, name, LCAP_NAME_MAX_LEN);
-                textures[textureCount].Pixels = stbi_load(path,
-                                                          &width,
-                                                          &height,
-                                                          &components,
-                                                          4);
-
-                if (textures[textureCount].Pixels == NULL)
-                {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: could not load texture '%s'."
-                            "\x1b[0m\n",
-                            path);
-                    exit(-1);
-                }
-                else if (width != height)
-                {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: textures must be square. "
-                            "Got width of %d and height of %d for texture '%s'."
-                            "\x1b[0m\n",
-                            width,
-                            height,
-                            path);
-                    exit(-1);
-                }
-                else if ((width & (width - 1)) != 0)
-                {
-                    fprintf(stderr,
-                            "\x1b[31m"
-                            "ERROR: the size of a texture must be a power of two. "
-                            "Got width of: %d for texture '%s'."
-                            "\x1b[0m\n",
-                            width,
-                            path);
-                    exit(-1);
-                }
-
-                textures[textureCount].Size = width;
-
-                ++textureCount;
-
-                EatWhiteSpace(textureList);
-            }
-        }
-    }
-
-    if (outputPath == NULL)
+    size_t lengthOfArg = strlen(path);
+    if (lengthOfArg > (MAX_PATH - 2))
     {
         fprintf(stderr,
-                "\x1b[31m"
-                "Expected option '-o': no output path specified."
-                "\x1b[0m\n");
+                "ERROR: path is too long.");
         exit(-1);
     }
 
-    /* sort textures by size */
-    Sort(textures, 0, textureCount - 1);
+    char fullpath[MAX_PATH];
+    memcpy(fullpath, path, MAX_PATH);
+    strcat(fullpath, "*");
 
-    /* find total area */
-    int area = 0;
-    for (i = 0; i < textureCount; ++i)
+    d = FindFirstFile(fullpath, &dir);
+
+    do
     {
-        area += textures[i].Size * textures[i].Size;
+        if (!(dir.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            *list = realloc(*list, ++(*count) * sizeof(**list));
+            int size = strlen(dir.cFileName) + 1;
+            (*list)[(*count) - 1] = malloc(size);
+            memcpy((*list)[(*count) - 1], dir.cFileName, size);
+        }
+    } while (FindNextFile(d, &dir) != 0);
+
+    FindClose(d);
+#else
+    *count = 0;
+    *list = NULL;
+
+    DIR *d;
+    struct dirent *dir;
+    d = opendir(path);
+    if (d)
+    {
+        while ((dir = readdir(d)) != NULL)
+        {
+            if (dir->d_type == DT_REG)
+            {
+                *list = realloc(*list, ++(*count) * sizeof(**list));
+                int size = strlen(dir->d_name) + 1;
+                (*list)[(*count) - 1] = malloc(size);
+                memcpy((*list)[(*count) - 1], dir->d_name, size);
+            }
+        }
+    closedir(d);
+  }
+#endif
+}
+
+void
+FreeDirectoryList(int count,
+                  char **list)
+{
+    int textureIndex;
+    for (textureIndex = 0;
+         textureIndex < count;
+         ++textureIndex)
+    {
+        free(list[textureIndex]);
+    }
+    free(list);
+}
+
+void
+ReadEntireFile(char *path,
+         char **result)
+{
+    FILE *f = fopen(path, "rb");
+    fseek(f, 0, SEEK_END);
+    long size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    (*result) = malloc(size + 1);
+    fread((*result), 1, size, f);
+    fclose(f);
+
+    (*result)[size] = 0;
+}
+
+void
+PackTextures(FILE *out)
+{
+    int textureIndex;
+
+    int textureCount;
+    char **texturePaths;
+
+    GetAllFilesInDir(LCAP_TEXTURES_DIRECTORY,
+                     &textureCount,
+                     &texturePaths);
+
+    texture_t *textures = malloc(textureCount * sizeof(*textures));
+
+    for (textureIndex = 0;
+         textureIndex < textureCount;
+         ++textureIndex)
+    {
+        int charIndex;
+        for (charIndex = 0;
+             charIndex < (LCAP_NAME_MAX_LEN - 1) &&
+             texturePaths[textureIndex][charIndex] != '.';
+             textures[textureIndex].Name[++charIndex] = 0)
+        {
+            textures[textureIndex].Name[charIndex] =
+                texturePaths[textureIndex][charIndex];
+        }
+
+        char *fullpath = malloc(strlen(texturePaths[textureIndex]) +
+                                strlen(LCAP_TEXTURES_DIRECTORY) + 
+                                1);
+        memcpy(fullpath,
+               LCAP_TEXTURES_DIRECTORY,
+               strlen(LCAP_TEXTURES_DIRECTORY) + 1);
+        strcat(fullpath, texturePaths[textureIndex]);
+
+        int width, height, components;
+        textures[textureIndex].Pixels = stbi_load(fullpath,
+                                                  &width, &height,
+                                                  &components, 4);
+        if (textures[textureCount].Pixels == NULL)
+        {
+            fprintf(stderr,
+                    "ERROR: could not load texture '%s'.\n",
+                    fullpath);
+            exit(-1);
+        }
+        else if (width != height)
+        {
+            fprintf(stderr,
+                    "ERROR: textures must be square. "
+                    "Got width of %d and height of %d for texture '%s'.\n",
+                    width,
+                    height,
+                    fullpath);
+            exit(-1);
+        }
+        else if ((width & (width - 1)) != 0)
+        {
+            fprintf(stderr,
+                    "ERROR: the size of a texture must be a power of two. "
+                    "Got width of: %d for texture '%s'.\n",
+                    width,
+                    fullpath);
+            exit(-1);
+        }
+
+
+        textures[textureIndex].Size = width;
     }
 
-    /* find area of smallest power of two square that is greater than the total
-       area of the textures
-    */
+    Sort(textures, 0, textureCount);
+
+    int totalTextureArea = 0;
+    for (textureIndex = 0; textureIndex < textureCount; ++textureIndex)
+    {
+        totalTextureArea += textures[textureIndex].Size *
+                            textures[textureIndex].Size;
+    }
+
     int binArea;
-    for (binArea = 4; binArea < area; binArea *= 4);
+    for (binArea = 4; binArea < totalTextureArea; binArea *= 4);
     int binWidth = sqrt(binArea);
     uint8_t *bin = malloc(binArea * 4);
     uint8_t *placedMask = malloc(binArea);
     memset(bin, 0, binArea * 4);
     memset(placedMask, 0, binArea);
 
-    /* pack textures into bin */
-    for (i = textureCount - 1; i >= 0; --i)
+    for (textureIndex = textureCount - 1; textureIndex >= 0; --textureIndex)
     {
         int j, x, y;
         for (j = 0; j < binArea; ++j)
@@ -269,21 +294,11 @@ main(int argc,
         x = j % binWidth;
         y = j / binWidth;
 
-        WriteTexture(bin, placedMask, binWidth, &textures[i], x, y);
-        textures[i].Min[0] = (float)x / (float)binWidth;
-        textures[i].Min[1] = (float)y / (float)binWidth;
-        textures[i].Max[0] = (float)(x + textures[i].Size) / (float)binWidth;
-        textures[i].Max[1] = (float)(y + textures[i].Size) / (float)binWidth;
-    }
-
-    FILE *out = fopen(outputPath, "wb");
-    if (out == NULL)
-    {
-        fprintf(stderr,
-                "\x1b[31m"
-                "ERROR: Could not open output file for writing."
-                "\x1b[0m\n");
-        exit(-1);
+        WriteTexture(bin, placedMask, binWidth, &textures[textureIndex], x, y);
+        textures[textureIndex].Min[0] = (float)x / (float)binWidth;
+        textures[textureIndex].Min[1] = (float)y / (float)binWidth;
+        textures[textureIndex].Max[0] = (float)(x + textures[textureIndex].Size) / (float)binWidth;
+        textures[textureIndex].Max[1] = (float)(y + textures[textureIndex].Size) / (float)binWidth;
     }
 
     lcapTextureAtlas_t masterTexture =
@@ -292,17 +307,190 @@ main(int argc,
         .Width = binWidth
     };
 
-
     fwrite(&masterTexture, sizeof(lcapTextureAtlas_t), 1, out);
     fwrite(bin, 4, binArea, out);
-    for (i = 0; i < textureCount; ++i)
+    for (textureIndex = 0; textureIndex < textureCount; ++textureIndex)
     {
         lcapSprite_t sprite = { .Type = LCAP_ASSET_TYPE_SPRITE };
-        memcpy(sprite.Name, textures[i].Name, LCAP_NAME_MAX_LEN);
-        memcpy(sprite.Min, textures[i].Min, sizeof(float) * 2);
-        memcpy(sprite.Max, textures[i].Max, sizeof(float) * 2);
+        memcpy(sprite.Name, textures[textureIndex].Name, LCAP_NAME_MAX_LEN);
+        memcpy(sprite.Min, textures[textureIndex].Min, sizeof(float) * 2);
+        memcpy(sprite.Max, textures[textureIndex].Max, sizeof(float) * 2);
         fwrite(&sprite, sizeof(lcapSprite_t), 1, out);
     }
+
+    FreeDirectoryList(textureCount, texturePaths);
+}
+
+void
+PackShaders(FILE *out)
+{
+    int sourceIndex;
+
+    int sourceCount;
+    char **shaderPaths;
+
+    GetAllFilesInDir(LCAP_SHADERS_DIRECTORY,
+                     &sourceCount,
+                     &shaderPaths);
+
+    int shaderCount = 0;
+    shader_t *shaders = NULL;
+
+    for (sourceIndex = 0;
+         sourceIndex < sourceCount;
+         ++sourceIndex)
+    {
+        char name[LCAP_NAME_MAX_LEN];
+        int charIndex;
+        for (charIndex = 0;
+             charIndex < (LCAP_NAME_MAX_LEN - 1) &&
+             shaderPaths[sourceIndex][charIndex] != '.';
+             name[++charIndex] = 0)
+        {
+            name[charIndex] = shaderPaths[sourceIndex][charIndex];
+        }
+
+        char *fullpath = malloc(strlen(shaderPaths[sourceIndex]) +
+                                strlen(LCAP_SHADERS_DIRECTORY) +
+                                1);
+        memcpy(fullpath,
+               LCAP_SHADERS_DIRECTORY,
+               strlen(LCAP_TEXTURES_DIRECTORY) + 1);
+        strcat(fullpath, shaderPaths[sourceIndex]);
+
+        if (strstr(shaderPaths[sourceIndex], ".frag"))
+        {
+            bool found = false;
+
+            int i;
+            for (i = 0; i < shaderCount; ++i)
+            {
+                if (0 == strcmp(name, shaders[i].Name))
+                {
+                    if (shaders[i].FragmentSource == NULL)
+                    {
+                        ReadEntireFile(fullpath, &(shaders[i].FragmentSource));
+                        found = true;
+                    }
+                    else
+                    {
+                        fprintf(stderr,
+                                "ERROR: duplicate shader name '%s'.",
+                                name);
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                shaders = realloc(shaders, sizeof(shader_t) * ++shaderCount);
+                int i = shaderCount - 1;
+
+                memcpy(shaders[i].Name, name, LCAP_NAME_MAX_LEN);
+
+                shaders[i].VertexSource = NULL;
+                ReadEntireFile(fullpath, &(shaders[i].FragmentSource));
+            }
+        }
+        else if (strstr(shaderPaths[sourceIndex], ".vert"))
+        {
+            bool found = false;
+
+            int i;
+            for (i = 0; i < shaderCount; ++i)
+            {
+                if (0 == strcmp(name, shaders[i].Name))
+                {
+                    if (shaders[i].VertexSource == NULL)
+                    {
+                        ReadEntireFile(fullpath, &(shaders[i].VertexSource));
+                        found = true;
+                    }
+                    else
+                    {
+                        fprintf(stderr,
+                                "ERROR: duplicate shader name '%s'.",
+                                name);
+                    }
+                }
+            }
+
+            if (!found)
+            {
+                shaders = realloc(shaders, sizeof(shader_t) * ++shaderCount);
+                int i = shaderCount - 1;
+
+                memcpy(shaders[i].Name, name, LCAP_NAME_MAX_LEN);
+
+                shaders[i].FragmentSource = NULL;
+                ReadEntireFile(fullpath, &(shaders[i].VertexSource));
+            }
+        }
+        else
+        {
+            fprintf(stderr,
+                    "ERROR: unrecognised extension for file '%s'.\n",
+                    shaderPaths[sourceIndex]);
+            exit(-1);
+        }
+    }
+
+    int shaderIndex;
+    for (shaderIndex = 0;
+         shaderIndex < shaderCount;
+         ++shaderIndex)
+    {
+        if (shaders[shaderIndex].VertexSource == NULL ||
+            shaders[shaderIndex].FragmentSource == NULL)
+        {
+            fprintf(stderr,
+                    "ERROR: missing source for shader '%s'.\n",
+                    shaders[shaderIndex].Name);
+            exit(-1);
+        }
+
+        lcapShader_t chunkHeader;
+        chunkHeader.Type = LCAP_ASSET_TYPE_SHADER;
+        memcpy(chunkHeader.Name, shaders[shaderIndex].Name, LCAP_NAME_MAX_LEN);
+        chunkHeader.VertexLength = strlen(shaders[shaderIndex].VertexSource) + 1;
+        chunkHeader.FragmentLength= strlen(shaders[shaderIndex].FragmentSource) + 1;
+
+        fwrite(&chunkHeader, sizeof(lcapShader_t), 1, out);
+        fwrite(shaders[shaderIndex].VertexSource,
+               chunkHeader.VertexLength,
+               1,
+               out);
+        fwrite(shaders[shaderIndex].FragmentSource,
+               chunkHeader.FragmentLength,
+               1,
+               out);
+
+        free(shaders[shaderIndex].VertexSource);
+        free(shaders[shaderIndex].FragmentSource);
+    }
+}
+
+int
+main(int argc,
+     char **argv)
+{
+    if (argc != 2)
+    {
+        fprintf(stderr, "Usage: %s <output directory>\n", argv[0]);
+    }
+
+    FILE *out = fopen(argv[1], "wb");
+    if (out == NULL)
+    {
+        fprintf(stderr,
+                "ERROR: Could not '%s' for writing.\n",
+                argv[1]);
+        exit(-1);
+    }
+
+    PackTextures(out);
+    PackShaders(out);
+
     fclose(out);
 }
 

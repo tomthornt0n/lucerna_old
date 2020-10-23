@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 24 August 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -32,8 +32,9 @@ static lcGenericMessage_t *
 lcWindowResizeMessageCreate(uint32_t width,
                             uint32_t height)
 {
-    lcWindowResizeMessage_t *message = malloc(sizeof(lcWindowResizeMessage_t));
+    lcWindowResizeMessage_t *message;
 
+    message = malloc(sizeof(lcWindowResizeMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_WINDOW_RESIZE;
     message->Width = width;
     message->Height = height;
@@ -44,8 +45,9 @@ lcWindowResizeMessageCreate(uint32_t width,
 static lcGenericMessage_t *
 lcKeyPressMessageCreate(int keyCode)
 {
-    lcKeyPressMessage_t *message = malloc(sizeof(lcKeyPressMessage_t));
+    lcKeyPressMessage_t *message;
 
+    message = malloc(sizeof(lcKeyPressMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_KEY_PRESS;
     message->KeyCode = keyCode;
 
@@ -55,8 +57,9 @@ lcKeyPressMessageCreate(int keyCode)
 static lcGenericMessage_t *
 lcKeyReleaseMessageCreate(int keyCode)
 {
-    lcKeyReleaseMessage_t *message = malloc(sizeof(lcKeyReleaseMessage_t));
+    lcKeyReleaseMessage_t *message;
 
+    message = malloc(sizeof(lcKeyReleaseMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_KEY_RELEASE;
     message->KeyCode = keyCode;
 
@@ -66,9 +69,9 @@ lcKeyReleaseMessageCreate(int keyCode)
 static lcGenericMessage_t *
 lcMouseButtonPressMessageCreate(int keyCode)
 {
-    lcMouseButtonPressMessage_t *message =
-        malloc(sizeof(lcMouseButtonPressMessage_t));
+    lcMouseButtonPressMessage_t *message;
 
+    message = malloc(sizeof(lcMouseButtonPressMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_PRESS;
     message->KeyCode = keyCode;
 
@@ -78,9 +81,9 @@ lcMouseButtonPressMessageCreate(int keyCode)
 static lcGenericMessage_t *
 lcMouseButtonReleaseMessageCreate(int keyCode)
 {
-    lcMouseButtonReleaseMessage_t *message =
-        malloc(sizeof(lcMouseButtonReleaseMessage_t));
+    lcMouseButtonReleaseMessage_t *message;
 
+    message = malloc(sizeof(lcMouseButtonReleaseMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_MOUSE_BUTTON_RELEASE;
     message->KeyCode = keyCode;
 
@@ -90,9 +93,9 @@ lcMouseButtonReleaseMessageCreate(int keyCode)
 static lcGenericMessage_t *
 lcMouseScrollMessageCreate(int offset)
 {
-    lcMouseScrollMessage_t *message =
-        malloc(sizeof(lcMouseScrollMessage_t));
+    lcMouseScrollMessage_t *message;
 
+    message = malloc(sizeof(lcMouseScrollMessage_t));
     message->Header.Type = LC_MESSAGE_TYPE_MOUSE_SCROLL;
     message->ScrollOffset = offset;
 
@@ -112,6 +115,7 @@ static void
 lcMessageEmit(lcGenericMessage_t *message)
 {
     int i;
+
     for (i = 0; i < LC_LIST_LEN(lcMessageListeners[message->Type]); ++i)
     {
         (*lcMessageListeners[message->Type][i])(message);
@@ -123,6 +127,7 @@ static void
 lcMessageSystemDestroy(void)
 {
     int i;
+
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
         LC_LIST_DESTROY(lcMessageListeners[i]);

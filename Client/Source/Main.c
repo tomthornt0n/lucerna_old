@@ -14,10 +14,10 @@
 #define OponentAcceleration 40.0f
 #define OponentBallRange 0.0f
 #define BallSpeed 500.0f
+#define CourtBounds 640.0f
 
 static uint8_t g_running = 1;
 static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
-static float g_winXBounds[2]; /* left and right of screen */
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
@@ -28,13 +28,11 @@ OnWindowClose(lcGenericMessage_t *message)
 static void
 OnWindowResize(lcGenericMessage_t *message)
 {
-    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
+    lcWindowResizeMessage_t *resize;
+    resize = (lcWindowResizeMessage_t *)message;
 
     g_winYBounds[0] = -((float)resize->Height / 2.0f);
     g_winYBounds[1] = +((float)resize->Height / 2.0f);
-
-    g_winXBounds[0] = -((float)resize->Width / 2.0f);
-    g_winXBounds[1] = +((float)resize->Width / 2.0f);
 }
 
 static void
@@ -42,7 +40,8 @@ UpdatePhysics(lcSubset_t *subset,
               lcScene_t *scene,
               double frameTime)
 {
-    lcForEntityInSubset(*subset)
+    int i;
+    lcForEntityInSubset(i, *subset)
     {
         scene->ComponentPhysics[entity].Minimum[0] +=
         scene->ComponentPhysics[entity].Velocity[0] *
@@ -74,16 +73,20 @@ UpdateComputerPaddle(lcScene_t *scene,
                      lcEntity_t paddle)
 {
     if (scene->ComponentPhysics[paddle].Minimum[1] >
-        scene->ComponentPhysics[ball].Maximum[1] + OponentBallRange &&
-        scene->ComponentPhysics[paddle].Velocity[1] > -OponentSpeed)
+        scene->ComponentPhysics[ball].Maximum[1])
     {
-        scene->ComponentPhysics[paddle].Velocity[1] -= OponentAcceleration;
+        if (scene->ComponentPhysics[paddle].Velocity[1] > -OponentSpeed)
+        {
+            scene->ComponentPhysics[paddle].Velocity[1] -= OponentAcceleration;
+        }
     }
     else if (scene->ComponentPhysics[paddle].Maximum[1] <
-             scene->ComponentPhysics[ball].Minimum[1] - OponentBallRange &&
-             scene->ComponentPhysics[ball].Velocity[1] < OponentSpeed)
+             scene->ComponentPhysics[ball].Minimum[1])
     {
-        scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
+        if (scene->ComponentPhysics[paddle].Velocity[1] > -OponentSpeed)
+        {
+            scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
+        }
     }
 }
 
@@ -123,8 +126,12 @@ UpdateBall(lcScene_t *scene,
            lcSubset_t *physicsSubset,
            lcEntity_t ball)
 {
-    float *ballMin = scene->ComponentPhysics[ball].Minimum;
-    float *ballMax = scene->ComponentPhysics[ball].Maximum;
+    int i;
+    float *ballMin;
+    float *ballMax;
+
+    ballMin = scene->ComponentPhysics[ball].Minimum;
+    ballMax = scene->ComponentPhysics[ball].Maximum;
 
     if (ballMin[1] < g_winYBounds[0])
     {
@@ -135,23 +142,26 @@ UpdateBall(lcScene_t *scene,
         scene->ComponentPhysics[ball].Velocity[1] *= -1.0f;
     }
 
-    if (ballMin[0] < g_winXBounds[0])
+    if (ballMin[0] < -CourtBounds)
     {
         LC_LOG_INFO("Computer wins... :(");
         exit(0);
     }
-    else if (ballMax[0] > g_winXBounds[1])
+    else if (ballMax[0] > CourtBounds)
     {
         LC_LOG_INFO("Player wins! :)");
         exit(0);
     }
 
-    lcForEntityInSubset(*physicsSubset)
+    lcForEntityInSubset(i, *physicsSubset)
     {
         if (entity != ball)
         {
-            float *min = scene->ComponentPhysics[entity].Minimum;
-            float *max = scene->ComponentPhysics[entity].Maximum;
+            float *min; 
+            float *max; 
+
+            min = scene->ComponentPhysics[entity].Minimum;
+            max = scene->ComponentPhysics[entity].Maximum;
 
             if (!(max[0] < ballMin[0] || min[0] > ballMax[0]) &&
                 !(max[1] < ballMin[1] || min[1] > ballMax[1]))
@@ -170,15 +180,27 @@ PaddleCreate(lcScene_t *scene,
              float *colour,
              lcAssetSprite_t *sprite)
 {
-    lcEntity_t result = lcEntityCreate(scene);
+    lcEntity_t result;
+    float min[2];
+    float max[2];
+    float vel[2];
+
+    result = lcEntityCreate(scene);
     ComponentRenderableAdd(scene, result,
                            x, y,
-                           16.0f, 128.0f,
+                           128.0f, 128.0f,
                            colour,
                            sprite);
-    float min[] = { x - 16.0f, y - 128.0f };
-    float max[] = { x + 16.0f, y + 128.0f };
-    float vel[] = { 0.0f, 0.0f };
+
+    min[0] = x - 16.0f;
+    min[1] = y - 128.0f;
+
+    max[0] = x + 16.0f;
+    max[1] = y + 128.0f;
+
+    vel[0] = 0.0f;
+    vel[1] = 0.0f;
+
     lcAddComponentPhysics(scene, result, min, max, vel);
 
     return result;
@@ -190,15 +212,27 @@ BallCreate(lcScene_t *scene,
            float *colour,
            lcAssetSprite_t *sprite)
 {
-    lcEntity_t result = lcEntityCreate(scene);
+    lcEntity_t result;
+    float min[2];
+    float max[2];
+    float vel[2];
+
+    result = lcEntityCreate(scene);
     ComponentRenderableAdd(scene, result,
                            x, y,
-                           12.0f, 12.0f,
+                           32.0f, 32.0f,
                            colour,
                            sprite);
-    float min[] = { x - 12.0f, y - 12.0f };
-    float max[] = { x + 12.0f, y + 12.0f };
-    float vel[] = { -BallSpeed, 0.0f };
+
+    min[0] = x - 32.0f;
+    min[1] = y - 32.0f;
+
+    max[0] = x + 32.0f;
+    max[1] = y + 32.0f;
+
+    vel[0] = -BallSpeed;
+    vel[1] = 0.0f;
+
     lcAddComponentPhysics(scene, result, min, max, vel);
 
     return result;
@@ -227,12 +261,10 @@ lcClientMain(int argc,
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
     g_winYBounds[0] = -540.0f;
     g_winYBounds[1] = 540.0f;
-    g_winXBounds[0] = -960.0f;
-    g_winXBounds[1] = 960.0f;
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
 
     /* load assets */
-    lcAssetSprite_t *backgroundTex = (lcAssetSprite_t *)lcLoadAsset("background");
+    lcAssetSprite_t *backgroundTex = (lcAssetSprite_t *)lcLoadAsset("bg");
     lcAssetSprite_t *ballTex = (lcAssetSprite_t *)lcLoadAsset("ball");
     lcAssetSprite_t *paddleTex = (lcAssetSprite_t *)lcLoadAsset("paddle");
 
@@ -240,14 +272,13 @@ lcClientMain(int argc,
     lcScene_t *scene = lcSceneCreate();
 
     /* setup the renderer */
-    lcShader_t shader = lcShaderCreate(LC_SHADER_PATH("SolidColour.vert"),
-                                       LC_SHADER_PATH("SolidColour.frag"));
+    lcShader_t shader = ((lcAssetShader_t *)lcLoadAsset("Simple"))->Shader;
 
     lcRendererBindShader(shader);
     lcRendererBindScene(scene);
 
     /* create some entities */
-    float bgCol[4] = { 1.0f, 0.5f, 0.8f, 1.0f };
+    float bgCol[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float fgCol[4] = { 1.0, 1.0f, 1.0f, 1.0f };
 
     lcEntity_t bg = lcEntityCreate(scene);

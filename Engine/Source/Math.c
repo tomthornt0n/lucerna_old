@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
+  Updated : 20 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -154,9 +154,9 @@ void
 lcMatrix4Multiply(float *result,
                   float *matrix1, float *matrix2)
 {
-    const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[ 0]));
-    const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[ 4]));
-    const __m128 _matrix2Column3 = _mm_load_ps(&(matrix1[ 8]));
+    const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[0]));
+    const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[4]));
+    const __m128 _matrix2Column3 = _mm_load_ps(&(matrix1[8]));
     const __m128 _matrix2Column4 = _mm_load_ps(&(matrix1[12]));
 
     float *leftRowPointer = &matrix2[0];

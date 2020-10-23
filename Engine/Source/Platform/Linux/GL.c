@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -67,7 +67,8 @@ lcGLIsExtensionSupported(Display *display,
                          int screen,
                          char *extension)
 {
-    const char *start = gl.XQueryExtensionsString(display, screen);
+    const char *start;
+    start = gl.XQueryExtensionsString(display, screen);
 
     LC_ASSERT(start, "Error getting gl extensions string");
 

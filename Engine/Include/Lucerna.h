@@ -68,7 +68,7 @@ enum
 #endif
 
 #ifdef _MSC_VER
-    #define LC_ASSERT(x, ...) \
+    #define LC_ASSERT(x, ...)                                                  \
     {                                                                          \
         if(!(x))                                                               \
         {                                                                      \
@@ -79,7 +79,7 @@ enum
         }                                                                      \
     }
 #else
-    #define LC_ASSERT(x, ...) \
+    #define LC_ASSERT(x, ...)                                                  \
     {                                                                          \
         if(!(x))                                                               \
         {                                                                      \
@@ -229,17 +229,19 @@ typedef struct
 struct lcInputMessage_t
 {
     lcGenericMessage_t Header;
-    union
-    {
-        int KeyCode;
-        int ScrollOffset;
-    };
+    int KeyCode;
 };
+struct lcMouseScrollMessage_t
+{
+    lcGenericMessage_t Header;
+    int ScrollOffset;
+};
+
 typedef struct lcInputMessage_t lcKeyPressMessage_t;
 typedef struct lcInputMessage_t lcKeyReleaseMessage_t;
 typedef struct lcInputMessage_t lcMouseButtonPressMessage_t;
 typedef struct lcInputMessage_t lcMouseButtonReleaseMessage_t;
-typedef struct lcInputMessage_t lcMouseScrollMessage_t;
+typedef struct lcMouseScrollMessage_t lcMouseScrollMessage_t;
 
 typedef void (*lcMessageListener_t)(lcGenericMessage_t *);
 
@@ -475,8 +477,7 @@ typedef struct
     float TexCoords4[2];
 } ComponentRenderable;
 
-#define lcForEntityInSubset(subset)                                            \
-int i;                                                                         \
+#define lcForEntityInSubset(i, subset)                                         \
 lcEntity_t entity;                                                             \
 for(i = 0, entity = (subset).Entities[i];                                      \
     i < LC_LIST_LEN((subset).Entities);                                        \
@@ -528,7 +529,7 @@ void lcEntityDestroy(lcScene_t *scene, lcEntity_t entity);
 enum
 {
     LC_ASSET_TYPE_SPRITE = LCAP_ASSET_TYPE_SPRITE,
-    /* ... */
+    LC_ASSET_TYPE_SHADER = LCAP_ASSET_TYPE_SHADER
 };
 
 typedef struct
@@ -543,6 +544,13 @@ typedef struct
     float Min[2];
     float Max[2];
 } lcAssetSprite_t;
+
+typedef struct
+{
+    lcGenericAsset_t Header;
+
+    uint32_t Shader;
+} lcAssetShader_t;
 
 lcGenericAsset_t *lcLoadAsset(char *name);
 

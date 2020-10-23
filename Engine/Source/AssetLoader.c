@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 23 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -11,30 +11,34 @@
 static void
 lcLoadMasterTexture(void)
 {
-    FILE *assetsFile = fopen(LC_ASSETS_FILE_PATH, "rb");
+    FILE *assetsFile;
+    char c;
+
+    assetsFile = fopen(LC_ASSETS_FILE_PATH, "rb");
     LC_ASSERT(assetsFile, "Could not open assets file: %s", strerror(errno));
 
-    char c;
     for (c = fgetc(assetsFile);
          !feof(assetsFile);
          c = fgetc(assetsFile))
     {
         if (c == LCAP_ASSET_TYPE_TEXTURE_ATLAS)
         {
-            ungetc(c, assetsFile);
-
             lcapTextureAtlas_t textureHeader;
+            size_t pixelsSize;
+            uint8_t *pixels;
+            GLuint textureID;
+
+            ungetc(c, assetsFile);
 
             fread(&textureHeader, sizeof(lcapTextureAtlas_t), 1, assetsFile);
 
-            size_t pixelsSize = textureHeader.Width *
-                                textureHeader.Width *
-                                4;
+            pixelsSize = textureHeader.Width *
+                         textureHeader.Width *
+                         4;
 
-            uint8_t *pixels = malloc(pixelsSize);
+            pixels = malloc(pixelsSize);
             fread(pixels, pixelsSize, 1, assetsFile);
 
-            GLuint textureID;
             gl.GenTextures(1, &textureID);
             gl.BindTexture(GL_TEXTURE_2D, textureID);
 
@@ -76,38 +80,70 @@ lcLoadMasterTexture(void)
 lcGenericAsset_t *
 lcLoadAsset(char *name)
 {
-    FILE *assetsFile = fopen(LC_ASSETS_FILE_PATH, "rb");
+    FILE *assetsFile;
+    char c;
+
+    assetsFile = fopen(LC_ASSETS_FILE_PATH, "rb");
     LC_ASSERT(assetsFile, "Could not open assets file.");
 
-    char c;
     for (c = fgetc(assetsFile);
          !feof(assetsFile);
          c = fgetc(assetsFile))
     {
         if (c == LCAP_ASSET_TYPE_TEXTURE_ATLAS)
         {
-            /* skip */
+            lcapTextureAtlas_t textureHeader;
+
             ungetc(c, assetsFile);
 
-            lcapTextureAtlas_t textureHeader;
             fread(&textureHeader, sizeof(lcapTextureAtlas_t), 1, assetsFile);
 
             fseek(assetsFile,
-                  textureHeader.Width * textureHeader.Width * 4, /* 4 components */
+                  textureHeader.Width * textureHeader.Width * 4,
                   SEEK_CUR);
         }
-        else if (c == LCAP_ASSET_TYPE_SPRITE)
+        else if (c == LC_ASSET_TYPE_SPRITE)
         {
-            ungetc(c, assetsFile);
             lcapSprite_t sprite;
-            fread(&sprite, sizeof(lcapSprite_t), 1, assetsFile);
+
+            ungetc(c, assetsFile);
+            fread(&sprite, sizeof(sprite), 1, assetsFile);
 
             if (0 == strcmp(sprite.Name, name))
             {
-                lcAssetSprite_t *result = malloc(sizeof(lcAssetSprite_t));
+                lcAssetSprite_t *result;
+
+                result = malloc(sizeof(*result));
                 result->Header.Type = LC_ASSET_TYPE_SPRITE;
                 memcpy(result->Min, sprite.Min, 2 * sizeof(float));
                 memcpy(result->Max, sprite.Max, 2 * sizeof(float));
+
+                return (lcGenericAsset_t *)result;
+            }
+        }
+        else if (c == LC_ASSET_TYPE_SHADER)
+        {
+            lcapShader_t shader;
+
+            ungetc(c, assetsFile);
+            fread(&shader, sizeof(shader), 1, assetsFile);
+
+            if (0 == strcmp(shader.Name, name))
+            {
+                lcAssetShader_t *result;
+                char *vertexSrc;
+                char *fragmentSrc;
+
+
+                result = malloc(sizeof(*result));
+                result->Header.Type = LC_ASSET_TYPE_SPRITE;
+
+                vertexSrc = malloc(shader.VertexLength);
+                fragmentSrc = malloc(shader.FragmentLength);
+                fread(vertexSrc, shader.VertexLength, 1, assetsFile);
+                fread(fragmentSrc, shader.FragmentLength, 1, assetsFile);
+
+                result->Shader = lcShaderCreate(vertexSrc, fragmentSrc);
 
                 return (lcGenericAsset_t *)result;
             }

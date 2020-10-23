@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -42,12 +42,18 @@ lcWindowInit(HINSTANCE instanceHandle,
              uint32_t width, uint32_t height,
              bool vSyncEnabled)
 {
+    WNDCLASS windowClass;
+    PIXELFORMATDESCRIPTOR pfd;
+    int  pixelFormat;
+    HMODULE opengl32;
+    bool recreateContext;
+
     lcWindow.Width = width;
     lcWindow.Height = height;
 
     lcWindow.DummyContext = true;
 
-    WNDCLASS windowClass;
+    windowClass;
     ZeroMemory(&windowClass, sizeof(windowClass));
 
     windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -69,7 +75,6 @@ lcWindowInit(HINSTANCE instanceHandle,
 
     lcWindow.DeviceContext = GetDC(lcWindow.WindowHandle);
 
-    PIXELFORMATDESCRIPTOR pfd;
     ZeroMemory(&pfd, sizeof(pfd));
 
     pfd.nSize        = sizeof(pfd);
@@ -83,22 +88,22 @@ lcWindowInit(HINSTANCE instanceHandle,
     pfd.cStencilBits = 8;
     pfd.iLayerType   = PFD_MAIN_PLANE;
 
-    int pixelFormat = ChoosePixelFormat(lcWindow.DeviceContext, &pfd);
+    pixelFormat = ChoosePixelFormat(lcWindow.DeviceContext, &pfd);
     SetPixelFormat(lcWindow.DeviceContext, pixelFormat, &pfd);
 
     lcWindow.RenderContext = wglCreateContext(lcWindow.DeviceContext);
     wglMakeCurrent(lcWindow.DeviceContext, lcWindow.RenderContext);
 
-    HMODULE opengl32 = LoadLibrary(TEXT("opengl32.dll"));
+    opengl32 = LoadLibrary(TEXT("opengl32.dll"));
 
     gl.wglGetExtensionsStringARB =
         (PFNWGLGETEXTENSIONSSTRINGARBPROC)
         lcGLLoadFunctionWindows("wglGetExtensionsStringARB", opengl32);
 
-    bool recreateContext = lcGLIsExtensionSupported(lcWindow.DeviceContext,
-                                                    "WGL_ARB_pixel_format") &&
-                           lcGLIsExtensionSupported(lcWindow.DeviceContext,
-                                                    "WGL_ARB_create_context");
+    recreateContext = lcGLIsExtensionSupported(lcWindow.DeviceContext,
+                                               "WGL_ARB_pixel_format") &&
+                      lcGLIsExtensionSupported(lcWindow.DeviceContext,
+                                               "WGL_ARB_create_context");
 
     if (lcGLIsExtensionSupported(lcWindow.DeviceContext,
                                  "WGL_EXT_swap_control"))
@@ -124,6 +129,12 @@ lcWindowInit(HINSTANCE instanceHandle,
 
     if (recreateContext)
     {
+        int pixelFormatARB;
+        int pixelAttributes[15];
+        UINT pixelFormatCount;
+        BOOL ChoosePixelFormatResult;
+        GLint contextAttributes[7];
+
         wglMakeCurrent(NULL, NULL);
         wglDeleteContext(lcWindow.RenderContext);
         ReleaseDC(lcWindow.WindowHandle, lcWindow.DeviceContext);
@@ -141,42 +152,53 @@ lcWindowInit(HINSTANCE instanceHandle,
 
         lcWindow.DeviceContext = GetDC(lcWindow.WindowHandle);
 
-        int pixelFormatARB;
-        UINT pixelFormatCount;
+        pixelAttributes[0] = WGL_DRAW_TO_WINDOW_ARB;
+        pixelAttributes[1] = GL_TRUE;
+        
+        pixelAttributes[2] = WGL_SUPPORT_OPENGL_ARB;
+        pixelAttributes[3] = GL_TRUE;
 
-        int pixelAttributes[] =
-        {
-            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-            WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-            WGL_PIXEL_TYPE_ARB, WGL_TYPE_RGBA_ARB,
-            WGL_COLOR_BITS_ARB, 32,
-            WGL_DEPTH_BITS_ARB, 24,
-            WGL_STENCIL_BITS_ARB, 8,
-            0,
-        };
+        pixelAttributes[4] = WGL_DOUBLE_BUFFER_ARB;
+        pixelAttributes[5] = GL_TRUE;
 
-        BOOL result = gl.wglChoosePixelFormatARB(lcWindow.DeviceContext,
-                                                 pixelAttributes,
-                                                 NULL,
-                                                 1,
-                                                 &pixelFormatARB,
-                                                 &pixelFormatCount);
+        pixelAttributes[6] = WGL_PIXEL_TYPE_ARB;
+        pixelAttributes[7] = WGL_TYPE_RGBA_ARB;
 
-        LC_ASSERT(result == TRUE &&
+        pixelAttributes[8] = WGL_COLOR_BITS_ARB;
+        pixelAttributes[9] = 32;
+
+        pixelAttributes[10] = WGL_DEPTH_BITS_ARB;
+        pixelAttributes[11] = 24;
+
+        pixelAttributes[12] = WGL_STENCIL_BITS_ARB;
+        pixelAttributes[13] = 8;
+
+        pixelAttributes[14] = 0;
+
+        ChoosePixelFormatResult =
+            gl.wglChoosePixelFormatARB(lcWindow.DeviceContext,
+                                       pixelAttributes,
+                                       NULL,
+                                       1,
+                                       &pixelFormatARB,
+                                       &pixelFormatCount);
+
+        LC_ASSERT(ChoosePixelFormatResult == TRUE &&
                   pixelFormatCount > 0,
                   "Error creating window: could not find pixel format");
 
         SetPixelFormat(lcWindow.DeviceContext, pixelFormatARB, &pfd);
 
+        contextAttributes[0] = WGL_CONTEXT_MAJOR_VERSION_ARB;
+        contextAttributes[1] = 3;
 
-        GLint contextAttributes[] = 
-        {
-            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-            WGL_CONTEXT_MINOR_VERSION_ARB, 3,
-            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
-            0
-        };
+        contextAttributes[2] = WGL_CONTEXT_MINOR_VERSION_ARB;
+        contextAttributes[3] = 3;
+
+        contextAttributes[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
+        contextAttributes[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
+
+        contextAttributes[6] = 0;
 
         lcWindow.RenderContext = gl.wglCreateContextAttribsARB(lcWindow.DeviceContext,
                                                                0,
@@ -236,10 +258,11 @@ WindowProc(HWND windowHandle,
     {
         case WM_KEYDOWN:
         {
-            uint32_t key =  KeyLUT[((lParam >> 16) & 0x7f) |
-                                   ((lParam & (1 << 24))
-                                   != 0 ?
-                                   0x80 : 0)];
+            uint32_t key;
+            key =  KeyLUT[((lParam >> 16) & 0x7f) |
+                          ((lParam & (1 << 24))
+                          != 0 ?
+                          0x80 : 0)];
 
             lcMessageEmit(lcKeyPressMessageCreate(key));
             lcInputIsKeyPressed[key] = true;
@@ -248,10 +271,11 @@ WindowProc(HWND windowHandle,
         }
         case WM_KEYUP:
         {
-            uint32_t key =  KeyLUT[((lParam >> 16) & 0x7f) |
-                                   ((lParam & (1 << 24))
-                                   != 0 ?
-                                   0x80 : 0)];
+            uint32_t key;
+            key =  KeyLUT[((lParam >> 16) & 0x7f) |
+                          ((lParam & (1 << 24))
+                          != 0 ?
+                          0x80 : 0)];
 
             lcMessageEmit(lcKeyReleaseMessageCreate(key));
             lcInputIsKeyPressed[key] = false;
@@ -302,10 +326,13 @@ WindowProc(HWND windowHandle,
         }
         case WM_MOUSEWHEEL:
         {
-            int offset = GET_WHEEL_DELTA_WPARAM(wParam) / 120;
+            int offset;
+            int button;
+
+            offset = GET_WHEEL_DELTA_WPARAM(wParam) / 120;
             lcMessageEmit(lcMouseScrollMessageCreate(offset));
 
-            int button = offset > 0 ? LC_MOUSE_BUTTON_5 : LC_MOUSE_BUTTON_6;
+            button = offset > 0 ? LC_MOUSE_BUTTON_5 : LC_MOUSE_BUTTON_6;
             lcMessageEmit(lcMouseButtonPressMessageCreate(button));
             lcInputIsMouseButtonPressed[button] = true;
 

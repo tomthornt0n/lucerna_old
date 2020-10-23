@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -12,7 +12,9 @@ int
 main(int argc,
      char **argv)
 {
-    lcInitConfig_t config = lcClientConfig();
+    lcInitConfig_t config;
+
+    config = lcClientConfig();
 
     lcGLLoad();
     lcInputInit();
@@ -32,6 +34,8 @@ main(int argc,
     lcCameraDestroy();
     lcWindowDestroy();
     lcMessageSystemDestroy();
+
+    return 0;
 }
 
 #elif defined LC_PLATFORM_WINDOWS
@@ -42,9 +46,11 @@ WinMain(HINSTANCE hInstance,
         LPSTR lpCmdLine,
         int nShowCmd)
 {
+    lcInitConfig_t config;
+
     lcClockInit();
 
-    lcInitConfig_t config = lcClientConfig();
+    config = lcClientConfig();
 
 #ifdef LC_LOGGING_ENABLED
     lcLogInitWindowsConsole();
@@ -66,6 +72,8 @@ WinMain(HINSTANCE hInstance,
     lcRendererDestroy();
     lcCameraDestroy();
     lcMessageSystemDestroy();
+
+    return 0;
 }
 
 int

@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -11,11 +11,15 @@
 lcScene_t *
 lcSceneCreate(void)
 {
-    lcScene_t *result = malloc(sizeof(lcScene_t));
-
+    lcScene_t *result;
     lcEntity_t i;
+
+    result = malloc(sizeof(lcScene_t));
+
     for (i = 0; i < LC_MAX_ENTITIES; ++i)
+    {
         result->EntitySignatures[i] = LC_NO_ENTITY;
+    }
 
     result->RenderableCount = 0;
 
@@ -51,9 +55,10 @@ void
 lcSubsetRefresh(lcScene_t *scene,
                 lcSubset_t *subset)
 {
+    lcEntity_t i;
+
     LC_LIST_CLEAR(subset->Entities);
 
-    lcEntity_t i;
     for (i = 0; i < LC_MAX_ENTITIES; ++i)
     {
         if (((subset->Signature & scene->EntitySignatures[i])
@@ -71,6 +76,7 @@ lcEntity_t
 lcEntityCreate(lcScene_t *scene)
 {
     lcEntity_t entity;
+
     for (entity = 0; entity < LC_MAX_ENTITIES; entity++)
     {
         if (scene->EntitySignatures[entity] == LC_NO_ENTITY)

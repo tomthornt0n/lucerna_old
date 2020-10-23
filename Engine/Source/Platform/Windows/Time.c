@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -22,9 +22,10 @@ uint64_t
 lcClockGetTime(void)
 {
     LARGE_INTEGER time;
+    LARGE_INTEGER elapsed;
+
     QueryPerformanceCounter(&time);
 
-    LARGE_INTEGER elapsed;
     elapsed.QuadPart = time.QuadPart - lcClockStartTime.QuadPart;
 
     elapsed.QuadPart *= 1000000;

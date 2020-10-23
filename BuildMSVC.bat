@@ -22,9 +22,9 @@ cl /nologo lcap.c /link /out:..\bin\AssetPacker.exe
 DEL lcap.obj
 POPD
 
-COPY /a Client\Assets\Meta\*.asset Client\Assets\Meta\tmp.asset
-bin\AssetPacker Client\Assets\Meta\tmp.asset -o bin\assets.data
-DEL Client\Assets\Meta\tmp.asset
+PUSHD bin
+.\AssetPacker assets.data
+POPD
 
 EXIT /B 0
 

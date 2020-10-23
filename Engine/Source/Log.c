@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -33,8 +33,11 @@
 void
 lcLogInitWindowsConsole(void)
 {
-    DWORD outMode = 0;
-    HANDLE stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD outMode;
+    HANDLE stdoutHandle;
+
+    outMode = 0;
+    stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if (stdoutHandle == INVALID_HANDLE_VALUE)
     {
@@ -83,6 +86,7 @@ lcLog(int level,
       char *fmt, ...)
 {    
     va_list args;
+
     fprintf(
         stderr, "\x1b[0m%s%-5s\x1b[0m \x1b[38m%-6s\x1b[34m │ \x1b[0m ",
         lcLogLevelColours[level], lcLogLevelNames[level], prefix);

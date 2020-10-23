@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -27,7 +27,9 @@ ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
                        float *colour,
                        lcAssetSprite_t *texture)
 {
-    uint32_t index = scene->RenderableCount;
+    uint32_t index;
+
+    index = scene->RenderableCount;
 
     scene->EntitySignatures[entity] |= COMPONENT_RENDERABLE;
 
@@ -73,13 +75,15 @@ void
 ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
                         float xOffset, float yOffset)
 {
+    uint32_t index;
+
     if (!(scene->EntitySignatures[entity] & COMPONENT_RENDERABLE))
     {
         LC_CORE_LOG_WARN("Attempting to move unused renderable component.");
         return;
     }
 
-    uint32_t index = scene->EntityToRenderable[entity];
+    index = scene->EntityToRenderable[entity];
 
     scene->ComponentRenderable[index].Position1[0] += xOffset;
     scene->ComponentRenderable[index].Position1[1] += yOffset;
@@ -97,7 +101,8 @@ ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity,
 static void
 lcRendererUpdateViewport(lcGenericMessage_t *message)
 {
-    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
+    lcWindowResizeMessage_t *resize;
+    resize = (lcWindowResizeMessage_t *)message;
 
     gl.Viewport(0, 0,
                 resize->Width,
@@ -107,6 +112,10 @@ lcRendererUpdateViewport(lcGenericMessage_t *message)
 static void
 lcRendererInit(void)
 {
+    uint32_t *indices;
+    uint32_t offset;
+    int i;
+
     lcRendererBoundShader = -1;
     lcRenderer.ModifiedStart = NULL;
     lcRenderer.ModifiedEnd = NULL;
@@ -146,10 +155,9 @@ lcRendererInit(void)
                   GL_DYNAMIC_DRAW);
 
     gl.GenBuffers(1, &(lcRenderer.IndexBuffer));
-    unsigned int *indices = calloc(LC_MAX_ENTITIES * 6, sizeof(uint32_t));
-    unsigned int offset = 0;
+    indices = calloc(LC_MAX_ENTITIES * 6, sizeof(uint32_t));
+    offset = 0;
 
-    int i;
     for (i = 0; i < LC_MAX_ENTITIES * 6; i += 6)
     {
         indices[i + 0] = 0 + offset;
@@ -192,20 +200,19 @@ lcRendererBindScene(lcScene_t *scene)
 void
 lcRendererBindShader(lcShader_t shader)
 {
-    lcRendererBoundShader = shader;
+    uint32_t windowSize[2];
 
+    lcRendererBoundShader = shader;
     gl.UseProgram(shader);
 
     lcCamera.UniformLocation = gl.GetUniformLocation(shader,
                                                      LC_CAMERA_UNIFORM_NAME);
-
     if (lcCamera.UniformLocation == -1)
     {
         LC_CORE_LOG_WARN("Uniform '%s' does not exist!",
                          LC_CAMERA_UNIFORM_NAME);
     }
 
-    uint32_t windowSize[2];
     lcWindowGetSize(windowSize);
     lcMessageEmit(lcWindowResizeMessageCreate(windowSize[0], windowSize[1]));
 }

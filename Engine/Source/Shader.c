@@ -2,61 +2,36 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 23 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 static lcShader_t lcRendererBoundShader;
 
-static bool
-lcShaderLoadFile(char *path,
-                 char **result)
-{
-    FILE *f = fopen(path, "rb");
-    if (!f) return false;
-
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    rewind(f);
-    
-    *result = malloc(fsize + 1);
-    if (*result == NULL) return false;
-    int status = fread(*result, 1, fsize, f);
-    if (status != fsize) return false;
-    fclose(f);
-    
-    (*result)[fsize] = 0;
-    return true;
-}
-
 lcShader_t
-lcShaderCreate(char *vertexPath,
-               char *fragmentPath)
+lcShaderCreate(char *vertexSrc,
+               char *fragmentSrc)
 {
     lcShader_t program;
-
-    char *vertexSrc;
-    LC_ASSERT(lcShaderLoadFile(vertexPath, &vertexSrc) != false, "Could not load vertex src!");
-    char *fragmentSrc;
-    LC_ASSERT(lcShaderLoadFile(fragmentPath, &fragmentSrc) != false, "Could not load fragment src!");
+    uint32_t vertexID, fragmentID;
+    int status;
 
     program = gl.CreateProgram();
     
-    uint32_t vertexID, fragmentID;
-
     vertexID = gl.CreateShader(GL_VERTEX_SHADER);
 
     gl.ShaderSource(vertexID, 1, (const char * const *)&vertexSrc, NULL);
     gl.CompileShader(vertexID);
 
-    int isCompiled;
-    gl.GetShaderiv(vertexID, GL_COMPILE_STATUS, &isCompiled);
+    gl.GetShaderiv(vertexID, GL_COMPILE_STATUS, &status);
 
-    if (isCompiled == GL_FALSE)
+    if (status == GL_FALSE)
     {
         int maxLength;
+        char *msg;
+
         gl.GetShaderiv(vertexID, GL_INFO_LOG_LENGTH, &maxLength);
-        char *msg = malloc(maxLength);
+        msg = malloc(maxLength);
         gl.GetShaderInfoLog(vertexID, maxLength, NULL, msg);
 
         gl.DeleteShader(vertexID);
@@ -72,14 +47,15 @@ lcShaderCreate(char *vertexPath,
 
     gl.CompileShader(fragmentID);
 
-    gl.GetShaderiv(fragmentID, GL_COMPILE_STATUS, &isCompiled);
+    gl.GetShaderiv(fragmentID, GL_COMPILE_STATUS, &status);
 
-    if (isCompiled == GL_FALSE)
+    if (status == GL_FALSE)
     {
         int maxLength;
-        gl.GetShaderiv(fragmentID, GL_INFO_LOG_LENGTH, &maxLength);
+        char *msg;
 
-        char *msg = malloc(maxLength);
+        gl.GetShaderiv(fragmentID, GL_INFO_LOG_LENGTH, &maxLength);
+        msg = malloc(maxLength);
         gl.GetShaderInfoLog(fragmentID, maxLength, NULL, msg);
 
         gl.DeleteShader(fragmentID);
@@ -91,14 +67,14 @@ lcShaderCreate(char *vertexPath,
 
     gl.LinkProgram(program);
 
-    GLint isLinked;
-    gl.GetProgramiv(program, GL_LINK_STATUS, &isLinked);
-    if (isLinked == GL_FALSE)
+    gl.GetProgramiv(program, GL_LINK_STATUS, &status);
+    if (status == GL_FALSE)
     {
         int maxLength;
-        gl.GetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        char *msg;
 
-        char *msg = malloc(maxLength);
+        gl.GetProgramiv(program, GL_INFO_LOG_LENGTH, &maxLength);
+        msg = malloc(maxLength);
         gl.GetShaderInfoLog(program, maxLength, NULL, msg);
 
         gl.DeleteProgram(program);

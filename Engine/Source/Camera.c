@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 22 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -38,7 +38,9 @@ lcCameraRecalculateViewProjectionMatrix(void)
 static void
 lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
 {
-    lcWindowResizeMessage_t *resize = (lcWindowResizeMessage_t *)message;
+    lcWindowResizeMessage_t *resize;
+
+    resize = (lcWindowResizeMessage_t *)message;
 
     lcMatrix4CreateOrthographicProjectionMatrix(
          lcCamera.ProjectionMatrix,
@@ -54,6 +56,8 @@ lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
 static void
 lcCameraInit(float *position)
 {
+    uint32_t windowSize[2];
+
     lcCamera.ViewMatrix = malloc(sizeof(float) * 16);
     lcCamera.ProjectionMatrix = malloc(sizeof(float) * 16);
     lcCamera.ViewProjectionMatrix = malloc(sizeof(float) * 16);
@@ -64,7 +68,6 @@ lcCameraInit(float *position)
            position, sizeof(float) * 2);
 
 
-    uint32_t windowSize[2];
     lcWindowGetSize(windowSize);
 
     lcMatrix4CreateOrthographicProjectionMatrix(
