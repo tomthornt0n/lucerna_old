@@ -1,13 +1,16 @@
 #ifndef LUCERNA_H
 #define LUCERNA_H
 
-#include <stdbool.h>
 #include <stdint.h>
 #include <errno.h>
 
 extern int errno;
 
 #define LC_ARRAY_COUNT(arr) ((sizeof(arr) / sizeof(*arr)) + 1)
+
+typedef uint8_t bool;
+#define true 1
+#define false 0
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Client Entry Point
@@ -100,7 +103,8 @@ void lcLog(int level, char *prefix, char *fmt, ...);
   
   Author  : Tom Thornton
   License : MIT, at end of file
-  Notes   : NA
+  Notes   : Not syncrhonised in anyway, should only be used for relative
+            measurements such as timesteps or performance counters.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 uint64_t lcClockGetTime(void);
@@ -119,11 +123,13 @@ uint64_t lcClockGetTime(void);
             (uint32_t *)list - 1: max number of elements
                                                                                         
             To avoid excessive heap allocations, when the list becomes full,
-            it is reallocated to be double the size.                                          
+            it is reallocated to be double the size (as opposed to resizing it
+            to fit).                                          
                                                                                         
             In addition, when removing elements from the list, the alloacted
             memory is not shrunk untill the number of elements decreases to
-            half of the max number of elements.
+            half of it's current size, reducing the number of allocations
+            required should more elements be added back into the list.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #define LC_LIST_CREATE(list, type) LC_ASSERT((list) == NULL,                   \
@@ -196,7 +202,8 @@ if (*((uint32_t *)(list) - 2) ==                                               \
   
   Author  : Tom Thornton
   License : MIT, at end of file
-  Notes   : NA
+  Notes   : Not threadsafe. Only intended to allow easy communication about
+            engine events with the client.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 enum
@@ -243,9 +250,9 @@ typedef struct lcInputMessage_t lcMouseButtonPressMessage_t;
 typedef struct lcInputMessage_t lcMouseButtonReleaseMessage_t;
 typedef struct lcMouseScrollMessage_t lcMouseScrollMessage_t;
 
-typedef void (*lcMessageListener_t)(lcGenericMessage_t *);
+typedef void (*lcMessageHandler_t)(lcGenericMessage_t *);
 
-void lcMessageBind(int messageType, lcMessageListener_t action);
+void lcMessageBind(int messageType, lcMessageHandler_t action);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Window
@@ -449,8 +456,7 @@ void lcMatrix4CreateScaleMatrix(float *matrix, float x, float y);
   
   Author  : Tom Thornton
   License : MIT, at end of file
-  Notes   : Designed initially for simplicity.
-            Will eventually get replaced with a better design
+  Notes   : N/A
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #include "Components.gen.h"
@@ -477,11 +483,10 @@ typedef struct
     float TexCoords4[2];
 } ComponentRenderable;
 
-#define lcForEntityInSubset(i, subset)                                         \
-lcEntity_t entity;                                                             \
-for(i = 0, entity = (subset).Entities[i];                                      \
-    i < LC_LIST_LEN((subset).Entities);                                        \
-    ++i, entity = (subset).Entities[i])
+#define lcForEntityInSubset(index, entity, subset)                             \
+for(index = 0, entity = (subset).Entities[index];                              \
+    index < LC_LIST_LEN((subset).Entities);                                    \
+    ++index, entity = (subset).Entities[index])
 
 typedef uint64_t lcSignature_t;
 typedef uint32_t lcEntity_t;
@@ -529,30 +534,12 @@ void lcEntityDestroy(lcScene_t *scene, lcEntity_t entity);
 enum
 {
     LC_ASSET_TYPE_SPRITE = LCAP_ASSET_TYPE_SPRITE,
-    LC_ASSET_TYPE_SHADER = LCAP_ASSET_TYPE_SHADER
+    LC_ASSET_TYPE_SHADER = LCAP_ASSET_TYPE_SHADER,
+    LC_ASSET_TYPE_SOUND  = LCAP_ASSET_TYPE_SOUND
 };
 
-typedef struct
-{
-    int Type;
-} lcGenericAsset_t;
 
-typedef struct
-{
-    lcGenericAsset_t Header;
-
-    float Min[2];
-    float Max[2];
-} lcAssetSprite_t;
-
-typedef struct
-{
-    lcGenericAsset_t Header;
-
-    uint32_t Shader;
-} lcAssetShader_t;
-
-lcGenericAsset_t *lcLoadAsset(char *name);
+void *lcLoadAsset(char *name, int type);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Renderer
@@ -564,15 +551,22 @@ lcGenericAsset_t *lcLoadAsset(char *name);
 
 #define LC_SHADER_PATH(shader) "../Client/Assets/Shaders/" shader
 
+typedef struct
+{
+    float Min[2];
+    float Max[2];
+} lcSprite_t;
+
+typedef uint32_t lcShader_t;
+
 void ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
                             float x, float y,
                             float width, float height,
                             float *colour,
-                            lcAssetSprite_t *texture);
+                            lcSprite_t *texture);
 void ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
                              float xOffset, float yOffset);
 
-typedef uint32_t lcShader_t;
 lcShader_t lcShaderCreate(char *vertexPath, char *fragmentPath);
 void lcShaderDestroy(lcShader_t shader);
 
@@ -584,29 +578,53 @@ void lcRendererRenderToWindow(void);
   Camera
   
   Author  : Tom Thornton
-  Updated : 30 July 2020
   License : MIT, at end of file
+  Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 void lcCameraMove(float *offset);
+
+/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  Audio
+  
+  Author  : Tom Thornton
+  License : MIT, at end of file
+  Notes   : NA
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
+
+enum
+{
+    LC_AUDIO_PLAYING,
+    LC_AUDIO_LOOPING,
+    LC_AUDIO_PAUSED
+};
+
+typedef struct
+{
+    int BufferSize;
+    uint8_t *Buffer;
+    int Playhead;
+    int State;
+} lcAudioSource_t;
+
+void lcAudioPlay(lcAudioSource_t *source);  /* play source from current playhead position */
+void lcAudioLoop(lcAudioSource_t *source);  /* same as play, but loops at end instead of stopping */
+void lcAudioPause(lcAudioSource_t *source); /* stops source playing, maintaining playhead position */
+void lcAudioStop(lcAudioSource_t *source);  /* stops source playing, resetting playhead to 0 */
 
 #endif
 
 /*
 MIT License
-
 Copyright (c) 2020 Tom Thornton
-
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
 to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
-
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -615,4 +633,5 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+
 

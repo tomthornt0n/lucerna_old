@@ -1,3 +1,7 @@
+#ifdef LC_PLATFORM_LINUX
+#define _POSIX_C_SOURCE 200809L
+#endif
+
 #include "Lucerna.h"
 
 #include <ctype.h>
@@ -7,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <math.h>
 
 #include <immintrin.h>
 
@@ -40,4 +45,5 @@
 #include "Camera.c"
 #include "AssetLoader.c"
 #include "Renderer.c"
+#include "Audio.c"
 #include "EntryPoint.c"

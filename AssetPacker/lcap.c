@@ -14,9 +14,13 @@
 
 #define LCAP_TEXTURES_DIRECTORY "../Client/Assets/Textures/"
 #define LCAP_SHADERS_DIRECTORY "../Client/Assets/Shaders/"
+#define LCAP_AUDIO_DIRECTORY "../Client/Assets/Audio/"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#define WAV_IMPLEMENTATION
+#include "wav.h"
 
 typedef struct
 {
@@ -273,7 +277,8 @@ PackTextures(FILE *out)
     }
 
     int binArea;
-    for (binArea = 4; binArea < totalTextureArea; binArea *= 4);
+    for (binArea = 4; binArea < totalTextureArea; binArea *= 4)
+      ;
     int binWidth = sqrt(binArea);
     uint8_t *bin = malloc(binArea * 4);
     uint8_t *placedMask = malloc(binArea);
@@ -283,12 +288,10 @@ PackTextures(FILE *out)
     for (textureIndex = textureCount - 1; textureIndex >= 0; --textureIndex)
     {
         int j, x, y;
-        for (j = 0; j < binArea; ++j)
-        {
-            if (!(placedMask[j]))
-            {
-                break;
-            }
+        for (j = 0; j < binArea; ++j) {
+          if (!(placedMask[j])) {
+            break;
+          }
         }
 
         x = j % binWidth;
@@ -301,21 +304,25 @@ PackTextures(FILE *out)
         textures[textureIndex].Max[1] = (float)(y + textures[textureIndex].Size) / (float)binWidth;
     }
 
-    lcapTextureAtlas_t masterTexture =
-    {
-        .Type = LCAP_ASSET_TYPE_TEXTURE_ATLAS,
-        .Width = binWidth
-    };
+    lcapChunkHeader_t atlasHeader;
+    atlasHeader.Type = LCAP_ASSET_TYPE_TEXTURE_ATLAS;
+    atlasHeader.Size = binArea * 4;
 
-    fwrite(&masterTexture, sizeof(lcapTextureAtlas_t), 1, out);
+    fwrite(&atlasHeader, sizeof(atlasHeader), 1, out);
     fwrite(bin, 4, binArea, out);
     for (textureIndex = 0; textureIndex < textureCount; ++textureIndex)
     {
-        lcapSprite_t sprite = { .Type = LCAP_ASSET_TYPE_SPRITE };
+        lcapChunkHeader_t header;
+        lcapSprite_t sprite;
+
+        header.Type = LCAP_ASSET_TYPE_SPRITE;
+        header.Size = sizeof(lcapSprite_t);
         memcpy(sprite.Name, textures[textureIndex].Name, LCAP_NAME_MAX_LEN);
         memcpy(sprite.Min, textures[textureIndex].Min, sizeof(float) * 2);
         memcpy(sprite.Max, textures[textureIndex].Max, sizeof(float) * 2);
-        fwrite(&sprite, sizeof(lcapSprite_t), 1, out);
+
+        fwrite(&header, sizeof(header), 1, out);
+        fwrite(&sprite, sizeof(sprite), 1, out);
     }
 
     FreeDirectoryList(textureCount, texturePaths);
@@ -383,7 +390,7 @@ PackShaders(FILE *out)
 
             if (!found)
             {
-                shaders = realloc(shaders, sizeof(shader_t) * ++shaderCount);
+                shaders = realloc(shaders, sizeof(*shaders) * ++shaderCount);
                 int i = shaderCount - 1;
 
                 memcpy(shaders[i].Name, name, LCAP_NAME_MAX_LEN);
@@ -417,7 +424,7 @@ PackShaders(FILE *out)
 
             if (!found)
             {
-                shaders = realloc(shaders, sizeof(shader_t) * ++shaderCount);
+                shaders = realloc(shaders, sizeof(*shaders) * ++shaderCount);
                 int i = shaderCount - 1;
 
                 memcpy(shaders[i].Name, name, LCAP_NAME_MAX_LEN);
@@ -449,24 +456,98 @@ PackShaders(FILE *out)
             exit(-1);
         }
 
-        lcapShader_t chunkHeader;
-        chunkHeader.Type = LCAP_ASSET_TYPE_SHADER;
-        memcpy(chunkHeader.Name, shaders[shaderIndex].Name, LCAP_NAME_MAX_LEN);
-        chunkHeader.VertexLength = strlen(shaders[shaderIndex].VertexSource) + 1;
-        chunkHeader.FragmentLength= strlen(shaders[shaderIndex].FragmentSource) + 1;
+        lcapChunkHeader_t header;
+        lcapShader_t shader;
 
-        fwrite(&chunkHeader, sizeof(lcapShader_t), 1, out);
+
+        memcpy(shader.Name, shaders[shaderIndex].Name, LCAP_NAME_MAX_LEN);
+        shader.VertexLength = strlen(shaders[shaderIndex].VertexSource) + 1;
+        shader.FragmentLength = strlen(shaders[shaderIndex].FragmentSource) + 1;
+
+        header.Type = LCAP_ASSET_TYPE_SHADER;
+        header.Size = sizeof(lcapShader_t) -
+                             sizeof(lcapChunkHeader_t) +
+                             shader.VertexLength +
+                             shader.FragmentLength;
+
+        fwrite(&header, sizeof(header), 1, out);
+        fwrite(&shader, sizeof(shader), 1, out);
         fwrite(shaders[shaderIndex].VertexSource,
-               chunkHeader.VertexLength,
+               shader.VertexLength,
                1,
                out);
         fwrite(shaders[shaderIndex].FragmentSource,
-               chunkHeader.FragmentLength,
+               shader.FragmentLength,
                1,
                out);
 
         free(shaders[shaderIndex].VertexSource);
         free(shaders[shaderIndex].FragmentSource);
+    }
+}
+
+void
+PackSounds(FILE *out)
+{
+    int soundIndex;
+    int soundCount;
+    char **soundPaths;
+
+    GetAllFilesInDir(LCAP_AUDIO_DIRECTORY,
+                     &soundCount,
+                     &soundPaths);
+
+    for (soundIndex = 0;
+         soundIndex < soundCount;
+         ++soundIndex)
+    {
+        /* TODO(tbt): convert all audio to same format */
+        char *fullpath;
+        int dataSize;
+        unsigned char *data;
+
+        lcapChunkHeader_t header;
+        lcapSound_t sound;
+
+        fullpath = malloc(strlen(soundPaths[soundIndex]) +
+                          strlen(LCAP_AUDIO_DIRECTORY) + 
+                          1);
+
+        memcpy(fullpath,
+               LCAP_AUDIO_DIRECTORY,
+               strlen(LCAP_AUDIO_DIRECTORY) + 1);
+        strcat(fullpath, soundPaths[soundIndex]);
+
+        wavRead(fullpath,
+                NULL,
+                NULL,
+                NULL,
+                &dataSize,
+                NULL);
+        data = malloc(dataSize);
+        wavRead(fullpath,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                data);
+
+        header.Type = LCAP_ASSET_TYPE_SOUND;
+        header.Size = sizeof(lcapSound_t) +
+                      dataSize;
+
+        int charIndex;
+        for (charIndex = 0;
+             charIndex < (LCAP_NAME_MAX_LEN - 1) &&
+             soundPaths[soundIndex][charIndex] != '.';
+             sound.Name[++charIndex] = 0)
+        {
+            sound.Name[charIndex] = soundPaths[soundIndex][charIndex];
+        }
+        
+        fwrite(&header, sizeof(header), 1, out);
+        fwrite(&sound, sizeof(sound), 1, out);
+        fwrite(data, dataSize, 1, out);
     }
 }
 
@@ -490,6 +571,7 @@ main(int argc,
 
     PackTextures(out);
     PackShaders(out);
+    PackSounds(out);
 
     fclose(out);
 }

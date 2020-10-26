@@ -7,7 +7,7 @@ TIMEFORMAT="took %Rs"
 if [ "$1" == "Debug" ]; then
     FLAGS="-DLC_DEBUG -g"
 elif [ "$1" == "Release" ]; then
-    FLAGS="-DLC_RELEASE -O2 -Warray-bounds=1"
+    FLAGS="-DLC_RELEASE -O2 -msse2"
 else
     printf "\033[31mInvalid configuration.\033[0m\n"
     printf "\033[31mUsage:\033[0m"
@@ -40,7 +40,7 @@ popd > /dev/null
 printf "\033[32mDone!\n\033[0m\n"
 
 printf "\033[35mBuilding lucerna...\033[0m\n"
-time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -std=c89 -Wall -Wno-variadic-macros -pedantic $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -o bin/LucernaProject
+time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -Wall -pedantic $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -lm -lasound -o bin/LucernaProject
 printf "\033[32mDone!\n\033[0m\n"
 
 exit 0

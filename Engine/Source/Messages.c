@@ -6,7 +6,7 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-static lcMessageListener_t *lcMessageListeners[LC_MESSAGE_TYPE_COUNT];
+static lcMessageHandler_t *lcMessageHandlers[LC_MESSAGE_TYPE_COUNT];
 
 static void
 lcMessageSystemInit(void)
@@ -14,8 +14,8 @@ lcMessageSystemInit(void)
     int i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        lcMessageListeners[i] = NULL; 
-        LC_LIST_CREATE(lcMessageListeners[i], lcMessageListener_t); 
+        lcMessageHandlers[i] = NULL; 
+        LC_LIST_CREATE(lcMessageHandlers[i], lcMessageHandler_t); 
     }
 }
 
@@ -104,10 +104,10 @@ lcMouseScrollMessageCreate(int offset)
 
 void
 lcMessageBind(int messageType,
-              lcMessageListener_t action)
+              lcMessageHandler_t action)
 {
-    LC_LIST_PUSH_BACK(lcMessageListeners[messageType],
-                      lcMessageListener_t,
+    LC_LIST_PUSH_BACK(lcMessageHandlers[messageType],
+                      lcMessageHandler_t,
                       &action);
 }
 
@@ -116,9 +116,9 @@ lcMessageEmit(lcGenericMessage_t *message)
 {
     int i;
 
-    for (i = 0; i < LC_LIST_LEN(lcMessageListeners[message->Type]); ++i)
+    for (i = 0; i < LC_LIST_LEN(lcMessageHandlers[message->Type]); ++i)
     {
-        (*lcMessageListeners[message->Type][i])(message);
+        (*lcMessageHandlers[message->Type][i])(message);
     }
     free(message);
 }
@@ -130,7 +130,7 @@ lcMessageSystemDestroy(void)
 
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        LC_LIST_DESTROY(lcMessageListeners[i]);
+        LC_LIST_DESTROY(lcMessageHandlers[i]);
     }
 }
 

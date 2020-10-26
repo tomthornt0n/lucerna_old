@@ -1,23 +1,18 @@
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Lucerna
-  
+
   Author  : Tom Thornton
-  Updated : 17 Oct 2020
+  Updated : 26 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#include "sys/time.h"
-
-uint64_t
-lcClockGetTime(void)
-{
-    struct timeval tv;
-
-    gettimeofday(&tv, NULL);
-
-    return tv.tv_sec * 1000000 +
-           tv.tv_usec;
-}
+#if defined(LC_PLATFORM_LINUX)
+#include "Platform/Linux/Audio.c"
+#elif defined(LC_PLATFORM_WINDOWS)
+#error TODO: audio on windows
+#else
+#error "Platform macro not defined"
+#endif
 
 /*
 MIT License

@@ -1,5 +1,4 @@
 #include <math.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -18,6 +17,7 @@
 
 static uint8_t g_running = 1;
 static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
+lcAudioSource_t *g_sound;
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
@@ -41,7 +41,8 @@ UpdatePhysics(lcSubset_t *subset,
               double frameTime)
 {
     int i;
-    lcForEntityInSubset(i, *subset)
+    lcEntity_t entity;
+    lcForEntityInSubset(i, entity, *subset)
     {
         scene->ComponentPhysics[entity].Minimum[0] +=
         scene->ComponentPhysics[entity].Velocity[0] *
@@ -72,7 +73,7 @@ UpdateComputerPaddle(lcScene_t *scene,
                      lcEntity_t ball,
                      lcEntity_t paddle)
 {
-    if (scene->ComponentPhysics[paddle].Minimum[1] >
+    if (scene->ComponentPhysics[paddle].Minimum[1] + OponentBallRange >
         scene->ComponentPhysics[ball].Maximum[1])
     {
         if (scene->ComponentPhysics[paddle].Velocity[1] > -OponentSpeed)
@@ -80,13 +81,17 @@ UpdateComputerPaddle(lcScene_t *scene,
             scene->ComponentPhysics[paddle].Velocity[1] -= OponentAcceleration;
         }
     }
-    else if (scene->ComponentPhysics[paddle].Maximum[1] <
+    else if (scene->ComponentPhysics[paddle].Maximum[1] - OponentBallRange <
              scene->ComponentPhysics[ball].Minimum[1])
     {
-        if (scene->ComponentPhysics[paddle].Velocity[1] > -OponentSpeed)
+        if (scene->ComponentPhysics[paddle].Velocity[1] < OponentSpeed)
         {
             scene->ComponentPhysics[paddle].Velocity[1] += OponentAcceleration;
         }
+    }
+    else
+    {
+        scene->ComponentPhysics[paddle].Velocity[1] /= 1.5f;
     }
 }
 
@@ -129,6 +134,7 @@ UpdateBall(lcScene_t *scene,
     int i;
     float *ballMin;
     float *ballMax;
+    lcEntity_t entity;
 
     ballMin = scene->ComponentPhysics[ball].Minimum;
     ballMax = scene->ComponentPhysics[ball].Maximum;
@@ -153,7 +159,7 @@ UpdateBall(lcScene_t *scene,
         exit(0);
     }
 
-    lcForEntityInSubset(i, *physicsSubset)
+    lcForEntityInSubset(i, entity, *physicsSubset)
     {
         if (entity != ball)
         {
@@ -178,7 +184,7 @@ static lcEntity_t
 PaddleCreate(lcScene_t *scene,
              float x, float y,
              float *colour,
-             lcAssetSprite_t *sprite)
+             lcSprite_t *sprite)
 {
     lcEntity_t result;
     float min[2];
@@ -210,7 +216,7 @@ static lcEntity_t
 BallCreate(lcScene_t *scene,
            float x, float y,
            float *colour,
-           lcAssetSprite_t *sprite)
+           lcSprite_t *sprite)
 {
     lcEntity_t result;
     float min[2];
@@ -248,7 +254,7 @@ lcClientConfig()
     config.WindowDimensions[1] = 1017;
     config.CameraPosition[0] = 0.0f;
     config.CameraPosition[1] = 1.0f;
-    config.VSyncEnabled = true;
+    config.VSyncEnabled = false;
     
     return config;
 }
@@ -257,6 +263,19 @@ void
 lcClientMain(int argc,
              char** argv)
 {
+    lcSprite_t *backgroundTex;
+    lcSprite_t *paddleTex;
+    lcSprite_t *ballTex;
+    lcScene_t *scene;
+    lcShader_t shader;
+    float bgCol[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    float fgCol[4] = { 1.0, 1.0f, 1.0f, 1.0f };
+    lcEntity_t bg, playerPaddle, computerPaddle, ball;
+    lcSubset_t physics;
+    double frameTimeInSeconds;
+    uint64_t previousTime, time;
+    int count;
+
     /* create the window */
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_CLOSE, OnWindowClose);
     g_winYBounds[0] = -540.0f;
@@ -264,24 +283,21 @@ lcClientMain(int argc,
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
 
     /* load assets */
-    lcAssetSprite_t *backgroundTex = (lcAssetSprite_t *)lcLoadAsset("bg");
-    lcAssetSprite_t *ballTex = (lcAssetSprite_t *)lcLoadAsset("ball");
-    lcAssetSprite_t *paddleTex = (lcAssetSprite_t *)lcLoadAsset("paddle");
+    backgroundTex = (lcSprite_t *)lcLoadAsset("bg", LC_ASSET_TYPE_SPRITE);
+    ballTex = (lcSprite_t *)lcLoadAsset("ball", LC_ASSET_TYPE_SPRITE);
+    paddleTex = (lcSprite_t *)lcLoadAsset("paddle", LC_ASSET_TYPE_SPRITE);
+    shader = *((lcShader_t *)lcLoadAsset("SplitTone", LC_ASSET_TYPE_SHADER));
+    g_sound = lcLoadAsset("testSound", LC_ASSET_TYPE_SOUND);
 
     /* create a scene */
-    lcScene_t *scene = lcSceneCreate();
+    scene = lcSceneCreate();
 
     /* setup the renderer */
-    lcShader_t shader = ((lcAssetShader_t *)lcLoadAsset("Simple"))->Shader;
-
     lcRendererBindShader(shader);
     lcRendererBindScene(scene);
 
     /* create some entities */
-    float bgCol[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    float fgCol[4] = { 1.0, 1.0f, 1.0f, 1.0f };
-
-    lcEntity_t bg = lcEntityCreate(scene);
+    bg = lcEntityCreate(scene);
     ComponentRenderableAdd(scene,
                            bg,
                            0.0f,
@@ -291,34 +307,34 @@ lcClientMain(int argc,
                            bgCol,
                            backgroundTex);
 
-    lcEntity_t playerPaddle = PaddleCreate(scene, -540.0f, 0.0f, fgCol, paddleTex);
-    lcEntity_t computerPaddle = PaddleCreate(scene, +540.0f, 0.0f, fgCol, paddleTex);
-    lcEntity_t ball = BallCreate(scene, 0.0f, 0.0f, fgCol, ballTex);
+    playerPaddle = PaddleCreate(scene, -540.0f, 0.0f, fgCol, paddleTex);
+    computerPaddle = PaddleCreate(scene, +540.0f, 0.0f, fgCol, paddleTex);
+    ball = BallCreate(scene, 0.0f, 0.0f, fgCol, ballTex);
 
     /* setup physics */
-    lcSubset_t physics = lcSubsetCreate();
+    physics = lcSubsetCreate();
     lcSubsetSetSignature(&physics,
                          COMPONENT_PHYSICS |
                          COMPONENT_RENDERABLE);
     lcSubsetRefresh(scene, &physics);
 
+    lcAudioPlay(g_sound);
+
     /* main loop */
-    double frameTimeInSeconds;
-    uint64_t previousTime = lcClockGetTime();
-    uint64_t time = lcClockGetTime();
-    int count = 0;
+    previousTime = lcClockGetTime();
+    time = lcClockGetTime();
+    count = 0;
     while (g_running)
     {
         previousTime = time;
         time = lcClockGetTime();
         frameTimeInSeconds = (time - previousTime) / 1000000.0;
 
-        if (count++ == 60)
+        if (count++ == 30000)
         {
             count = 0;
             LC_LOG_INFO("FPS: %f; Frame Time (in seconds): %f\n",
-                        1.0 / frameTimeInSeconds,
-                        frameTimeInSeconds);
+                        1.0 / frameTimeInSeconds, frameTimeInSeconds);
         }
 
         UpdateBall(scene, &physics, ball);

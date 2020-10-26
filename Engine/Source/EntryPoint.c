@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 26 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -23,13 +23,14 @@ main(int argc,
                  config.WindowDimensions[0],
                  config.WindowDimensions[1],
                  config.VSyncEnabled);
+    lcAudioInit();
     lcRendererInit();
     lcLoadMasterTexture();
     lcCameraInit(config.CameraPosition);
 
-
     lcClientMain(argc, argv);
 
+    lcAudioDestroy();
     lcRendererDestroy();
     lcCameraDestroy();
     lcWindowDestroy();
