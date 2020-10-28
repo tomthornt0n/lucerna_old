@@ -2,111 +2,102 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 26 Oct 2020
+  Updated : 28 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #define LC_CAMERA_UNIFORM_NAME "u_ViewProjectionMatrix"
 
-struct
+internal struct
 {
     GLint UniformLocation;
 
-    float *ProjectionMatrix;
-    float *ViewMatrix;
-    float *ViewProjectionMatrix;
+    f32 *ProjectionMatrix;
+    f32 *ViewMatrix;
+    f32 *ViewProjectionMatrix;
 
-    float Position[2];
-} lcCamera;
+    f32 Position[2];
+} _lcCamera;
 
-static void
+internal void
 lcCameraRecalculateViewProjectionMatrix(void)
 {
-    lcMatrix4Multiply(lcCamera.ViewProjectionMatrix,
-                      lcCamera.ProjectionMatrix,
-                      lcCamera.ViewMatrix);
+    lcMatrix4Multiply(_lcCamera.ViewProjectionMatrix,
+                      _lcCamera.ProjectionMatrix,
+                      _lcCamera.ViewMatrix);
 
-    if (lcCamera.UniformLocation != -1)
+    if (_lcCamera.UniformLocation != -1)
     {
-        gl.UniformMatrix4fv(lcCamera.UniformLocation,
-                            1, GL_FALSE,
-                            lcCamera.ViewProjectionMatrix);
+        gl.UniformMatrix4fv(_lcCamera.UniformLocation,
+                            1,
+                            GL_FALSE,
+                            _lcCamera.ViewProjectionMatrix);
     }
 }
 
 
-static void
-lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
+internal void
+_lcCameraUpdateProjectionMatrix(lcGenericMessage_t *message)
 {
     lcWindowResizeMessage_t *resize;
 
     resize = (lcWindowResizeMessage_t *)message;
 
     lcMatrix4CreateOrthographicProjectionMatrix(
-         lcCamera.ProjectionMatrix,
-        -((float) resize->Width / 2.0f),
-         ((float) resize->Width / 2.0f),
-        -((float) resize->Height / 2.0f),
-         ((float) resize->Height / 2.0f)
-    );
+        _lcCamera.ProjectionMatrix, -((f32)resize->Width / 2.0f),
+        ((f32)resize->Width / 2.0f), -((f32)resize->Height / 2.0f),
+        ((f32)resize->Height / 2.0f));
 
-   lcCameraRecalculateViewProjectionMatrix(); 
+    lcCameraRecalculateViewProjectionMatrix(); 
 }
 
-static void
-lcCameraInit(float *position)
+internal void
+_lcCameraInit(f32 *position)
 {
-    uint32_t windowSize[2];
+    u32 windowSize[2];
 
-    lcCamera.ViewMatrix = malloc(sizeof(float) * 16);
-    lcCamera.ProjectionMatrix = malloc(sizeof(float) * 16);
-    lcCamera.ViewProjectionMatrix = malloc(sizeof(float) * 16);
+    _lcCamera.ViewMatrix = malloc(sizeof(f32) * 16);
+    _lcCamera.ProjectionMatrix = malloc(sizeof(f32) * 16);
+    _lcCamera.ViewProjectionMatrix = malloc(sizeof(f32) * 16);
 
-    lcCamera.UniformLocation = -1;
+    _lcCamera.UniformLocation = -1;
 
-    memcpy(lcCamera.Position,
-           position, sizeof(float) * 2);
-
+    memcpy(_lcCamera.Position, position, sizeof(f32) * 2);
 
     lcWindowGetSize(windowSize);
 
     lcMatrix4CreateOrthographicProjectionMatrix(
-         lcCamera.ProjectionMatrix,
-        -((float)windowSize[0]  / 2.0f),
-         ((float)windowSize[0]  / 2.0f),
-        -((float)windowSize[1] / 2.0f),
-         ((float)windowSize[1] / 2.0f)
-    );
+        _lcCamera.ProjectionMatrix, -((f32)windowSize[0] / 2.0f),
+        ((f32)windowSize[0] / 2.0f), -((f32)windowSize[1] / 2.0f),
+        ((f32)windowSize[1] / 2.0f));
 
-    lcMatrix4CreateTranslationMatrix(lcCamera.ViewMatrix,
-                                      position[0], position[1]);
+    lcMatrix4CreateTranslationMatrix(_lcCamera.ViewMatrix, position[0],
+                                     position[1]);
 
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE,
-                   lcCameraUpdateProjectionMatrix);
+                   _lcCameraUpdateProjectionMatrix);
 
     lcCameraRecalculateViewProjectionMatrix();
 }
 
 void
-lcCameraMove(float *offset)
+lcCameraMove(f32 *offset)
 {
-    lcVector2Add(lcCamera.Position,
-                 lcCamera.Position,
-                 offset);
-
-    lcMatrix4CreateTranslationMatrix(lcCamera.ViewMatrix,
-                                     lcCamera.Position[0],
-                                     lcCamera.Position[1]);
-
+    lcVector2Add(_lcCamera.Position, _lcCamera.Position, offset);
+  
+    lcMatrix4CreateTranslationMatrix(_lcCamera.ViewMatrix,
+                                     _lcCamera.Position[0],
+                                     _lcCamera.Position[1]);
+  
     lcCameraRecalculateViewProjectionMatrix();
 }
 
-static void
-lcCameraDestroy(void)
+internal void
+_lcCameraDestroy(void)
 {
-    free(lcCamera.ViewMatrix);
-    free(lcCamera.ProjectionMatrix);
-    free(lcCamera.ViewProjectionMatrix);
+    free(_lcCamera.ViewMatrix);
+    free(_lcCamera.ProjectionMatrix);
+    free(_lcCamera.ViewProjectionMatrix);
 }
 
 /*

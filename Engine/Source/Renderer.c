@@ -2,32 +2,32 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 24 Oct 2020
+  Updated : 27 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-struct
+internal struct
 {
     lcScene_t *BoundScene;
-    uint32_t VertexArray, VertexBuffer, IndexBuffer;
-    uint8_t *ModifiedStart, *ModifiedEnd;
-} lcRenderer;
+    u32 VertexArray, VertexBuffer, IndexBuffer;
+    u8 *ModifiedStart, *ModifiedEnd;
+} _lcRenderer;
 
-#define lcRendererBufferData()                                                 \
+#define _lcRendererBufferData()                                                \
     gl.BufferSubData(GL_ARRAY_BUFFER,                                          \
                      0,                                                        \
-                     lcRenderer.BoundScene->RenderableCount *                  \
+                     _lcRenderer.BoundScene->RenderableCount *                 \
                      sizeof(ComponentRenderable),                              \
-                     lcRenderer.BoundScene->ComponentRenderable);
+                     _lcRenderer.BoundScene->ComponentRenderable);
 
 void
 ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
-                       float x, float y,
-                       float width, float height,
-                       float *colour,
+                       f32 x, f32 y,
+                       f32 width, f32 height,
+                       f32 *colour,
                        lcSprite_t *texture)
 {
-    uint32_t index;
+    u32 index;
 
     index = scene->RenderableCount;
 
@@ -38,33 +38,33 @@ ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
     scene->ComponentRenderable[index].TexCoords1[0] = texture->Min[0];
     scene->ComponentRenderable[index].TexCoords1[1] = texture->Min[1];
     memcpy(&(scene->ComponentRenderable[index].Colour1),
-           colour, 4 * sizeof(float));
+           colour, 4 * sizeof(f32));
 
     scene->ComponentRenderable[index].Position2[0] = x + width;
     scene->ComponentRenderable[index].Position2[1] = y - height;
     scene->ComponentRenderable[index].TexCoords2[0] = texture->Max[0];
     scene->ComponentRenderable[index].TexCoords2[1] = texture->Min[1];
     memcpy(&(scene->ComponentRenderable[index].Colour2),
-           colour, 4 * sizeof(float));
+           colour, 4 * sizeof(f32));
 
     scene->ComponentRenderable[index].Position3[0] = x + width;
     scene->ComponentRenderable[index].Position3[1] = y + height;
     scene->ComponentRenderable[index].TexCoords3[0] = texture->Max[0];
     scene->ComponentRenderable[index].TexCoords3[1] = texture->Max[1];
     memcpy(&(scene->ComponentRenderable[index].Colour3),
-           colour, 4 * sizeof(float));
+           colour, 4 * sizeof(f32));
 
     scene->ComponentRenderable[index].Position4[0] = x - width;
     scene->ComponentRenderable[index].Position4[1] = y + height;
     scene->ComponentRenderable[index].TexCoords4[0] = texture->Min[0];
     scene->ComponentRenderable[index].TexCoords4[1] = texture->Max[1];
     memcpy(&(scene->ComponentRenderable[index].Colour4),
-           colour, 4 * sizeof(float));
+           colour, 4 * sizeof(f32));
 
 
-    if (scene == lcRenderer.BoundScene)
+    if (scene == _lcRenderer.BoundScene)
     {
-        lcRendererBufferData();
+        _lcRendererBufferData();
     }
 
     scene->EntityToRenderable[entity] = index;
@@ -72,10 +72,12 @@ ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
 }
 
 void
-ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
-                        float xOffset, float yOffset)
+ComponentRenderableMove(lcScene_t *scene,
+                        lcEntity_t entity, 
+                        f32 xOffset,
+                        f32 yOffset)
 {
-    uint32_t index;
+    u32 index;
 
     if (!(scene->EntitySignatures[entity] & COMPONENT_RENDERABLE))
     {
@@ -98,8 +100,8 @@ ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity,
     scene->ComponentRenderable[index].Position4[1] += yOffset;
 }
 
-static void
-lcRendererUpdateViewport(lcGenericMessage_t *message)
+internal void
+_lcRendererUpdateViewport(lcGenericMessage_t *message)
 {
     lcWindowResizeMessage_t *resize;
     resize = (lcWindowResizeMessage_t *)message;
@@ -109,29 +111,29 @@ lcRendererUpdateViewport(lcGenericMessage_t *message)
                 resize->Height);
 }
 
-static void
-lcRendererInit(void)
+internal void
+_lcRendererInit(void)
 {
-    uint32_t *indices;
-    uint32_t offset;
+    u32 *indices;
+    u32 offset;
     int i;
 
-    lcRendererBoundShader = -1;
-    lcRenderer.ModifiedStart = NULL;
-    lcRenderer.ModifiedEnd = NULL;
+    _lcRendererBoundShader = -1;
+    _lcRenderer.ModifiedStart = NULL;
+    _lcRenderer.ModifiedEnd = NULL;
 
-    gl.GenVertexArrays(1, &(lcRenderer.VertexArray));
-    gl.BindVertexArray(lcRenderer.VertexArray);
+    gl.GenVertexArrays(1, &(_lcRenderer.VertexArray));
+    gl.BindVertexArray(_lcRenderer.VertexArray);
 
-    gl.GenBuffers(1, &(lcRenderer.VertexBuffer));
-    gl.BindBuffer(GL_ARRAY_BUFFER, lcRenderer.VertexBuffer);
+    gl.GenBuffers(1, &(_lcRenderer.VertexBuffer));
+    gl.BindBuffer(GL_ARRAY_BUFFER, _lcRenderer.VertexBuffer);
 
     gl.EnableVertexAttribArray(0);
     gl.VertexAttribPointer(0,
                            2,
                            GL_FLOAT,
                            GL_FALSE,
-                           8 * sizeof(float),
+                           8 * sizeof(f32),
                            NULL);
 
     gl.EnableVertexAttribArray(1);
@@ -139,23 +141,23 @@ lcRendererInit(void)
                            4,
                            GL_FLOAT,
                            GL_FALSE,
-                           8 * sizeof(float),
-                           (const void*)(2 * sizeof(float)));
+                           8 * sizeof(f32),
+                           (const void*)(2 * sizeof(f32)));
 
     gl.EnableVertexAttribArray(2);
     gl.VertexAttribPointer(2,
                            2,
                            GL_FLOAT,
                            GL_FALSE,
-                           8 * sizeof(float),
-                           (const void*)(6 * sizeof(float)));
+                           8 * sizeof(f32),
+                           (const void*)(6 * sizeof(f32)));
 
     gl.BufferData(GL_ARRAY_BUFFER,
                   LC_MAX_ENTITIES * sizeof(ComponentRenderable), NULL,
                   GL_DYNAMIC_DRAW);
 
-    gl.GenBuffers(1, &(lcRenderer.IndexBuffer));
-    indices = calloc(LC_MAX_ENTITIES * 6, sizeof(uint32_t));
+    gl.GenBuffers(1, &(_lcRenderer.IndexBuffer));
+    indices = malloc(LC_MAX_ENTITIES * 6 * sizeof(u32));
     offset = 0;
 
     for (i = 0; i < LC_MAX_ENTITIES * 6; i += 6)
@@ -171,50 +173,50 @@ lcRendererInit(void)
         offset += 4;
     }
 
-    gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, lcRenderer.IndexBuffer);
+    gl.BindBuffer(GL_ELEMENT_ARRAY_BUFFER, _lcRenderer.IndexBuffer);
     gl.BufferData(GL_ELEMENT_ARRAY_BUFFER,
-                  LC_MAX_ENTITIES * 6 * sizeof(uint32_t), indices,
+                  LC_MAX_ENTITIES * 6 * sizeof(u32), indices,
                   GL_STATIC_DRAW);
 
     free(indices);
 
     gl.ClearColor(1.0f, 0.0f, 0.0f, 0.0f);
 
-    lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, lcRendererUpdateViewport);
+    lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, _lcRendererUpdateViewport);
 }
 
 void
 lcRendererBindScene(lcScene_t *scene)
 {
-    lcRenderer.ModifiedStart =
-        (uint8_t *)(scene->ComponentRenderable);
+    _lcRenderer.ModifiedStart =
+        (u8 *)(scene->ComponentRenderable);
 
-    lcRenderer.ModifiedEnd =
-        (uint8_t *)(scene->ComponentRenderable + scene->RenderableCount);
+    _lcRenderer.ModifiedEnd =
+        (u8 *)(scene->ComponentRenderable + scene->RenderableCount);
 
-    lcRenderer.BoundScene = scene;
+    _lcRenderer.BoundScene = scene;
 
-    lcRendererBufferData();
+    _lcRendererBufferData();
 }
 
 void
 lcRendererBindShader(lcShader_t shader)
 {
-    uint32_t windowSize[2];
+    u32 windowSize[2];
 
-    lcRendererBoundShader = shader;
+    _lcRendererBoundShader = shader;
     gl.UseProgram(shader);
 
-    lcCamera.UniformLocation = gl.GetUniformLocation(shader,
+    _lcCamera.UniformLocation = gl.GetUniformLocation(shader,
                                                      LC_CAMERA_UNIFORM_NAME);
-    if (lcCamera.UniformLocation == -1)
+    if (_lcCamera.UniformLocation == -1)
     {
         LC_CORE_LOG_WARN("Uniform '%s' does not exist!",
                          LC_CAMERA_UNIFORM_NAME);
     }
 
     lcWindowGetSize(windowSize);
-    lcMessageEmit(lcWindowResizeMessageCreate(windowSize[0], windowSize[1]));
+    _lcMessageEmit(_lcWindowResizeMessageCreate(windowSize[0], windowSize[1]));
 }
 
 
@@ -225,24 +227,24 @@ lcRendererRenderToWindow(void)
 
     gl.Clear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (lcRenderer.ModifiedStart != NULL &&
-        lcRenderer.ModifiedEnd   != NULL)
+    if (_lcRenderer.ModifiedStart != NULL &&
+        _lcRenderer.ModifiedEnd   != NULL)
     {
-        lcRendererBufferData();
+        _lcRendererBufferData();
     }
     
     gl.DrawElements(GL_TRIANGLES,
-                    lcRenderer.BoundScene->RenderableCount * 6,
+                    _lcRenderer.BoundScene->RenderableCount * 6,
                     GL_UNSIGNED_INT, NULL);
 }
 
 
-static void
-lcRendererDestroy(void)
+internal void
+_lcRendererDestroy(void)
 {
-    gl.DeleteBuffers(1, &(lcRenderer.VertexBuffer));
-    gl.DeleteBuffers(1, &(lcRenderer.IndexBuffer));
-    gl.DeleteVertexArrays(1, &(lcRenderer.VertexArray));
+    gl.DeleteBuffers(1, &(_lcRenderer.VertexBuffer));
+    gl.DeleteBuffers(1, &(_lcRenderer.IndexBuffer));
+    gl.DeleteVertexArrays(1, &(_lcRenderer.VertexArray));
 }
 
 /*

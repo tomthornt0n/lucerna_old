@@ -2,28 +2,22 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 28 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #define LC_NO_ENTITY 0xffffffffffffffff
 
-lcScene_t *
-lcSceneCreate(void)
+void
+lcSceneCreate(lcScene_t *scene)
 {
-    lcScene_t *result;
     lcEntity_t i;
-
-    result = malloc(sizeof(lcScene_t));
-
     for (i = 0; i < LC_MAX_ENTITIES; ++i)
     {
-        result->EntitySignatures[i] = LC_NO_ENTITY;
+        scene->EntitySignatures[i] = LC_NO_ENTITY;
     }
 
-    result->RenderableCount = 0;
-
-    return result;
+    scene->RenderableCount = 0;
 }
 
 lcSubset_t 
@@ -33,7 +27,7 @@ lcSubsetCreate(void)
 
     subset.Signature = LC_COMPONENT_NONE;
     subset.Entities = NULL;
-    LC_LIST_CREATE(subset.Entities, lcEntity_t);
+    LC_LIST_CREATE(subset.Entities);
 
     return subset;
 }
@@ -67,7 +61,7 @@ lcSubsetRefresh(lcScene_t *scene,
                     != LC_NO_ENTITY
             )
         {
-            LC_LIST_PUSH_BACK(subset->Entities, lcEntity_t, &i);
+            LC_LIST_PUSH_BACK(subset->Entities, &i);
         }
     }
 }

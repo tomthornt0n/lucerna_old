@@ -1,16 +1,34 @@
 #ifndef LUCERNA_H
 #define LUCERNA_H
 
-#include <stdint.h>
 #include <errno.h>
 
 extern int errno;
 
 #define LC_ARRAY_COUNT(arr) ((sizeof(arr) / sizeof(*arr)) + 1)
 
-typedef uint8_t bool;
 #define true 1
 #define false 0
+
+#define internal static
+
+/* NOTE(tbt): can make assumptions about widths as the platform will remain
+              relatively constant.
+*/
+typedef unsigned char  u8;
+typedef unsigned short u16;
+typedef unsigned int   u32;
+typedef unsigned long  u64;
+
+typedef char           i8;
+typedef short int      i16;
+typedef int            i32;
+typedef long           i64;
+
+typedef float          f32;
+typedef double         f64;
+
+typedef unsigned char  b8;
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Client Entry Point
@@ -20,15 +38,15 @@ typedef uint8_t bool;
 
 typedef struct
 {
-    char WindowTitle[LC_WINDOW_TITLE_MAX_LEN];
-    unsigned int WindowDimensions[2];
-    bool VSyncEnabled;
+    i8 WindowTitle[LC_WINDOW_TITLE_MAX_LEN];
+    u32 WindowDimensions[2];
+    b8 VSyncEnabled;
 
-    float CameraPosition[2];
+    f32 CameraPosition[2];
 } lcInitConfig_t;
 
 lcInitConfig_t lcClientConfig(void);
-void lcClientMain(int argc, char **argv);
+void lcClientMain(i32 argc, i8 **argv);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Logging                                                                    
@@ -96,7 +114,7 @@ enum
 
 void lcLogInit(void);
 void lcLogDestroy(void);
-void lcLog(int level, char *prefix, char *fmt, ...);
+void lcLog(i32 level, char *prefix, char *fmt, ...);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Time                                                                    
@@ -107,7 +125,7 @@ void lcLog(int level, char *prefix, char *fmt, ...);
             measurements such as timesteps or performance counters.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-uint64_t lcClockGetTime(void);
+u64 lcClockGetTime(void);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Array Backed List
@@ -132,69 +150,69 @@ uint64_t lcClockGetTime(void);
             required should more elements be added back into the list.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define LC_LIST_CREATE(list, type) LC_ASSERT((list) == NULL,                   \
+#define LC_LIST_CREATE(list) LC_ASSERT((list) == NULL,                   \
                                        "Uninitialised list must be NULL");     \
-                             (list) = (type *)                                 \
+                             (list) = (void *)                                 \
                              (                                                 \
-                                    (uint32_t *)malloc(sizeof(type) +          \
-                                    2 * sizeof(uint32_t)) + 2                  \
+                                    (u32 *)malloc(sizeof(*list) +               \
+                                    2 * sizeof(u32)) + 2                       \
                              );                                                \
-                             *((uint32_t *)(list) - 1) = 1;                    \
-                             *((uint32_t *)(list) - 2) = 0
+                             *((u32 *)(list) - 1) = 1;                         \
+                             *((u32 *)(list) - 2) = 0
 
-#define LC_LIST_LEN(list) *((uint32_t *)(list) - 2)
+#define LC_LIST_LEN(list) *((u32 *)(list) - 2)
 
-#define LC_LIST_PUSH_BACK(list, type, item)                                    \
-if (*((uint32_t *)(list) - 2) ==                                               \
-    *((uint32_t *)(list) - 1))                                                 \
+#define LC_LIST_PUSH_BACK(list, item)                                    \
+if (*((u32 *)(list) - 2) ==                                                    \
+    *((u32 *)(list) - 1))                                                      \
 {                                                                              \
-    list = (type *)                                                            \
+    list = (void *)                                                            \
     (                                                                          \
-        (uint32_t *)                                                           \
+        (u32 *)                                                                \
         (                                                                      \
-            realloc((uint32_t *)(list) - 2,                                    \
-                   *((uint32_t *)(list) - 1) * 2 * sizeof(type)                \
-                   + 2 * sizeof(uint32_t)                                      \
+            realloc((u32 *)(list) - 2,                                         \
+                   *((u32 *)(list) - 1) * 2 * sizeof(*(list))                     \
+                   + 2 * sizeof(u32)                                           \
                    )                                                           \
         ) + 2                                                                  \
     );                                                                         \
-    *((uint32_t *)(list) - 1) *= 2;                                            \
+    *((u32 *)(list) - 1) *= 2;                                                 \
 }                                                                              \
-memcpy((list) + *((uint32_t *)(list) - 2),                                     \
-       item, sizeof(type));                                                    \
-(*((uint32_t *)(list) - 2))++
+memcpy((list) + *((u32 *)(list) - 2),                                          \
+       item, sizeof(*(list)));                                                    \
+(*((u32 *)(list) - 2))++
 
-#define LC_LIST_REMOVE(list, type, index)                                      \
+#define LC_LIST_REMOVE(list, index)                                      \
 memcpy((list) + index,                                                         \
-       (list) + index + 1, (*((uint32_t *)(list) - 1) - (index + 1))           \
-                         * sizeof(type));                                      \
-(*((uint32_t *)(list) - 2))--;                                                 \
+       (list) + index + 1, (*((u32 *)(list) - 1) - (index + 1))                \
+                         * sizeof(*(list)));                                      \
+(*((u32 *)(list) - 2))--;                                                      \
                                                                                \
-if (*((uint32_t *)(list) - 2) ==                                               \
-    *((uint32_t *)(list) - 1) / 2)                                             \
+if (*((u32 *)(list) - 2) ==                                                    \
+    *((u32 *)(list) - 1) / 2)                                                  \
 {                                                                              \
-    list = (type *)                                                            \
+    list = (void *)                                                            \
     (                                                                          \
-        (uint32_t *)                                                           \
+        (u32 *)                                                                \
         (                                                                      \
-            realloc((uint32_t *)(list) - 2,                                    \
-                   *((uint32_t *)(list) - 1)                                   \
+            realloc((u32 *)(list) - 2,                                         \
+                   *((u32 *)(list) - 1)                                        \
                    / 2                                                         \
                    * sizeof(type)                                              \
-                   + 2 * sizeof(uint32_t)                                      \
+                   + 2 * sizeof(u32)                                           \
                    )                                                           \
         ) + 2                                                                  \
     );                                                                         \
-    *((uint32_t *)(list) - 1) /= 2;                                            \
+    *((u32 *)(list) - 1) /= 2;                                                 \
 }                                                                              \
 
 /* NOTE(tbt): Doesn't deallocate any memory, just resets the element count so
    new entries overwrite the current contents */
-#define LC_LIST_CLEAR(list) (*(((uint32_t *)list) - 2) = 0)
+#define LC_LIST_CLEAR(list) (*(((u32 *)list) - 2) = 0)
 
 #define LC_LIST_DESTROY(list) LC_ASSERT((list) != NULL,                        \
                                         "List is already NULL");               \
-                           free((uint32_t *)(list) - 2);                       \
+                           free((u32 *)(list) - 2);                            \
                            list = NULL
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -223,25 +241,25 @@ enum
 
 typedef struct
 {
-    int Type;
+    i32 Type;
 } lcGenericMessage_t;
 
 typedef struct
 {
     lcGenericMessage_t Header;
-    uint32_t Width;
-    uint32_t Height;
+    u32 Width;
+    u32 Height;
 } lcWindowResizeMessage_t;
 
 struct lcInputMessage_t
 {
     lcGenericMessage_t Header;
-    int KeyCode;
+    i32 KeyCode;
 };
 struct lcMouseScrollMessage_t
 {
     lcGenericMessage_t Header;
-    int ScrollOffset;
+    i32 ScrollOffset;
 };
 
 typedef struct lcInputMessage_t lcKeyPressMessage_t;
@@ -252,7 +270,7 @@ typedef struct lcMouseScrollMessage_t lcMouseScrollMessage_t;
 
 typedef void (*lcMessageHandler_t)(lcGenericMessage_t *);
 
-void lcMessageBind(int messageType, lcMessageHandler_t action);
+void lcMessageBind(i32 messageType, lcMessageHandler_t handler);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Window
@@ -263,8 +281,8 @@ void lcMessageBind(int messageType, lcMessageHandler_t action);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 void lcWindowUpdate(void);
-void lcWindowSetVSync(bool enabled);
-void lcWindowGetSize(uint32_t *result);
+void lcWindowSetVSync(b8 enabled);
+void lcWindowGetSize(u32 *result);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Input
@@ -413,9 +431,9 @@ void lcWindowGetSize(uint32_t *result);
 #define LC_MOUSE_SCROLL_UP         LC_MOUSE_BUTTON_5
 #define LC_MOUSE_SCROLL_DOWN       LC_MOUSE_BUTTON_6
 
-extern bool    lcInputIsKeyPressed[256];
-extern bool    lcInputIsMouseButtonPressed[8];
-extern int16_t lcInputMousePosition[2];
+extern b8 lcInputIsKeyPressed[256];
+extern b8 lcInputIsMouseButtonPressed[8];
+extern i16 lcInputMousePosition[2];
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Math
@@ -425,30 +443,30 @@ extern int16_t lcInputMousePosition[2];
   Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-void lcVector2Add(float *result, float *vector1, float *vector2);
-void lcVector2Subtract(float *result, float *vector1, float *vector2);
-void lcVector2Multiply(float *result, float *vector1, float *vector2);
-void lcVector2Divide(float *result, float *vector1, float *vector2);
-float lcVector2Dot(float *vector1, float *vector2);
+void lcVector2Add(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector2Subtract(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector2Multiply(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector2Divide(f32 *result, f32 *vector1, f32 *vector2);
+f32 lcVector2Dot(f32 *vector1, f32 *vector2);
 
-void lcVector3Add(float *result, float *vector1, float *vector2);
-void lcVector3Subtract(float *result, float *vector1, float *vector2);
-void lcVector3Multiply(float *result, float *vector1, float *vector2);
-void lcVector3Divide(float *result, float *vector1, float *vector2);
-float lcVector3Dot(float *vector1, float *vector2);
+void lcVector3Add(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector3Subtract(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector3Multiply(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector3Divide(f32 *result, f32 *vector1, f32 *vector2);
+f32 lcVector3Dot(f32 *vector1, f32 *vector2);
 
-void lcVector4Add(float *result, float *vector1, float *vector2);
-void lcVector4Subtract(float *result, float *vector1, float *vector2);
-void lcVector4Multiply(float *result, float *vector1, float *vector2);
-void lcVector4Divide(float *result, float *vector1, float *vector2);
-float lcVector4Dot(float *vector1, float *vector2);
+void lcVector4Add(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector4Subtract(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector4Multiply(f32 *result, f32 *vector1, f32 *vector2);
+void lcVector4Divide(f32 *result, f32 *vector1, f32 *vector2);
+f32 lcVector4Dot(f32 *vector1, f32 *vector2);
 
-void lcMatrix4Multiply(float *result, float *matrix1, float *matrix2);
-void lcMatrix4CreateOrthographicProjectionMatrix(float *matrix,
-                                                 float left, float right,
-                                                 float top, float bottom);
-void lcMatrix4CreateTranslationMatrix(float *matrix, float x, float y);
-void lcMatrix4CreateScaleMatrix(float *matrix, float x, float y);
+void lcMatrix4Multiply(f32 *result, f32 *matrix1, f32 *matrix2);
+void lcMatrix4CreateOrthographicProjectionMatrix(f32 *matrix,
+                                                 f32 left, f32 right,
+                                                 f32 top, f32 bottom);
+void lcMatrix4CreateTranslationMatrix(f32 *matrix, f32 x, f32 y);
+void lcMatrix4CreateScaleMatrix(f32 *matrix, f32 x, f32 y);
 
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -466,21 +484,21 @@ void lcMatrix4CreateScaleMatrix(float *matrix, float x, float y);
 #define COMPONENT_RENDERABLE (1 << 0)
 typedef struct
 {
-    float Position1[2];
-    float Colour1[4];
-    float TexCoords1[2];
+    f32 Position1[2];
+    f32 Colour1[4];
+    f32 TexCoords1[2];
 
-    float Position2[2];
-    float Colour2[4];
-    float TexCoords2[2];
+    f32 Position2[2];
+    f32 Colour2[4];
+    f32 TexCoords2[2];
 
-    float Position3[2];
-    float Colour3[4];
-    float TexCoords3[2];
+    f32 Position3[2];
+    f32 Colour3[4];
+    f32 TexCoords3[2];
 
-    float Position4[2];
-    float Colour4[4];
-    float TexCoords4[2];
+    f32 Position4[2];
+    f32 Colour4[4];
+    f32 TexCoords4[2];
 } ComponentRenderable;
 
 #define lcForEntityInSubset(index, entity, subset)                             \
@@ -488,8 +506,8 @@ for(index = 0, entity = (subset).Entities[index];                              \
     index < LC_LIST_LEN((subset).Entities);                                    \
     ++index, entity = (subset).Entities[index])
 
-typedef uint64_t lcSignature_t;
-typedef uint32_t lcEntity_t;
+typedef u64 lcSignature_t;
+typedef u32 lcEntity_t;
 
 typedef struct
 {
@@ -497,8 +515,8 @@ typedef struct
 
 #include "ComponentArrays.gen.h"
 
-    uint32_t RenderableCount;
-    uint32_t EntityToRenderable[LC_MAX_ENTITIES];
+    u64 RenderableCount;
+    u64 EntityToRenderable[LC_MAX_ENTITIES];
     ComponentRenderable ComponentRenderable[LC_MAX_ENTITIES];
 } lcScene_t;
 
@@ -509,7 +527,7 @@ typedef struct
     lcScene_t *Parent;
 } lcSubset_t;
 
-lcScene_t *lcSceneCreate(void);
+void lcSceneCreate(lcScene_t *scene);
 void lcSceneDestroy(lcScene_t *scene);
 lcSubset_t lcSubsetCreate(void);
 void lcSubsetDestroy(lcSubset_t subset);
@@ -539,7 +557,7 @@ enum
 };
 
 
-void *lcLoadAsset(char *name, int type);
+void *lcLoadAsset(i8 *name, i32 type);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Renderer
@@ -553,21 +571,21 @@ void *lcLoadAsset(char *name, int type);
 
 typedef struct
 {
-    float Min[2];
-    float Max[2];
+    f32 Min[2];
+    f32 Max[2];
 } lcSprite_t;
 
-typedef uint32_t lcShader_t;
+typedef u64 lcShader_t;
 
 void ComponentRenderableAdd(lcScene_t *scene, lcEntity_t entity,
-                            float x, float y,
-                            float width, float height,
-                            float *colour,
+                            f32 x, f32 y,
+                            f32 width, f32 height,
+                            f32 *colour,
                             lcSprite_t *texture);
 void ComponentRenderableMove(lcScene_t *scene, lcEntity_t entity, 
-                             float xOffset, float yOffset);
+                             f32 xOffset, f32 yOffset);
 
-lcShader_t lcShaderCreate(char *vertexPath, char *fragmentPath);
+lcShader_t lcShaderCreate(i8 *vertexPath, i8 *fragmentPath);
 void lcShaderDestroy(lcShader_t shader);
 
 void lcRendererBindScene(lcScene_t *scene);
@@ -582,7 +600,7 @@ void lcRendererRenderToWindow(void);
   Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-void lcCameraMove(float *offset);
+void lcCameraMove(f32 *offset);
 
 /*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
   Audio
@@ -592,25 +610,9 @@ void lcCameraMove(float *offset);
   Notes   : NA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-enum
-{
-    LC_AUDIO_PLAYING,
-    LC_AUDIO_LOOPING,
-    LC_AUDIO_PAUSED
-};
+typedef void *lcAudioSource_t;
 
-typedef struct
-{
-    int BufferSize;
-    uint8_t *Buffer;
-    int Playhead;
-    int State;
-} lcAudioSource_t;
-
-void lcAudioPlay(lcAudioSource_t *source);  /* play source from current playhead position */
-void lcAudioLoop(lcAudioSource_t *source);  /* same as play, but loops at end instead of stopping */
-void lcAudioPause(lcAudioSource_t *source); /* stops source playing, maintaining playhead position */
-void lcAudioStop(lcAudioSource_t *source);  /* stops source playing, resetting playhead to 0 */
+/* TODO(tbt): Audio */
 
 #endif
 

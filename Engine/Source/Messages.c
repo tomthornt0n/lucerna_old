@@ -2,25 +2,25 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 28 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-static lcMessageHandler_t *lcMessageHandlers[LC_MESSAGE_TYPE_COUNT];
+internal lcMessageHandler_t *_lcMessageHandlers[LC_MESSAGE_TYPE_COUNT];
 
-static void
-lcMessageSystemInit(void)
+internal void
+_lcMessageSystemInit(void)
 {
-    int i;
+    i32 i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        lcMessageHandlers[i] = NULL; 
-        LC_LIST_CREATE(lcMessageHandlers[i], lcMessageHandler_t); 
+        _lcMessageHandlers[i] = NULL; 
+        LC_LIST_CREATE(_lcMessageHandlers[i]); 
     }
 }
 
-static lcGenericMessage_t *
-lcWindowCloseMessageCreate(void)
+internal lcGenericMessage_t *
+_lcWindowCloseMessageCreate(void)
 {
     lcGenericMessage_t *message = malloc(sizeof(lcGenericMessage_t));
     message->Type = LC_MESSAGE_TYPE_WINDOW_CLOSE;
@@ -28,9 +28,9 @@ lcWindowCloseMessageCreate(void)
     return message;
 }
 
-static lcGenericMessage_t *
-lcWindowResizeMessageCreate(uint32_t width,
-                            uint32_t height)
+internal lcGenericMessage_t *
+_lcWindowResizeMessageCreate(u32 width,
+                             u32 height)
 {
     lcWindowResizeMessage_t *message;
 
@@ -42,8 +42,8 @@ lcWindowResizeMessageCreate(uint32_t width,
     return (lcGenericMessage_t *)message;
 }
 
-static lcGenericMessage_t *
-lcKeyPressMessageCreate(int keyCode)
+internal lcGenericMessage_t *
+_lcKeyPressMessageCreate(i32 keyCode)
 {
     lcKeyPressMessage_t *message;
 
@@ -54,8 +54,8 @@ lcKeyPressMessageCreate(int keyCode)
     return (lcGenericMessage_t *)message;
 }
 
-static lcGenericMessage_t *
-lcKeyReleaseMessageCreate(int keyCode)
+internal lcGenericMessage_t *
+_lcKeyReleaseMessageCreate(i32 keyCode)
 {
     lcKeyReleaseMessage_t *message;
 
@@ -66,8 +66,8 @@ lcKeyReleaseMessageCreate(int keyCode)
     return (lcGenericMessage_t *)message;
 }
 
-static lcGenericMessage_t *
-lcMouseButtonPressMessageCreate(int keyCode)
+internal lcGenericMessage_t *
+_lcMouseButtonPressMessageCreate(i32 keyCode)
 {
     lcMouseButtonPressMessage_t *message;
 
@@ -78,8 +78,8 @@ lcMouseButtonPressMessageCreate(int keyCode)
     return (lcGenericMessage_t *)message;
 }
 
-static lcGenericMessage_t *
-lcMouseButtonReleaseMessageCreate(int keyCode)
+internal lcGenericMessage_t *
+_lcMouseButtonReleaseMessageCreate(i32 keyCode)
 {
     lcMouseButtonReleaseMessage_t *message;
 
@@ -90,8 +90,8 @@ lcMouseButtonReleaseMessageCreate(int keyCode)
     return (lcGenericMessage_t *)message;
 }
 
-static lcGenericMessage_t *
-lcMouseScrollMessageCreate(int offset)
+internal lcGenericMessage_t *
+_lcMouseScrollMessageCreate(i32 offset)
 {
     lcMouseScrollMessage_t *message;
 
@@ -103,34 +103,31 @@ lcMouseScrollMessageCreate(int offset)
 }
 
 void
-lcMessageBind(int messageType,
-              lcMessageHandler_t action)
+lcMessageBind(i32 messageType,
+              lcMessageHandler_t handler)
 {
-    LC_LIST_PUSH_BACK(lcMessageHandlers[messageType],
-                      lcMessageHandler_t,
-                      &action);
+    LC_LIST_PUSH_BACK(_lcMessageHandlers[messageType], &handler);
 }
 
-static void
-lcMessageEmit(lcGenericMessage_t *message)
+internal void
+_lcMessageEmit(lcGenericMessage_t *message)
 {
-    int i;
+    i32 i;
 
-    for (i = 0; i < LC_LIST_LEN(lcMessageHandlers[message->Type]); ++i)
+    for (i = 0; i < LC_LIST_LEN(_lcMessageHandlers[message->Type]); ++i)
     {
-        (*lcMessageHandlers[message->Type][i])(message);
+        (*_lcMessageHandlers[message->Type][i])(message);
     }
     free(message);
 }
 
-static void
-lcMessageSystemDestroy(void)
+internal void
+_lcMessageSystemDestroy(void)
 {
-    int i;
-
+    i32 i;
     for (i = 0; i < LC_MESSAGE_TYPE_COUNT; ++i)
     {
-        LC_LIST_DESTROY(lcMessageHandlers[i]);
+        LC_LIST_DESTROY(_lcMessageHandlers[i]);
     }
 }
 

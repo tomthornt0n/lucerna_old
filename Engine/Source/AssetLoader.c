@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 26 Oct 2020
+  Updated : 28 Oct 2020
   License : MIT, at end of file
   Notes   : Not very good.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -10,14 +10,14 @@
 #include "Lucerna.h"
 #define LC_ASSETS_FILE_PATH "assets.data"
 
-static void
-lcLoadMasterTexture(void)
+internal void
+_lcLoadMasterTexture(void)
 {
     FILE *assetsFile;
     lcapChunkHeader_t header;
-    GLuint textureID;
-    uint32_t width;
-    uint8_t *pixels;
+    u32 textureID;
+    u32 width;
+    u8 *pixels;
 
     assetsFile = fopen(LC_ASSETS_FILE_PATH, "rb");
     LC_ASSERT(assetsFile, "Could not open assets file: %s", strerror(errno));
@@ -30,7 +30,7 @@ lcLoadMasterTexture(void)
     LC_ASSERT(header.Type == LCAP_ASSET_TYPE_TEXTURE_ATLAS,
               "Could not find texture atlas!");
 
-    width = (uint32_t)sqrt((double)(header.Size / 4));
+    width = (u32)sqrt((f64)(header.Size / 4));
     pixels = malloc(header.Size);
     fread(pixels, header.Size, 1, assetsFile);
 
@@ -57,8 +57,8 @@ lcLoadMasterTexture(void)
 }
 
 void *
-lcLoadAsset(char *name,
-            int type)
+lcLoadAsset(i8 *name,
+            i32 type)
 {
     FILE *assetsFile;
     lcapChunkHeader_t header;
@@ -88,8 +88,8 @@ lcLoadAsset(char *name,
             if (0 == strcmp(shader.Name, name))
             {
                 lcShader_t *result;
-                char *vertexSrc;
-                char *fragmentSrc;
+                i8 *vertexSrc;
+                i8 *fragmentSrc;
 
                 result = malloc(sizeof(*result));
 
@@ -99,6 +99,9 @@ lcLoadAsset(char *name,
                 fread(fragmentSrc, shader.FragmentLength, 1, assetsFile);
 
                 *result = lcShaderCreate(vertexSrc, fragmentSrc);
+
+                free(vertexSrc);
+                free(fragmentSrc);
 
                 fclose(assetsFile);
                 return result;
@@ -121,17 +124,8 @@ lcLoadAsset(char *name,
 
             if (0 == strcmp(sound.Name, name))
             {
-                int dataSize = header.Size - sizeof(sound);
-                lcAudioSource_t *result;
-
-                result = malloc(sizeof(*result));
-                result->BufferSize = dataSize;
-                result->Buffer = malloc(dataSize);
-                fread(result->Buffer, dataSize, 1, assetsFile);
-                result->Playhead = 0;
-                result->State = LC_AUDIO_PAUSED;
-
-                return result;
+                /* TODO(tbt): audio */
+                return NULL;
             }
         }
         else if (type == LC_ASSET_TYPE_SPRITE)
@@ -148,8 +142,8 @@ lcLoadAsset(char *name,
                 lcSprite_t *result;
 
                 result = malloc(sizeof(*result));
-                memcpy(result->Min, sprite.Min, 2 * sizeof(float));
-                memcpy(result->Max, sprite.Max, 2 * sizeof(float));
+                memcpy(result->Min, sprite.Min, 2 * sizeof(*sprite.Min));
+                memcpy(result->Max, sprite.Max, 2 * sizeof(*sprite.Max));
 
                 fclose(assetsFile);
                 return result;

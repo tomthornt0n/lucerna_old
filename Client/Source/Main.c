@@ -15,9 +15,8 @@
 #define BallSpeed 500.0f
 #define CourtBounds 640.0f
 
-static uint8_t g_running = 1;
+static u8 g_running = 1;
 static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
-lcAudioSource_t *g_sound;
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
@@ -254,7 +253,7 @@ lcClientConfig()
     config.WindowDimensions[1] = 1017;
     config.CameraPosition[0] = 0.0f;
     config.CameraPosition[1] = 1.0f;
-    config.VSyncEnabled = false;
+    config.VSyncEnabled = true;
     
     return config;
 }
@@ -266,14 +265,14 @@ lcClientMain(int argc,
     lcSprite_t *backgroundTex;
     lcSprite_t *paddleTex;
     lcSprite_t *ballTex;
-    lcScene_t *scene;
-    lcShader_t shader;
+    lcShader_t *shader;
+    lcScene_t scene;
     float bgCol[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     float fgCol[4] = { 1.0, 1.0f, 1.0f, 1.0f };
     lcEntity_t bg, playerPaddle, computerPaddle, ball;
     lcSubset_t physics;
     double frameTimeInSeconds;
-    uint64_t previousTime, time;
+    u64 previousTime, time;
     int count;
 
     /* create the window */
@@ -283,22 +282,21 @@ lcClientMain(int argc,
     lcMessageBind(LC_MESSAGE_TYPE_WINDOW_RESIZE, OnWindowResize);
 
     /* load assets */
-    backgroundTex = (lcSprite_t *)lcLoadAsset("bg", LC_ASSET_TYPE_SPRITE);
-    ballTex = (lcSprite_t *)lcLoadAsset("ball", LC_ASSET_TYPE_SPRITE);
-    paddleTex = (lcSprite_t *)lcLoadAsset("paddle", LC_ASSET_TYPE_SPRITE);
-    shader = *((lcShader_t *)lcLoadAsset("SplitTone", LC_ASSET_TYPE_SHADER));
-    g_sound = lcLoadAsset("testSound", LC_ASSET_TYPE_SOUND);
+    backgroundTex = lcLoadAsset("bg", LC_ASSET_TYPE_SPRITE);
+    ballTex = lcLoadAsset("ball", LC_ASSET_TYPE_SPRITE);
+    paddleTex = lcLoadAsset("paddle", LC_ASSET_TYPE_SPRITE);
+    shader = lcLoadAsset("SplitTone", LC_ASSET_TYPE_SHADER);
 
     /* create a scene */
-    scene = lcSceneCreate();
+    lcSceneCreate(&scene);
 
     /* setup the renderer */
-    lcRendererBindShader(shader);
-    lcRendererBindScene(scene);
+    lcRendererBindShader(*shader);
+    lcRendererBindScene(&scene);
 
     /* create some entities */
-    bg = lcEntityCreate(scene);
-    ComponentRenderableAdd(scene,
+    bg = lcEntityCreate(&scene);
+    ComponentRenderableAdd(&scene,
                            bg,
                            0.0f,
                            0.0f,
@@ -307,18 +305,16 @@ lcClientMain(int argc,
                            bgCol,
                            backgroundTex);
 
-    playerPaddle = PaddleCreate(scene, -540.0f, 0.0f, fgCol, paddleTex);
-    computerPaddle = PaddleCreate(scene, +540.0f, 0.0f, fgCol, paddleTex);
-    ball = BallCreate(scene, 0.0f, 0.0f, fgCol, ballTex);
+    playerPaddle = PaddleCreate(&scene, -540.0f, 0.0f, fgCol, paddleTex);
+    computerPaddle = PaddleCreate(&scene, +540.0f, 0.0f, fgCol, paddleTex);
+    ball = BallCreate(&scene, 0.0f, 0.0f, fgCol, ballTex);
 
     /* setup physics */
     physics = lcSubsetCreate();
     lcSubsetSetSignature(&physics,
                          COMPONENT_PHYSICS |
                          COMPONENT_RENDERABLE);
-    lcSubsetRefresh(scene, &physics);
-
-    lcAudioPlay(g_sound);
+    lcSubsetRefresh(&scene, &physics);
 
     /* main loop */
     previousTime = lcClockGetTime();
@@ -330,25 +326,28 @@ lcClientMain(int argc,
         time = lcClockGetTime();
         frameTimeInSeconds = (time - previousTime) / 1000000.0;
 
-        if (count++ == 30000)
+        if (count++ == 60)
         {
             count = 0;
             LC_LOG_INFO("FPS: %f; Frame Time (in seconds): %f\n",
                         1.0 / frameTimeInSeconds, frameTimeInSeconds);
         }
 
-        UpdateBall(scene, &physics, ball);
-        UpdateComputerPaddle(scene, ball, computerPaddle);
-        UpdatePlayerPaddle(scene, playerPaddle);
+        UpdateBall(&scene, &physics, ball);
+        UpdateComputerPaddle(&scene, ball, computerPaddle);
+        UpdatePlayerPaddle(&scene, playerPaddle);
 
-        UpdatePhysics(&physics, scene, frameTimeInSeconds);
+        UpdatePhysics(&physics, &scene, frameTimeInSeconds);
 
         lcRendererRenderToWindow();
         lcWindowUpdate();
     }
 
     /* cleanup */
-    lcShaderDestroy(shader);
+    lcShaderDestroy(*shader);
     lcSubsetDestroy(physics);
-    free(scene);
+    free(backgroundTex);
+    free(ballTex);
+    free(paddleTex);
+    free(shader);
 }

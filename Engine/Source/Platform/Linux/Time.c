@@ -8,7 +8,7 @@
 
 #include "sys/time.h"
 
-uint64_t
+u64
 lcClockGetTime(void)
 {
     struct timeval tv;

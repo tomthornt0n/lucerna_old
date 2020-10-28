@@ -2,11 +2,11 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 27 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-struct
+internal struct
 {
     PFNGLATTACHSHADERPROC             AttachShader;
     PFNGLBINDBUFFERPROC               BindBuffer;
@@ -49,18 +49,18 @@ struct
     PFNWGLGETEXTENSIONSSTRINGARBPROC  wglGetExtensionsStringARB;
 } gl;
 
-static bool
+_internal b8
 lcGLIsExtensionSupported(HDC deviceContext, char *extension)
 {
-    const char *start;
+    const i8 *start;
     start = gl.wglGetExtensionsStringARB(deviceContext);
 
     LC_ASSERT(start, "Error getting gl extensions string");
 
     for (;;)
     {
-        const char *at;
-        const char *terminator;
+        i8 *at;
+        i8 *terminator;
 
         at = strstr(start, extension);
         if (!at)
@@ -79,8 +79,8 @@ lcGLIsExtensionSupported(HDC deviceContext, char *extension)
     return true;
 }
 
-static void *
-lcGLLoadFunctionWindows(char *name, HMODULE opengl32)
+_internal void *
+lcGLLoadFunction(i8 *name, HMODULE opengl32)
 {
     void *p;
     p = wglGetProcAddress(name);
@@ -103,8 +103,8 @@ lcGLLoadFunctionWindows(char *name, HMODULE opengl32)
     return p;
 }
 
-static void
-lcGLLoad(void)
+internal void
+_lcGLLoad(void)
 {
     HMODULE opengl32;
 

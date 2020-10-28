@@ -1,0 +1,72 @@
+#!/bin/sh
+
+set -e
+
+TIMEFORMAT="took %Rs"
+
+MODE="none"
+FULL="false"
+
+for i in "$@"
+do
+case $i in
+    -m=*|--mode=*)
+    MODE="${i#*=}"
+    shift
+    ;;
+    -f|--full)
+    FULL="true"
+    shift
+    ;;
+    --default)
+    shift 
+    ;;
+    *)
+        echo "Ignoring unrecognised option $i"
+    ;;
+esac
+done
+
+if [ "$MODE" == "debug" ]; then
+    FLAGS="-DLC_DEBUG -g"
+elif [ "$MODE" == "release" ]; then
+    FLAGS="-DLC_RELEASE -O2 -msse2"
+elif [ "$MODE" == "none" ]; then
+    echo -e "Must specify mode (-m={mode} or --mode={mode})"
+    exit
+else
+    echo -e "Unknown mode '$MODE'"
+    exit
+fi
+
+if [ "$FULL" == "true" ]; then
+    printf "\033[35mBuilding lcddl...\033[0m\n"
+    pushd lcddl > /dev/null
+    time gcc -O2 lcddl.c lcddlUserLayer.c -o ../bin/lcddl
+    popd > /dev/null
+    printf "\033[32mDone!\n\033[0m\n"
+fi
+
+printf "\033[35mRunning lcddl...\033[0m\n"
+time bin/lcddl Client/Assets/Meta/*.lcd
+printf "\033[32mDone!\n\033[0m\n"
+
+if [ "$FULL" == "true" ]; then
+    printf "\033[35mBuilding asset packer...\033[0m\n"
+    pushd AssetPacker > /dev/null
+    time gcc -g lcap.c -lm -o ../bin/AssetPacker
+    popd > /dev/null
+    printf "\033[32mDone!\n\033[0m\n"
+fi
+
+printf "\033[35mPacking assets...\033[0m\n"
+pushd bin > /dev/null
+time ./AssetPacker assets.data
+popd > /dev/null
+printf "\033[32mDone!\n\033[0m\n"
+
+printf "\033[35mBuilding lucerna...\033[0m\n"
+time gcc -IClient/Source -IEngine/Source -IEngine/Include -DLC_PLATFORM_LINUX -Wall -pedantic $FLAGS Engine/Source/Lucerna.c Client/Source/Main.c -ldl -lpthread -lxcb -lX11 -lX11-xcb -lGL -lm -lasound -o bin/LucernaProject
+printf "\033[32mDone!\n\033[0m\n"
+
+exit 0

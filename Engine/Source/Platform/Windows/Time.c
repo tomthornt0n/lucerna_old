@@ -6,7 +6,7 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define LC_EPOCH ((uint64_t) 116444736000000000ULL)
+#define LC_EPOCH ((u64) 116444736000000000ULL)
 
 static LARGE_INTEGER lcClockStartTime;
 static LARGE_INTEGER lcClockFrequency;
@@ -18,7 +18,7 @@ lcClockInit(void)
     QueryPerformanceCounter(&lcClockStartTime);
 }
 
-uint64_t
+u64
 lcClockGetTime(void)
 {
     LARGE_INTEGER time;
@@ -31,7 +31,7 @@ lcClockGetTime(void)
     elapsed.QuadPart *= 1000000;
     elapsed.QuadPart /= lcClockFrequency.QuadPart;
 
-    return (uint64_t)elapsed.QuadPart;
+    return (u64)elapsed.QuadPart;
 }
 
 /*

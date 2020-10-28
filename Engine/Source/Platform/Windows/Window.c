@@ -2,11 +2,11 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 27 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-uint8_t KeyLUT[256] = 
+u8 _lcKeyLUT[256] = 
 {
 
     0, 41, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 45, 46, 42, 43, 20, 26, 8,
@@ -25,9 +25,9 @@ uint8_t KeyLUT[256] =
 
 struct
 {
-    uint32_t Width, Height;
+    u32 Width, Height;
 
-    bool DummyContext;
+    b8 DummyContext;
 
     HWND WindowHandle;
     HDC DeviceContext;
@@ -36,17 +36,17 @@ struct
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
-static void
-lcWindowInit(HINSTANCE instanceHandle,
-             char *title,
-             uint32_t width, uint32_t height,
-             bool vSyncEnabled)
+internal void
+_lcWindowInit(HINSTANCE instanceHandle,
+             i8 *title,
+             u32 width, u32 height,
+             b8 vSyncEnabled)
 {
     WNDCLASS windowClass;
     PIXELFORMATDESCRIPTOR pfd;
-    int  pixelFormat;
+    i32  pixelFormat;
     HMODULE opengl32;
-    bool recreateContext;
+    b8 recreateContext;
 
     lcWindow.Width = width;
     lcWindow.Height = height;
@@ -59,12 +59,12 @@ lcWindowInit(HINSTANCE instanceHandle,
     windowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     windowClass.lpfnWndProc = WindowProc;
     windowClass.hInstance = instanceHandle;
-    windowClass.lpszClassName = TEXT("LUCERNA");
+    windowClass.lpszClassName = "LUCERNA";
 
     RegisterClass(&windowClass);
 
-    lcWindow.WindowHandle = CreateWindow(TEXT("LUCERNA"),
-                                         TEXT(title),
+    lcWindow.WindowHandle = CreateWindow("LUCERNA",
+                                         title,
                                          WS_OVERLAPPEDWINDOW,
                                          CW_USEDEFAULT, CW_USEDEFAULT,
                                          width, height,
@@ -94,7 +94,7 @@ lcWindowInit(HINSTANCE instanceHandle,
     lcWindow.RenderContext = wglCreateContext(lcWindow.DeviceContext);
     wglMakeCurrent(lcWindow.DeviceContext, lcWindow.RenderContext);
 
-    opengl32 = LoadLibrary(TEXT("opengl32.dll"));
+    opengl32 = LoadLibrary("opengl32.dll");
 
     gl.wglGetExtensionsStringARB =
         (PFNWGLGETEXTENSIONSSTRINGARBPROC)
@@ -129,19 +129,35 @@ lcWindowInit(HINSTANCE instanceHandle,
 
     if (recreateContext)
     {
-        int pixelFormatARB;
-        int pixelAttributes[15];
+        i32 pixelFormatARB;
+        i32 pixelAttributes[] = 
+        {
+            WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
+            WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
+            WGL_DOUBLE_BUFFER_ARB,  GL_TRUE,
+            WGL_PIXEL_TYPE_ARB,     WGL_TYPE_RGBA_ARB,
+            WGL_COLOR_BITS_ARB,     32,
+            WGL_DEPTH_BITS_ARB,     24,
+            WGL_STENCIL_BITS_ARB,   8,
+            0
+        };
         UINT pixelFormatCount;
         BOOL ChoosePixelFormatResult;
-        GLint contextAttributes[7];
+        GLint contextAttributes[] = 
+        {
+            WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+            WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+            WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
+            0,
+        };
 
         wglMakeCurrent(NULL, NULL);
         wglDeleteContext(lcWindow.RenderContext);
         ReleaseDC(lcWindow.WindowHandle, lcWindow.DeviceContext);
         DestroyWindow(lcWindow.WindowHandle);
 
-        lcWindow.WindowHandle = CreateWindow(TEXT("LUCERNA"),
-                                             TEXT(title),
+        lcWindow.WindowHandle = CreateWindow("LUCERNA",
+                                             title,
                                              WS_OVERLAPPEDWINDOW,
                                              CW_USEDEFAULT, CW_USEDEFAULT,
                                              width, height,
@@ -152,28 +168,6 @@ lcWindowInit(HINSTANCE instanceHandle,
 
         lcWindow.DeviceContext = GetDC(lcWindow.WindowHandle);
 
-        pixelAttributes[0] = WGL_DRAW_TO_WINDOW_ARB;
-        pixelAttributes[1] = GL_TRUE;
-        
-        pixelAttributes[2] = WGL_SUPPORT_OPENGL_ARB;
-        pixelAttributes[3] = GL_TRUE;
-
-        pixelAttributes[4] = WGL_DOUBLE_BUFFER_ARB;
-        pixelAttributes[5] = GL_TRUE;
-
-        pixelAttributes[6] = WGL_PIXEL_TYPE_ARB;
-        pixelAttributes[7] = WGL_TYPE_RGBA_ARB;
-
-        pixelAttributes[8] = WGL_COLOR_BITS_ARB;
-        pixelAttributes[9] = 32;
-
-        pixelAttributes[10] = WGL_DEPTH_BITS_ARB;
-        pixelAttributes[11] = 24;
-
-        pixelAttributes[12] = WGL_STENCIL_BITS_ARB;
-        pixelAttributes[13] = 8;
-
-        pixelAttributes[14] = 0;
 
         ChoosePixelFormatResult =
             gl.wglChoosePixelFormatARB(lcWindow.DeviceContext,
@@ -189,16 +183,6 @@ lcWindowInit(HINSTANCE instanceHandle,
 
         SetPixelFormat(lcWindow.DeviceContext, pixelFormatARB, &pfd);
 
-        contextAttributes[0] = WGL_CONTEXT_MAJOR_VERSION_ARB;
-        contextAttributes[1] = 3;
-
-        contextAttributes[2] = WGL_CONTEXT_MINOR_VERSION_ARB;
-        contextAttributes[3] = 3;
-
-        contextAttributes[4] = WGL_CONTEXT_PROFILE_MASK_ARB;
-        contextAttributes[5] = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
-
-        contextAttributes[6] = 0;
 
         lcWindow.RenderContext = gl.wglCreateContextAttribsARB(lcWindow.DeviceContext,
                                                                0,
@@ -232,7 +216,7 @@ WindowProc(HWND windowHandle,
            WPARAM wParam,
            LPARAM lParam)
 {
-    static int mouseScrollPrev = 0; /* NOTE(tbt): keep track of previous
+    static i32 mouseScrollPrev = 0; /* NOTE(tbt): keep track of previous
                                                   frame's scroll so mouse wheel
                                                   movements can be treated as
                                                   mouse button presses (e.g.
@@ -258,11 +242,11 @@ WindowProc(HWND windowHandle,
     {
         case WM_KEYDOWN:
         {
-            uint32_t key;
-            key =  KeyLUT[((lParam >> 16) & 0x7f) |
-                          ((lParam & (1 << 24))
-                          != 0 ?
-                          0x80 : 0)];
+            u32 key;
+            key =  _lcKeyLUT[((lParam >> 16) & 0x7f) |
+                             ((lParam & (1 << 24))
+                             != 0 ?
+                             0x80 : 0)];
 
             lcMessageEmit(lcKeyPressMessageCreate(key));
             lcInputIsKeyPressed[key] = true;
@@ -271,11 +255,11 @@ WindowProc(HWND windowHandle,
         }
         case WM_KEYUP:
         {
-            uint32_t key;
-            key =  KeyLUT[((lParam >> 16) & 0x7f) |
-                          ((lParam & (1 << 24))
-                          != 0 ?
-                          0x80 : 0)];
+            u32 key;
+            key =  _lcKeyLUT[((lParam >> 16) & 0x7f) |
+                             ((lParam & (1 << 24))
+                             != 0 ?
+                             0x80 : 0)];
 
             lcMessageEmit(lcKeyReleaseMessageCreate(key));
             lcInputIsKeyPressed[key] = false;
@@ -326,8 +310,8 @@ WindowProc(HWND windowHandle,
         }
         case WM_MOUSEWHEEL:
         {
-            int offset;
-            int button;
+            i32 offset;
+            i32 button;
 
             offset = GET_WHEEL_DELTA_WPARAM(wParam) / 120;
             lcMessageEmit(lcMouseScrollMessageCreate(offset));
@@ -377,7 +361,7 @@ WindowProc(HWND windowHandle,
 }
 
 void
-lcWindowSetVSync(bool enabled)
+lcWindowSetVSync(b8 enabled)
 {
     if (gl.wglSwapIntervalEXT)
     {
@@ -386,14 +370,14 @@ lcWindowSetVSync(bool enabled)
 }
 
 void
-lcWindowGetSize(uint32_t *result)
+lcWindowGetSize(u32 *result)
 {
     result[0] = lcWindow.Width;
     result[1] = lcWindow.Height;
 }
 
-static void
-lcWindowDestroy(void)
+internal void
+_lcWindowDestroy(void)
 {
     wglMakeCurrent(lcWindow.DeviceContext, NULL);
     wglDeleteContext(lcWindow.RenderContext);

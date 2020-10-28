@@ -2,50 +2,48 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 26 Oct 2020
+  Updated : 28 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 #ifdef LC_PLATFORM_LINUX
 
-int
-main(int argc,
-     char **argv)
+i32
+main(i32 argc,
+     i8 **argv)
 {
     lcInitConfig_t config;
 
     config = lcClientConfig();
 
-    lcGLLoad();
-    lcInputInit();
-    lcMessageSystemInit();
-    lcWindowInit(config.WindowTitle,
+    _lcGLLoad();
+    _lcInputInit();
+    _lcMessageSystemInit();
+    _lcWindowInit(config.WindowTitle,
                  config.WindowDimensions[0],
                  config.WindowDimensions[1],
                  config.VSyncEnabled);
-    lcAudioInit();
-    lcRendererInit();
-    lcLoadMasterTexture();
-    lcCameraInit(config.CameraPosition);
+    _lcRendererInit();
+    _lcLoadMasterTexture();
+    _lcCameraInit(config.CameraPosition);
 
     lcClientMain(argc, argv);
 
-    lcAudioDestroy();
-    lcRendererDestroy();
-    lcCameraDestroy();
-    lcWindowDestroy();
-    lcMessageSystemDestroy();
+    _lcRendererDestroy();
+    _lcCameraDestroy();
+    _lcWindowDestroy();
+    _lcMessageSystemDestroy();
 
     return 0;
 }
 
 #elif defined LC_PLATFORM_WINDOWS
 
-int
+i32
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
         LPSTR lpCmdLine,
-        int nShowCmd)
+        i32 nShowCmd)
 {
     lcInitConfig_t config;
 
@@ -77,7 +75,7 @@ WinMain(HINSTANCE hInstance,
     return 0;
 }
 
-int
+i32
 main(void)
 {
     return WinMain(GetModuleHandle(NULL), NULL, GetCommandLine(), SW_SHOWNORMAL);

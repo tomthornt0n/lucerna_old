@@ -1,9 +1,10 @@
 # Lucerna Engine
 
-A minimalist 2D game framework implemented in (mostly) C89*, in early stages of development.
+A minimalist 2D game framework implemented in (mostly) C89*, in very early stages of development.
 
 ## features:
-* basic 2D batched renderer
+* Basic metaprogramming
+* Basic 2D batched renderer
 * ECS
 * Linux and Windows platform layers for keyboard and mouse input, window creation and OpenGL context creation
 * Simple math library
@@ -12,9 +13,9 @@ A minimalist 2D game framework implemented in (mostly) C89*, in early stages of 
 ## to do:
 * Sound
 * Font rendering
-* UI system
+* UI
 * Serialisation
 * Documentation
 ---
-*uses variadic macros and `stdint.h`, so not really c89.
+*uses variadic macros, so not really c89.
 

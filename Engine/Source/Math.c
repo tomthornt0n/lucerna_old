@@ -2,52 +2,52 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 20 Oct 2020
+  Updated : 27 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
 void
-lcVector2Add(float *result,
-             float *vector1, float *vector2)
+lcVector2Add(f32 *result,
+             f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] + vector2[0];
     result[1] = vector1[1] + vector2[1];
 }
 
 void
-lcVector2Subtract(float *result,
-                  float *vector1, float *vector2)
+lcVector2Subtract(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] - vector2[0];
     result[1] = vector1[1] - vector2[1];
 }
 
 void
-lcVector2Multiply(float *result,
-                  float *vector1, float *vector2)
+lcVector2Multiply(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] * vector2[0];
     result[1] = vector1[1] * vector2[1];
 }
 
 void
-lcVector2Divide(float *result,
-                float *vector1, float *vector2)
+lcVector2Divide(f32 *result,
+                f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] / vector2[0];
     result[1] = vector1[1] / vector2[1];
 }
 
-float
-lcVector2Dot(float *vector1, float *vector2)
+f32
+lcVector2Dot(f32 *vector1, f32 *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]));
 }
 
 void
-lcVector3Add(float *result,
-             float *vector1, float *vector2)
+lcVector3Add(f32 *result,
+             f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] + vector2[0];
     result[1] = vector1[1] + vector2[1];
@@ -55,8 +55,8 @@ lcVector3Add(float *result,
 }
 
 void
-lcVector3Subtract(float *result,
-                  float *vector1, float *vector2)
+lcVector3Subtract(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] - vector2[0];
     result[1] = vector1[1] - vector2[1];
@@ -64,8 +64,8 @@ lcVector3Subtract(float *result,
 }
 
 void
-lcVector3Multiply(float *result,
-                  float *vector1, float *vector2)
+lcVector3Multiply(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] * vector2[0];
     result[1] = vector1[1] * vector2[1];
@@ -73,16 +73,16 @@ lcVector3Multiply(float *result,
 }
 
 void
-lcVector3Divide(float *result,
-                float *vector1, float *vector2)
+lcVector3Divide(f32 *result,
+                f32 *vector1, f32 *vector2)
 {
     result[0] = vector1[0] / vector2[0];
     result[1] = vector1[1] / vector2[1];
     result[2] = vector1[2] / vector2[2];
 }
 
-float
-lcVector3Dot(float *vector1, float *vector2)
+f32
+lcVector3Dot(f32 *vector1, f32 *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]) +
@@ -90,8 +90,8 @@ lcVector3Dot(float *vector1, float *vector2)
 }
 
 void
-lcVector4Add(float *result,
-             float *vector1, float *vector2)
+lcVector4Add(f32 *result,
+             f32 *vector1, f32 *vector2)
 {
     __m128 _left, _right, _answer;
 
@@ -103,8 +103,8 @@ lcVector4Add(float *result,
 }
 
 void
-lcVector4Subtract(float *result,
-                  float *vector1, float *vector2)
+lcVector4Subtract(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     __m128 _left, _right, _answer;
 
@@ -116,8 +116,8 @@ lcVector4Subtract(float *result,
 }
 
 void
-lcVector4Multiply(float *result,
-                  float *vector1, float *vector2)
+lcVector4Multiply(f32 *result,
+                  f32 *vector1, f32 *vector2)
 {
     __m128 _left, _right, _result;
 
@@ -129,8 +129,8 @@ lcVector4Multiply(float *result,
 }
 
 void
-lcVector4Divide(float *result,
-                float *vector1, float *vector2)
+lcVector4Divide(f32 *result,
+                f32 *vector1, f32 *vector2)
 {
     __m128 _left, _right, _answer;
 
@@ -141,8 +141,8 @@ lcVector4Divide(float *result,
     _mm_store_ps(result, _answer);
 }
 
-float
-lcVector4Dot(float *vector1, float *vector2)
+f32
+lcVector4Dot(f32 *vector1, f32 *vector2)
 {
     return ((vector1[0] * vector2[0]) +
             (vector1[1] * vector2[1]) +
@@ -151,16 +151,16 @@ lcVector4Dot(float *vector1, float *vector2)
 }
 
 void
-lcMatrix4Multiply(float *result,
-                  float *matrix1, float *matrix2)
+lcMatrix4Multiply(f32 *result,
+                  f32 *matrix1, f32 *matrix2)
 {
     const __m128 _matrix2Column1 = _mm_load_ps(&(matrix1[0]));
     const __m128 _matrix2Column2 = _mm_load_ps(&(matrix1[4]));
     const __m128 _matrix2Column3 = _mm_load_ps(&(matrix1[8]));
     const __m128 _matrix2Column4 = _mm_load_ps(&(matrix1[12]));
 
-    float *leftRowPointer = &matrix2[0];
-    float *resultRowPointer = &result[0];
+    f32 *leftRowPointer = &matrix2[0];
+    f32 *resultRowPointer = &result[0];
 
     int i;
     for (i = 0; i < 4; ++i, leftRowPointer += 4, resultRowPointer += 4)
@@ -182,11 +182,11 @@ lcMatrix4Multiply(float *result,
 
 
 void
-lcMatrix4CreateOrthographicProjectionMatrix(float *matrix,
-                                            float left, float right,
-                                            float top, float bottom)
+lcMatrix4CreateOrthographicProjectionMatrix(f32 *matrix,
+                                            f32 left, f32 right,
+                                            f32 top, f32 bottom)
 {
-    memset(matrix, 0, 16 * sizeof(float));
+    memset(matrix, 0, 16 * sizeof(f32));
     matrix[0]  = 2.0f / (right - left);
     matrix[5]  = 2.0f / (top - bottom);
     matrix[10] = -1.0f;
@@ -197,10 +197,10 @@ lcMatrix4CreateOrthographicProjectionMatrix(float *matrix,
 }
 
 void
-lcMatrix4CreateTranslationMatrix(float *matrix,
-                                 float x, float y)
+lcMatrix4CreateTranslationMatrix(f32 *matrix,
+                                 f32 x, f32 y)
 {
-    memset(matrix, 0, 16 * sizeof(float));
+    memset(matrix, 0, 16 * sizeof(f32));
 
     matrix[0]  = 1.0f;
     matrix[5]  = 1.0f;
@@ -211,10 +211,10 @@ lcMatrix4CreateTranslationMatrix(float *matrix,
 }
 
 void
-lcMatrix4CreateScaleMatrix(float *matrix,
-                           float x, float y)
+lcMatrix4CreateScaleMatrix(f32 *matrix,
+                           f32 x, f32 y)
 {
-    memset(matrix, 0, 16 * sizeof(float));
+    memset(matrix, 0, 16 * sizeof(f32));
 
     matrix[0]  = x;
     matrix[5]  = y;

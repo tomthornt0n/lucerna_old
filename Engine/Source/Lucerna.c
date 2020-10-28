@@ -17,15 +17,18 @@
 
 #if defined(LC_PLATFORM_LINUX)
 #include "gl/glcorearb.h"
-#include "X11/Xlib.h"
-#include "xcb/xcb.h"
-#include "X11/Xlib-xcb.h"
-#include "GL/glx.h"
+#include <X11/Xlib.h>
+#include <xcb/xcb.h>
+#include <X11/Xlib-xcb.h>
+#include <GL/glx.h>
 #include "gl/glxext.h"
+#define ALSA_PCM_NEW_HW_PARAMS_API
+#include <alsa/asoundlib.h>
+#include <pthread.h>
 #elif defined(LC_PLATFORM_WINDOWS)
-#include "windows.h"
-#include "windowsx.h"
-#include "Fcntl.h"
+#include <windows.h>
+#include <windowsx.h>
+#include <Fcntl.h>
 #include "gl/glcorearb.h"
 #include "gl/wglext.h"
 #else
@@ -43,7 +46,6 @@
 #include "EcsFunctions.gen.c"
 #include "Shader.c"
 #include "Camera.c"
-#include "AssetLoader.c"
 #include "Renderer.c"
-#include "Audio.c"
+#include "AssetLoader.c"
 #include "EntryPoint.c"

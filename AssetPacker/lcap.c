@@ -536,6 +536,7 @@ PackSounds(FILE *out)
         header.Size = sizeof(lcapSound_t) +
                       dataSize;
 
+
         int charIndex;
         for (charIndex = 0;
              charIndex < (LCAP_NAME_MAX_LEN - 1) &&
@@ -544,7 +545,7 @@ PackSounds(FILE *out)
         {
             sound.Name[charIndex] = soundPaths[soundIndex][charIndex];
         }
-        
+
         fwrite(&header, sizeof(header), 1, out);
         fwrite(&sound, sizeof(sound), 1, out);
         fwrite(data, dataSize, 1, out);

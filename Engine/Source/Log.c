@@ -2,7 +2,7 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 22 Oct 2020
+  Updated : 27 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -68,28 +68,28 @@ lcLogInitWindowsConsole(void)
 
 #endif
 
-static char *
-lcLogLevelNames[] =
+internal i8 *
+_lcLogLevelNames[] =
 {
   "TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
 };
 
-static char *
-lcLogLevelColours[] =
+internal i8 *
+_lcLogLevelColours[] =
 {
   "\x1b[94m", "\x1b[36m", "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m"
 };
 
 void
-lcLog(int level,
-      char *prefix,
-      char *fmt, ...)
+lcLog(i32 level,
+      i8 *prefix,
+      i8 *fmt, ...)
 {    
     va_list args;
 
     fprintf(
         stderr, "\x1b[0m%s%-5s\x1b[0m \x1b[38m%-6s\x1b[34m │ \x1b[0m ",
-        lcLogLevelColours[level], lcLogLevelNames[level], prefix);
+        _lcLogLevelColours[level], _lcLogLevelNames[level], prefix);
 
     va_start(args, fmt);
     vfprintf(stderr, fmt, args);
