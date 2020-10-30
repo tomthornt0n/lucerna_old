@@ -6,6 +6,8 @@
 #include "Lucerna.h"
 
 /* NOTE(tbt): Everything about this example game is terrible */
+/* NOTE(tbt): Like genuinely awful */
+/* NOTE(tbt):  */
 
 #define PlayerAcceleration 40.0f
 #define PlayerSpeed 450.0f
@@ -17,6 +19,8 @@
 
 static u8 g_running = 1;
 static float g_winYBounds[2]; /* top and bottom of screen so the ball can bounce */
+static lcAudioSource_t *g_sound;
+static lcAudioSource_t *g_sound2;
 
 static void
 OnWindowClose(lcGenericMessage_t *message)
@@ -174,6 +178,16 @@ UpdateBall(lcScene_t *scene,
                 scene->ComponentPhysics[ball].Velocity[0] *= -1.0f;
                 scene->ComponentPhysics[ball].Velocity[1] +=
                     scene->ComponentPhysics[entity].Velocity[1] * 0.2f;
+
+                if (((ballMin[0] + ballMax[0]) / 2 ) > 0)
+                {
+                    lcAudioSetPan(g_sound, 1.0f);
+                }
+                else
+                {
+                    lcAudioSetPan(g_sound, 0.0f);
+                }
+                lcAudioPlay(g_sound);
             }
         }
     }
@@ -286,6 +300,8 @@ lcClientMain(int argc,
     ballTex = lcLoadAsset("ball", LC_ASSET_TYPE_SPRITE);
     paddleTex = lcLoadAsset("paddle", LC_ASSET_TYPE_SPRITE);
     shader = lcLoadAsset("SplitTone", LC_ASSET_TYPE_SHADER);
+    g_sound = lcLoadAsset("untitled", LC_ASSET_TYPE_SOUND);
+    g_sound2 = lcLoadAsset("testSound", LC_ASSET_TYPE_SOUND);
 
     /* create a scene */
     lcSceneCreate(&scene);
@@ -316,6 +332,9 @@ lcClientMain(int argc,
                          COMPONENT_RENDERABLE);
     lcSubsetRefresh(&scene, &physics);
 
+    lcAudioSetLooping(g_sound2, true);
+    lcAudioPlay(g_sound2);
+
     /* main loop */
     previousTime = lcClockGetTime();
     time = lcClockGetTime();
@@ -326,7 +345,7 @@ lcClientMain(int argc,
         time = lcClockGetTime();
         frameTimeInSeconds = (time - previousTime) / 1000000.0;
 
-        if (count++ == 60)
+        if (count++ == 360)
         {
             count = 0;
             LC_LOG_INFO("FPS: %f; Frame Time (in seconds): %f\n",

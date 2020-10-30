@@ -47,5 +47,6 @@
 #include "Shader.c"
 #include "Camera.c"
 #include "Renderer.c"
+#include "Audio.c"
 #include "AssetLoader.c"
 #include "EntryPoint.c"

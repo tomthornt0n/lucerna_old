@@ -2,16 +2,20 @@
   Lucerna
   
   Author  : Tom Thornton
-  Updated : 28 Oct 2020
+  Updated : 30 Oct 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
-#ifdef LC_PLATFORM_LINUX
 
 i32
 main(i32 argc,
      i8 **argv)
 {
+#ifdef LC_PLATFORM_WINDOWS
+    return WinMain(GetModuleHandle(NULL),
+                   NULL,
+                   GetCommandLine(),
+                   SW_SHOWNORMAL);
+#elif defined LC_PLATFORM_LINUX
     lcInitConfig_t config;
 
     config = lcClientConfig();
@@ -26,19 +30,23 @@ main(i32 argc,
     _lcRendererInit();
     _lcLoadMasterTexture();
     _lcCameraInit(config.CameraPosition);
+    _lcAudioInit();
 
     lcClientMain(argc, argv);
 
+    _lcAudioDestroy();
     _lcRendererDestroy();
     _lcCameraDestroy();
     _lcWindowDestroy();
     _lcMessageSystemDestroy();
 
     return 0;
+#else
+#error No platform macro defined
+#endif
 }
 
-#elif defined LC_PLATFORM_WINDOWS
-
+#ifdef LC_PLATFORM_WINDOWS
 i32
 WinMain(HINSTANCE hInstance,
         HINSTANCE hPrevInstance,
@@ -74,14 +82,6 @@ WinMain(HINSTANCE hInstance,
 
     return 0;
 }
-
-i32
-main(void)
-{
-    return WinMain(GetModuleHandle(NULL), NULL, GetCommandLine(), SW_SHOWNORMAL);
-}
-#else
-#error No platform macro defined
 #endif
 
 /*

@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 28 Oct 2020
+  Updated : 30 Oct 2020
   License : MIT, at end of file
   Notes   : Not very good.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -124,8 +124,26 @@ lcLoadAsset(i8 *name,
 
             if (0 == strcmp(sound.Name, name))
             {
-                /* TODO(tbt): audio */
-                return NULL;
+                lcAudioSource_t *result;
+
+                result = malloc(sizeof(*result));
+                result->StreamSize = header.Size - sizeof(sound);
+                result->Stream = malloc(result->StreamSize);
+                fread(result->Stream, result->StreamSize, 1, assetsFile);
+                result->Next = NULL;
+                result->Playhead = 0;
+                result->State = LC_AUDIO_STATE_PAUSED;
+                result->Flags = LC_SOURCE_FLAG_NO_FLAGS;
+                result->LGain = 1.0f;
+                result->RGain = 1.0f;
+                result->Level = 1.0f;
+                result->Pan = 0.5f;
+
+                return result;
+            }
+            else
+            {
+                fseek(assetsFile, header.Size - sizeof(sound), SEEK_CUR);
             }
         }
         else if (type == LC_ASSET_TYPE_SPRITE)
