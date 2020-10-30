@@ -4,17 +4,19 @@ A minimalist 2D game framework implemented in (mostly) C89*, in very early stage
 
 ## features:
 * Basic metaprogramming
-* Basic 2D batched renderer
+* Batched 2D renderer
 * ECS
 * Linux and Windows platform layers for keyboard and mouse input, window creation and OpenGL context creation
-* Simple math library
+* Math library
 * Rudimentary asset packer/loader
+* Audio mixer (linux [alsa] only)
 
 ## to do:
-* Sound
+* Sound (windows)
 * Font rendering
 * UI
 * Serialisation
+* Off-screen rendering / framebuffers
 * Documentation
 ---
 *uses variadic macros, so not really c89.
