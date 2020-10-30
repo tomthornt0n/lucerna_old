@@ -75,7 +75,6 @@ _lcAudioProcessSource(lcAudioSource_t *source)
     i32 i;
     i32 mix;
 
-
     if (LC_AUDIO_SOURCE_HAS_FLAG(source, LC_SOURCE_FLAG_REWIND))
     {
         source->Playhead = 0;
@@ -214,7 +213,7 @@ void
 lcAudioSetPan(lcAudioSource_t *source,
               f32 pan)
 {
-    source->Pan = pan;
+    source->Pan = LC_AUDIO_CLAMP(pan, 0.0f, 1.0f);
     _lcAudioRecalculateGain(source);
 }
 

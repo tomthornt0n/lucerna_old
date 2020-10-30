@@ -125,10 +125,13 @@ lcLoadAsset(i8 *name,
             if (0 == strcmp(sound.Name, name))
             {
                 lcAudioSource_t *result;
+                u32 pack; /* pack to be a multiple of the buffer size */
 
                 result = malloc(sizeof(*result));
                 result->StreamSize = header.Size - sizeof(sound);
-                result->Stream = malloc(result->StreamSize);
+                pack = result->StreamSize + _lcAudio.BufferSize - (result->StreamSize % _lcAudio.BufferSize);
+                result->Stream = malloc(result->StreamSize + pack);
+                memset(result->Stream, 0, result->StreamSize + pack);
                 fread(result->Stream, result->StreamSize, 1, assetsFile);
                 result->Next = NULL;
                 result->Playhead = 0;
