@@ -53,7 +53,7 @@ internal struct
 internal void _lcAudioProcess(void);
 
 #ifdef LC_PLATFORM_WINDOWS
-#error TODO: windows audio
+#include "Platform/Windows/Audio.c"
 #elif defined LC_PLATFORM_LINUX
 #include "Platform/Linux/Audio.c"
 #else

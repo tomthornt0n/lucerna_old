@@ -22,6 +22,8 @@
 #define WAV_IMPLEMENTATION
 #include "wav.h"
 
+/* All of this is awful. I'll make it better at some point */
+
 typedef struct
 {
     char Name[LCAP_NAME_MAX_LEN];
@@ -459,16 +461,14 @@ PackShaders(FILE *out)
         lcapChunkHeader_t header;
         lcapShader_t shader;
 
-
         memcpy(shader.Name, shaders[shaderIndex].Name, LCAP_NAME_MAX_LEN);
         shader.VertexLength = strlen(shaders[shaderIndex].VertexSource) + 1;
         shader.FragmentLength = strlen(shaders[shaderIndex].FragmentSource) + 1;
 
         header.Type = LCAP_ASSET_TYPE_SHADER;
-        header.Size = sizeof(lcapShader_t) -
-                             sizeof(lcapChunkHeader_t) +
-                             shader.VertexLength +
-                             shader.FragmentLength;
+        header.Size = sizeof(lcapShader_t) +
+                      shader.VertexLength +
+                      shader.FragmentLength;
 
         fwrite(&header, sizeof(header), 1, out);
         fwrite(&shader, sizeof(shader), 1, out);

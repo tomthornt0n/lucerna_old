@@ -6,7 +6,7 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-#define LC_NO_ENTITY 0xffffffffffffffff
+#define LC_NO_ENTITY (0xffffffffffffffff)
 
 void
 lcSceneCreate(lcScene_t *scene)
@@ -70,10 +70,14 @@ lcEntity_t
 lcEntityCreate(lcScene_t *scene)
 {
     lcEntity_t entity;
+    lcSignature_t noEntity = LC_NO_ENTITY; /* Why does it not work when
+                                              compiling with MSVC unless I do
+                                              this????
+                                           */
 
     for (entity = 0; entity < LC_MAX_ENTITIES; entity++)
     {
-        if (scene->EntitySignatures[entity] == LC_NO_ENTITY)
+        if ((scene->EntitySignatures[entity]) == noEntity)
         {
             scene->EntitySignatures[entity] = LC_COMPONENT_NONE;
             return entity; 

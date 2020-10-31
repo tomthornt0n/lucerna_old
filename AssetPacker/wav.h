@@ -1,60 +1,3 @@
-/*~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  wav.h
-
-  Author  : Thomas Thornton
-
-  Licence : MIT (at bottom of file)
-
-  Notes   : Simple c89 single header file library for reading uncompressed WAV
-            files
-
-  Usage   : #define WAV_IMPLEMENTATION in ONE .c or .cpp file and #include
-            "wav.h" wherever it is required.
-
-            Call wavRead once to get the data size.
-
-            Use the data size retrieved to allocate memory for the PCM data.
-
-            Call wavRead again to get the data.
-
-            Example:
-
-                #include <stdio.h>
-                #include <stdlib.h>
-                
-                #define WAV_IMPLEMENTATION
-                #include "wav.h"
-                
-                int
-                main(int argc,
-                     char **argv)
-                {
-                    unsigned char *data;
-                    int dataRate, channels, dataSize;
-                
-                    if (argc != 2)
-                    {
-                        fprintf(stderr, "Usage: %s <file>\n", argv[0]);
-                        return -1;
-                    }
-                
-                    wavRead(argv[1], &dataRate, &channels, &dataSize, NULL);
-                    data = malloc(dataSize);
-                    wavRead(argv[1], NULL, NULL, NULL, data);
-                
-                    fprintf(stderr,
-                            "Data Rate: %d\nChannels: %d\nData Size: %d\n",
-                            dataRate,
-                            channels,
-                            dataSize);
-                
-                    free(data);
-                
-                    return 0;
-                }
-
- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
-
 #ifndef WAV_H
 #define WAV_H
 
@@ -86,7 +29,7 @@ void wavRead(char *filename,
                                    ((uint32_t)(c) << 16) |                     \
                                    ((uint32_t)(d) << 24))
 
-#pragma pack(push, 0)
+#pragma pack(push, 1)
 typedef struct
 {
     uint32_t ID;

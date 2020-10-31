@@ -24,9 +24,9 @@ main(i32 argc,
     _lcInputInit();
     _lcMessageSystemInit();
     _lcWindowInit(config.WindowTitle,
-                 config.WindowDimensions[0],
-                 config.WindowDimensions[1],
-                 config.VSyncEnabled);
+                  config.WindowDimensions[0],
+                  config.WindowDimensions[1],
+                  config.VSyncEnabled);
     _lcRendererInit();
     _lcLoadMasterTexture();
     _lcCameraInit(config.CameraPosition);
@@ -62,23 +62,25 @@ WinMain(HINSTANCE hInstance,
 #ifdef LC_LOGGING_ENABLED
     lcLogInitWindowsConsole();
 #endif
-    lcInputInit();
-    lcMessageSystemInit();
-    lcWindowInit(hInstance,
-                 config.WindowTitle,
-                 config.WindowDimensions[0],
-                 config.WindowDimensions[1],
-                 config.VSyncEnabled);
-    lcGLLoad();
-    lcRendererInit();
-    lcLoadMasterTexture();
-    lcCameraInit(config.CameraPosition);
+    _lcInputInit();
+    _lcMessageSystemInit();
+    _lcWindowInit(hInstance,
+                  config.WindowTitle,
+                  config.WindowDimensions[0],
+                  config.WindowDimensions[1],
+                  config.VSyncEnabled);
+    _lcGLLoad();
+    _lcRendererInit();
+    _lcLoadMasterTexture();
+    _lcCameraInit(config.CameraPosition);
+    _lcAudioInit();
 
     lcClientMain(__argc, __argv);
 
-    lcRendererDestroy();
-    lcCameraDestroy();
-    lcMessageSystemDestroy();
+    _lcAudioDestroy();
+    _lcRendererDestroy();
+    _lcCameraDestroy();
+    _lcMessageSystemDestroy();
 
     return 0;
 }

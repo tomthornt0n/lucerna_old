@@ -12,7 +12,7 @@ FILE *FunctionsFile = NULL;
 FILE *FunctionsHeaderFile = NULL;
 FILE *ComponentArraysFile = NULL;
 
-int bitOffset = 1;
+int BitOffset = 1;
 
 void fWriteStringAsUppercaseWithUnderscores(FILE *file, char *string)
 {
@@ -84,8 +84,8 @@ void GenerateComponent(lcddlNode_t *component)
     fprintf(stderr, "        Generating component struct...\n");
     fprintf(ComponentsFile, "#define ");
     fWriteStringAsUppercaseWithUnderscores(ComponentsFile, component->Name);
-    fprintf(ComponentsFile, " (1 << %i)\n", bitOffset++);
-    if(bitOffset == 0xffffffffffffffff)
+    fprintf(ComponentsFile, " (1 << %i)\n", BitOffset++);
+    if(BitOffset == 63)
     {
         fprintf(stderr, "\033[31mERROR: Too many components!\033[0m\n");
         exit(-1);

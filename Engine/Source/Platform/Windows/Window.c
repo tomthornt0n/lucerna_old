@@ -98,18 +98,18 @@ _lcWindowInit(HINSTANCE instanceHandle,
 
     gl.wglGetExtensionsStringARB =
         (PFNWGLGETEXTENSIONSSTRINGARBPROC)
-        lcGLLoadFunctionWindows("wglGetExtensionsStringARB", opengl32);
+        _lcGLLoadFunction("wglGetExtensionsStringARB", opengl32);
 
-    recreateContext = lcGLIsExtensionSupported(lcWindow.DeviceContext,
+    recreateContext = _lcGLIsExtensionSupported(lcWindow.DeviceContext,
                                                "WGL_ARB_pixel_format") &&
-                      lcGLIsExtensionSupported(lcWindow.DeviceContext,
+                      _lcGLIsExtensionSupported(lcWindow.DeviceContext,
                                                "WGL_ARB_create_context");
 
-    if (lcGLIsExtensionSupported(lcWindow.DeviceContext,
+    if (_lcGLIsExtensionSupported(lcWindow.DeviceContext,
                                  "WGL_EXT_swap_control"))
     {
-        gl.wglSwapIntervalEXT = lcGLLoadFunctionWindows("wglSwapIntervalEXT",
-                                                        opengl32);
+        gl.wglSwapIntervalEXT = _lcGLLoadFunction("wglSwapIntervalEXT",
+                                                  opengl32);
     }
     else
     {
@@ -119,11 +119,11 @@ _lcWindowInit(HINSTANCE instanceHandle,
 
     gl.wglChoosePixelFormatARB =
         (PFNWGLCHOOSEPIXELFORMATARBPROC)
-        lcGLLoadFunctionWindows("wglChoosePixelFormatARB", opengl32);
+        _lcGLLoadFunction("wglChoosePixelFormatARB", opengl32);
 
     gl.wglCreateContextAttribsARB =
         (PFNWGLCREATECONTEXTATTRIBSARBPROC)
-        lcGLLoadFunctionWindows("wglCreateContextAttribsARB", opengl32);
+        _lcGLLoadFunction("wglCreateContextAttribsARB", opengl32);
 
     FreeModule(opengl32);
 
@@ -229,12 +229,12 @@ WindowProc(HWND windowHandle,
         case 1:
         {
             mouseScrollPrev = 0;
-            lcMessageEmit(lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_5));
+            _lcMessageEmit(_lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_5));
         }
         case -1:
         {
             mouseScrollPrev = 0;
-            lcMessageEmit(lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_6));
+            _lcMessageEmit(_lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_6));
         }
     }
 
@@ -248,7 +248,7 @@ WindowProc(HWND windowHandle,
                              != 0 ?
                              0x80 : 0)];
 
-            lcMessageEmit(lcKeyPressMessageCreate(key));
+            _lcMessageEmit(_lcKeyPressMessageCreate(key));
             lcInputIsKeyPressed[key] = true;
 
             break;
@@ -261,49 +261,49 @@ WindowProc(HWND windowHandle,
                              != 0 ?
                              0x80 : 0)];
 
-            lcMessageEmit(lcKeyReleaseMessageCreate(key));
+            _lcMessageEmit(_lcKeyReleaseMessageCreate(key));
             lcInputIsKeyPressed[key] = false;
 
             break;
         }
         case WM_LBUTTONDOWN:
         {
-            lcMessageEmit(lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_1));
+            _lcMessageEmit(_lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_1));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_1] = true;
 
             break;
         }
         case WM_LBUTTONUP:
         {
-            lcMessageEmit(lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_1));
+            _lcMessageEmit(_lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_1));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_1] = false;
 
             break;
         }
         case WM_MBUTTONDOWN:
         {
-            lcMessageEmit(lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_2));
+            _lcMessageEmit(_lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_2));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_2] = true;
 
             break;
         }
         case WM_MBUTTONUP:
         {
-            lcMessageEmit(lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_2));
+            _lcMessageEmit(_lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_2));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_2] = false;
 
             break;
         }
         case WM_RBUTTONDOWN:
         {
-            lcMessageEmit(lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_3));
+            _lcMessageEmit(_lcMouseButtonPressMessageCreate(LC_MOUSE_BUTTON_3));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_3] = true;
 
             break;
         }
         case WM_RBUTTONUP:
         {
-            lcMessageEmit(lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_3));
+            _lcMessageEmit(_lcMouseButtonReleaseMessageCreate(LC_MOUSE_BUTTON_3));
             lcInputIsMouseButtonPressed[LC_MOUSE_BUTTON_3] = false;
 
             break;
@@ -314,10 +314,10 @@ WindowProc(HWND windowHandle,
             i32 button;
 
             offset = GET_WHEEL_DELTA_WPARAM(wParam) / 120;
-            lcMessageEmit(lcMouseScrollMessageCreate(offset));
+            _lcMessageEmit(_lcMouseScrollMessageCreate(offset));
 
             button = offset > 0 ? LC_MOUSE_BUTTON_5 : LC_MOUSE_BUTTON_6;
-            lcMessageEmit(lcMouseButtonPressMessageCreate(button));
+            _lcMessageEmit(_lcMouseButtonPressMessageCreate(button));
             lcInputIsMouseButtonPressed[button] = true;
 
             mouseScrollPrev = offset;
@@ -334,8 +334,8 @@ WindowProc(HWND windowHandle,
 
             lcWindow.Width = LOWORD(lParam);
             lcWindow.Height = HIWORD(lParam);
-            lcMessageEmit(lcWindowResizeMessageCreate(lcWindow.Width,
-                                                      lcWindow.Height));
+            _lcMessageEmit(_lcWindowResizeMessageCreate(lcWindow.Width,
+                                                        lcWindow.Height));
             break;
         }
         case WM_DESTROY:
@@ -346,7 +346,7 @@ WindowProc(HWND windowHandle,
             }
             else
             {
-                lcMessageEmit(lcWindowCloseMessageCreate());
+                _lcMessageEmit(_lcWindowCloseMessageCreate());
                 PostQuitMessage(0);
             }
             break;
