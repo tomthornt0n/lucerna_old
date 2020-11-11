@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 30 Oct 2020
+  Updated : 11 Nov 2020
   License : MIT, at end of file
   Notes   : Just to get something playing.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
@@ -17,7 +17,7 @@
 
 #define LC_AUDIO_SAMPLE_RATE (44100)
 #define LC_AUDIO_LATENCEY_SAMPLES (4410)
-#define LC_ADUIO_LATENCEY_IN_US ((LC_AUDIO_LATENCEY_SAMPLES * 1000000) / LC_AUDIO_SAMPLE_RATE)
+#define LC_AUDIO_LATENCEY_IN_US ((LC_AUDIO_LATENCEY_SAMPLES * 1000000L) / LC_AUDIO_SAMPLE_RATE)
 
 enum lcAudioState
 {

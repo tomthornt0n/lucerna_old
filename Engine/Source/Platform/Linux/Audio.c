@@ -2,7 +2,7 @@
   Lucerna
 
   Author  : Tom Thornton
-  Updated : 30 Oct 2020
+  Updated : 11 Nov 2020
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
@@ -30,7 +30,8 @@ _lcPlatformAudioUpdate(void *arg)
                      (_lcPlatformAudioData.BufferSize / 4));
 
         frames = snd_pcm_writei(_lcPlatformAudioData.Handle,
-                                LC_AUDIO_BYTES_TO_SAMPLES(_lcAudio.Buffer));
+                                _lcPlatformAudioData.Buffer,
+                                LC_AUDIO_BYTES_TO_SAMPLES(_lcPlatformAudioData.BufferSize));
 
         if (frames == -EPIPE)
         {

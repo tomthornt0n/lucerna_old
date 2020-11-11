@@ -1,7 +1,6 @@
 #ifndef LUCERNA_H
 #define LUCERNA_H
 
-#include <windows.h>
 #include <errno.h>
 
 extern int errno;
