@@ -28,6 +28,7 @@
 #elif defined(LC_PLATFORM_WINDOWS)
 #include <windows.h>
 #include <windowsx.h>
+#include <dsound.h>
 #include <Fcntl.h>
 #include "gl/glcorearb.h"
 #include "gl/wglext.h"

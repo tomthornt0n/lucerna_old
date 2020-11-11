@@ -12,6 +12,13 @@
 /* clamp a between x and y */
 #define LC_AUDIO_CLAMP(a, x, y) (a < x ? x : a > y ? y : a)
 
+#define LC_AUDIO_BYTES_TO_SAMPLES(b) (b >> 2)
+#define LC_AUDIO_SAMPLES_TO_BYTES(s) (s << 2)
+
+#define LC_AUDIO_SAMPLE_RATE (44100)
+#define LC_AUDIO_LATENCEY_SAMPLES (4410)
+#define LC_ADUIO_LATENCEY_IN_US ((LC_AUDIO_LATENCEY_SAMPLES * 1000000) / LC_AUDIO_SAMPLE_RATE)
+
 enum lcAudioState
 {
     LC_AUDIO_STATE_PLAYING,
@@ -29,28 +36,26 @@ enum lcAudioSourceFlags
 
 struct _lcAudioSource_t
 {
-    u8 *Stream;               /* PCM audio data */
-    lcAudioSource_t *Next;    /* Next source in list */
-    u32 Playhead;             /* Current playback position in bytes */
-    i32 State;                /* playing or paused */ 
-    u32 StreamSize;           /* Size of stream data in bytes */
-    u8 Flags;                 /* Bitfield of source properties */
-    f32 LGain;                /* Left channel multiplier */
-    f32 RGain;                /* Right channel multiplier */
+    u8 *Stream;                      /* PCM audio data */
+    lcAudioSource_t *Next;           /* Next source in list */
+    u32 Playhead;                    /* Current playback position in bytes */
+    i32 State;                       /* playing or paused */ 
+    u32 StreamSize;                  /* Size of stream data in bytes */
+    u8 Flags;                        /* Bitfield of source properties */
+    f32 LGain;                       /* Left channel multiplier */
+    f32 RGain;                       /* Right channel multiplier */
 
-    f32 Level;                /* Set by lcAudioSetLevel */
-    f32 Pan;                  /* Set by lcAudioSetPan */
+    f32 Level;                       /* Set by lcAudioSetLevel */
+    f32 Pan;                         /* Set by lcAudioSetPan */
 };
 
 internal struct
 {
-    lcAudioSource_t *Playing; /* Linked list of active sources */
-    u32 BufferSize;           /* sizeof(_lcAudio.Buffer) */
-    u8 Buffer[0x400];         /* Internal master buffer */
-    b8 Running;
+    lcAudioSource_t *Playing;        /* Linked list of active sources */
+    b8 Running;                      /* True while application is running */
 } _lcAudio;
 
-internal void _lcAudioProcess(void);
+internal void _lcAudioProcess(void *buffer, u32 bufferSize);
 
 #ifdef LC_PLATFORM_WINDOWS
 #include "Platform/Windows/Audio.c"
@@ -63,17 +68,19 @@ internal void _lcAudioProcess(void);
 internal void
 _lcAudioInit(void)
 {
-    _lcAudio.BufferSize = sizeof(_lcAudio.Buffer);
     _lcAudio.Running = true;
 
     _lcPlatformAudioInit();
 }
 
 internal void
-_lcAudioProcessSource(lcAudioSource_t *source)
+_lcAudioProcessSource(lcAudioSource_t *source,
+                      i16 *buffer,
+                      u32 bufferSize)
 {
     i32 i;
     i32 mix;
+    i16 *sourceBuffer = (i16 *)(source->Stream + source->Playhead);
 
     if (LC_AUDIO_SOURCE_HAS_FLAG(source, LC_SOURCE_FLAG_REWIND))
     {
@@ -87,25 +94,28 @@ _lcAudioProcessSource(lcAudioSource_t *source)
     }
 
     for (i = 0;
-         i < (_lcAudio.BufferSize >> 1);
+         i < (bufferSize >> 1);
          ++i)
     {
         /* left channel */
-        mix = (i32)(((i16*)_lcAudio.Buffer)[i]);
-        mix += (i32)((((i16*)(source->Stream + source->Playhead))[i]) *
-               source->LGain);
-        ((i16*)_lcAudio.Buffer)[i] = (i16)LC_AUDIO_CLAMP(mix, -32768, 32767);
+        mix = (i32)buffer[i];
+        mix += sourceBuffer[i] * source->LGain;
+        buffer[i] = (i16)LC_AUDIO_CLAMP(mix, -32768, 32767);
 
         ++i;
 
         /* right channel */
-        mix = (i32)(((i16*)_lcAudio.Buffer)[i]);
-        mix += (i32)((((i16*)(source->Stream + source->Playhead))[i]) *
-               source->RGain);
-        ((i16*)_lcAudio.Buffer)[i] = (i16)LC_AUDIO_CLAMP(mix, -32768, 32767);
+        mix = (i32)buffer[i];
+        mix += sourceBuffer[i] * source->RGain;
+        buffer[i] = (i16)LC_AUDIO_CLAMP(mix, -32768, 32767);
+
+        if ((i << 2) + source->Playhead > source->StreamSize)
+        {
+            break;
+        }
     }
 
-    source->Playhead += _lcAudio.BufferSize;
+    source->Playhead += bufferSize;
 
     if (source->Playhead >= source->StreamSize)
     {
@@ -119,20 +129,21 @@ _lcAudioProcessSource(lcAudioSource_t *source)
 }
 
 internal void
-_lcAudioProcess(void)
+_lcAudioProcess(void *buffer,
+                u32 bufferSize)
 {
     lcAudioSource_t **indirect;
 
-    memset(&_lcAudio.Buffer, 0, _lcAudio.BufferSize);
+    memset(buffer, 0, bufferSize);
 
     _lcPlatformAudioLock();
     indirect = &_lcAudio.Playing;
     while (*indirect)
     {
-        _lcAudioProcessSource(*indirect);
+        _lcAudioProcessSource(*indirect, buffer, bufferSize);
 
         if ((*indirect)->State != LC_AUDIO_STATE_PLAYING)
-        /* Remove source from list if it is not playing */
+        /* NOTE(tbt): Remove source from list if it is not playing */
         {
             (*indirect)->Flags &= ~LC_SOURCE_FLAG_ACTIVE;
             *indirect = (*indirect)->Next;
@@ -155,6 +166,10 @@ lcAudioPlay(lcAudioSource_t *source)
         source->Flags |= LC_SOURCE_FLAG_ACTIVE;
         source->Next = _lcAudio.Playing;
         _lcAudio.Playing = source;
+    }
+    else
+    {
+        source->Flags |= LC_SOURCE_FLAG_REWIND;
     }
     _lcPlatformAudioUnlock();
 }

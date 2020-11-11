@@ -31,7 +31,7 @@ EXIT /B 0
 :DEBUG_BUILD
 CALL :COMMON
 cl /nologo /Zi /Fd:bin\LucernaProject.pdb /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_DEBUG Engine\Source\Lucerna.c Client\Source\Main.c
-link /nologo /debug /subsystem:console /stack:4194304 Lucerna.obj Main.obj Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
+link /nologo /debug /subsystem:console /stack:4194304 Lucerna.obj Main.obj Dsound.lib Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
 DEL Main.obj
 DEL Lucerna.obj
 EXIT /B 0
@@ -39,7 +39,7 @@ EXIT /B 0
 :RELEASE_BUILD
 CALL :COMMON
 cl /nologo /c /I Engine\Include /I Client\Source /I Engine\Source /D LC_PLATFORM_WINDOWS /D LC_RELEASE /O2 Engine\Source\Lucerna.c Client\Source\Main.c
-link /nologo /debug /subsystem:windows /stack:4194304 Lucerna.obj Main.obj Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
+link /nologo /debug /subsystem:windows /stack:4194304 Lucerna.obj Main.obj Dsound.lib Gdi32.lib User32.lib Shell32.lib opengl32.lib /out:bin\LucernaProject.exe
 DEL Main.obj
 DEL Lucerna.obj
 EXIT /B 0

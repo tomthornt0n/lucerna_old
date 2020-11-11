@@ -32,7 +32,7 @@ struct
     HWND WindowHandle;
     HDC DeviceContext;
     HGLRC RenderContext;
-} lcWindow;
+} _lcWindow;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -48,10 +48,10 @@ _lcWindowInit(HINSTANCE instanceHandle,
     HMODULE opengl32;
     b8 recreateContext;
 
-    lcWindow.Width = width;
-    lcWindow.Height = height;
+    _lcWindow.Width = width;
+    _lcWindow.Height = height;
 
-    lcWindow.DummyContext = true;
+    _lcWindow.DummyContext = true;
 
     windowClass;
     ZeroMemory(&windowClass, sizeof(windowClass));
@@ -63,17 +63,17 @@ _lcWindowInit(HINSTANCE instanceHandle,
 
     RegisterClass(&windowClass);
 
-    lcWindow.WindowHandle = CreateWindow("LUCERNA",
-                                         title,
-                                         WS_OVERLAPPEDWINDOW,
-                                         CW_USEDEFAULT, CW_USEDEFAULT,
-                                         width, height,
-                                         NULL,
-                                         NULL,
-                                         instanceHandle,
-                                         NULL);
+    _lcWindow.WindowHandle = CreateWindow("LUCERNA",
+                                          title,
+                                          WS_OVERLAPPEDWINDOW,
+                                          CW_USEDEFAULT, CW_USEDEFAULT,
+                                          width, height,
+                                          NULL,
+                                          NULL,
+                                          instanceHandle,
+                                          NULL);
 
-    lcWindow.DeviceContext = GetDC(lcWindow.WindowHandle);
+    _lcWindow.DeviceContext = GetDC(_lcWindow.WindowHandle);
 
     ZeroMemory(&pfd, sizeof(pfd));
 
@@ -88,11 +88,11 @@ _lcWindowInit(HINSTANCE instanceHandle,
     pfd.cStencilBits = 8;
     pfd.iLayerType   = PFD_MAIN_PLANE;
 
-    pixelFormat = ChoosePixelFormat(lcWindow.DeviceContext, &pfd);
-    SetPixelFormat(lcWindow.DeviceContext, pixelFormat, &pfd);
+    pixelFormat = ChoosePixelFormat(_lcWindow.DeviceContext, &pfd);
+    SetPixelFormat(_lcWindow.DeviceContext, pixelFormat, &pfd);
 
-    lcWindow.RenderContext = wglCreateContext(lcWindow.DeviceContext);
-    wglMakeCurrent(lcWindow.DeviceContext, lcWindow.RenderContext);
+    _lcWindow.RenderContext = wglCreateContext(_lcWindow.DeviceContext);
+    wglMakeCurrent(_lcWindow.DeviceContext, _lcWindow.RenderContext);
 
     opengl32 = LoadLibrary("opengl32.dll");
 
@@ -100,12 +100,12 @@ _lcWindowInit(HINSTANCE instanceHandle,
         (PFNWGLGETEXTENSIONSSTRINGARBPROC)
         _lcGLLoadFunction("wglGetExtensionsStringARB", opengl32);
 
-    recreateContext = _lcGLIsExtensionSupported(lcWindow.DeviceContext,
+    recreateContext = _lcGLIsExtensionSupported(_lcWindow.DeviceContext,
                                                "WGL_ARB_pixel_format") &&
-                      _lcGLIsExtensionSupported(lcWindow.DeviceContext,
+                      _lcGLIsExtensionSupported(_lcWindow.DeviceContext,
                                                "WGL_ARB_create_context");
 
-    if (_lcGLIsExtensionSupported(lcWindow.DeviceContext,
+    if (_lcGLIsExtensionSupported(_lcWindow.DeviceContext,
                                  "WGL_EXT_swap_control"))
     {
         gl.wglSwapIntervalEXT = _lcGLLoadFunction("wglSwapIntervalEXT",
@@ -152,25 +152,25 @@ _lcWindowInit(HINSTANCE instanceHandle,
         };
 
         wglMakeCurrent(NULL, NULL);
-        wglDeleteContext(lcWindow.RenderContext);
-        ReleaseDC(lcWindow.WindowHandle, lcWindow.DeviceContext);
-        DestroyWindow(lcWindow.WindowHandle);
+        wglDeleteContext(_lcWindow.RenderContext);
+        ReleaseDC(_lcWindow.WindowHandle, _lcWindow.DeviceContext);
+        DestroyWindow(_lcWindow.WindowHandle);
 
-        lcWindow.WindowHandle = CreateWindow("LUCERNA",
-                                             title,
-                                             WS_OVERLAPPEDWINDOW,
-                                             CW_USEDEFAULT, CW_USEDEFAULT,
-                                             width, height,
-                                             NULL,
-                                             NULL,
-                                             instanceHandle,
-                                             NULL);
+        _lcWindow.WindowHandle = CreateWindow("LUCERNA",
+                                              title,
+                                              WS_OVERLAPPEDWINDOW,
+                                              CW_USEDEFAULT, CW_USEDEFAULT,
+                                              width, height,
+                                              NULL,
+                                              NULL,
+                                              instanceHandle,
+                                              NULL);
 
-        lcWindow.DeviceContext = GetDC(lcWindow.WindowHandle);
+        _lcWindow.DeviceContext = GetDC(_lcWindow.WindowHandle);
 
 
         ChoosePixelFormatResult =
-            gl.wglChoosePixelFormatARB(lcWindow.DeviceContext,
+            gl.wglChoosePixelFormatARB(_lcWindow.DeviceContext,
                                        pixelAttributes,
                                        NULL,
                                        1,
@@ -181,20 +181,20 @@ _lcWindowInit(HINSTANCE instanceHandle,
                   pixelFormatCount > 0,
                   "Error creating window: could not find pixel format");
 
-        SetPixelFormat(lcWindow.DeviceContext, pixelFormatARB, &pfd);
+        SetPixelFormat(_lcWindow.DeviceContext, pixelFormatARB, &pfd);
 
 
-        lcWindow.RenderContext = gl.wglCreateContextAttribsARB(lcWindow.DeviceContext,
-                                                               0,
-                                                               contextAttributes);
+        _lcWindow.RenderContext = gl.wglCreateContextAttribsARB(_lcWindow.DeviceContext,
+                                                                0,
+                                                                contextAttributes);
 
         wglMakeCurrent(NULL, NULL);
-        wglMakeCurrent(lcWindow.DeviceContext, lcWindow.RenderContext);
+        wglMakeCurrent(_lcWindow.DeviceContext, _lcWindow.RenderContext);
     }
 
     lcWindowSetVSync(vSyncEnabled);
 
-    ShowWindow(lcWindow.WindowHandle, SW_SHOW);
+    ShowWindow(_lcWindow.WindowHandle, SW_SHOW);
 }
 
 void
@@ -207,7 +207,7 @@ lcWindowUpdate(void)
         DispatchMessage(&msg);
     }
     
-    SwapBuffers(lcWindow.DeviceContext);
+    SwapBuffers(_lcWindow.DeviceContext);
 }
 
 LRESULT CALLBACK
@@ -332,17 +332,17 @@ WindowProc(HWND windowHandle,
         case WM_SIZE:
         {
 
-            lcWindow.Width = LOWORD(lParam);
-            lcWindow.Height = HIWORD(lParam);
-            _lcMessageEmit(_lcWindowResizeMessageCreate(lcWindow.Width,
-                                                        lcWindow.Height));
+            _lcWindow.Width = LOWORD(lParam);
+            _lcWindow.Height = HIWORD(lParam);
+            _lcMessageEmit(_lcWindowResizeMessageCreate(_lcWindow.Width,
+                                                        _lcWindow.Height));
             break;
         }
         case WM_DESTROY:
         {
-            if (lcWindow.DummyContext)
+            if (_lcWindow.DummyContext)
             {
-                lcWindow.DummyContext = false;
+                _lcWindow.DummyContext = false;
             }
             else
             {
@@ -372,17 +372,17 @@ lcWindowSetVSync(b8 enabled)
 void
 lcWindowGetSize(u32 *result)
 {
-    result[0] = lcWindow.Width;
-    result[1] = lcWindow.Height;
+    result[0] = _lcWindow.Width;
+    result[1] = _lcWindow.Height;
 }
 
 internal void
 _lcWindowDestroy(void)
 {
-    wglMakeCurrent(lcWindow.DeviceContext, NULL);
-    wglDeleteContext(lcWindow.RenderContext);
-    ReleaseDC(lcWindow.WindowHandle, lcWindow.DeviceContext);
-    DestroyWindow(lcWindow.WindowHandle);
+    wglMakeCurrent(_lcWindow.DeviceContext, NULL);
+    wglDeleteContext(_lcWindow.RenderContext);
+    ReleaseDC(_lcWindow.WindowHandle, _lcWindow.DeviceContext);
+    DestroyWindow(_lcWindow.WindowHandle);
 }
 
 /*

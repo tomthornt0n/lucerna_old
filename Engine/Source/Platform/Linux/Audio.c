@@ -6,12 +6,13 @@
   License : MIT, at end of file
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~*/
 
-
 internal struct
 {
     pthread_mutex_t Lock;
     pthread_t Thread;
     snd_pcm_t *Handle;
+    u8 Buffer[1024];
+    u32 BufferSize;
 } _lcPlatformAudioData;
 
 internal void *
@@ -21,13 +22,15 @@ _lcPlatformAudioUpdate(void *arg)
 
     while (_lcAudio.Running)
     {
-        _lcAudioProcess();
+        _lcAudioProcess(_lcPlatformAudioData.Buffer,
+                        _lcPlatformAudioData.BufferSize);
 
-        snd_pcm_wait(_lcPlatformAudioData.Handle, 1000);
+        snd_pcm_wait(_lcPlatformAudioData.Handle,
+                     LC_AUDIO_SAMPLE_RATE *
+                     (_lcPlatformAudioData.BufferSize / 4));
 
         frames = snd_pcm_writei(_lcPlatformAudioData.Handle,
-                                _lcAudio.Buffer,
-                                _lcAudio.BufferSize >> 2); /* convert bytes to frames */
+                                LC_AUDIO_BYTES_TO_SAMPLES(_lcAudio.Buffer));
 
         if (frames == -EPIPE)
         {
@@ -67,6 +70,8 @@ _lcPlatformAudioInit(void)
     pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
     memcpy(&_lcPlatformAudioData.Lock, &lock, sizeof(lock));
 
+    _lcPlatformAudioData.BufferSize = sizeof(_lcPlatformAudioData.Buffer);
+
     LC_ASSERT(snd_pcm_open(&_lcPlatformAudioData.Handle,
                            "default",
                            SND_PCM_STREAM_PLAYBACK,
@@ -78,9 +83,9 @@ _lcPlatformAudioInit(void)
                                  SND_PCM_FORMAT_S16_LE,
                                  SND_PCM_ACCESS_RW_INTERLEAVED,
                                  2,
-                                 44100,
+                                 LC_AUDIO_SAMPLE_RATE,
                                  1,
-                                 100000)
+                                 LC_AUDIO_LATENCEY_IN_US)
               >= 0,
               "Could not configure pcm device");
 
